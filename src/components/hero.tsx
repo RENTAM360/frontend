@@ -3,7 +3,7 @@ import AppButton from "./app-button";
 
 export default function HeroSection() {
     return (
-      <section className="relative font-sans md:pt-30 w-full bg-black">
+      <section className="relative font-sans md:pt-24 w-full bg-black">
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image
@@ -18,8 +18,8 @@ export default function HeroSection() {
   
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Not everything needs <br /> to be owned.
+          <h1 className="text-4xl md:text-5xl leading-16 font-bold text-white mb-6">
+            Not everything needs <br className="mb-6" /> to be owned.
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl mb-6">
             Access what you need, when you need it without the cost of ownership. From heavy

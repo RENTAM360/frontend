@@ -93,7 +93,7 @@ export default function LoginPage() {
                 <p className="text-[#F04438] text-sm mt-1">{errors.email.message}</p>
               )}
             </div>
-            <a href="#" className="text-sm text-right text-primary ml-2 whitespace-nowrap">Forgot password</a>
+            <a href="forgot-password" className="text-sm text-right text-primary ml-2 whitespace-nowrap">Forgot password</a>
             <div className="mt-4">
               <input
                 type="password"

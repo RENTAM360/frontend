@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
       {/* Right form section */}
       <div className="flex-1 flex items-center justify-center py-12 px-6 md:px-20">
         <div className="w-full max-w-md">
-          <h2 className="text-2xl font-semibold mb-4 text-center">Forgot Password</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-center">Forgot Password</h2>
           <p className="text-[14px] text-[#898A8D] mb-8 text-center">Enter your email address and we’ll send you a confirmation code to reset your password.</p>
 
           <form className="space-y-4 text-right">

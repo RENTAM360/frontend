@@ -7,6 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import clsx from "clsx";
 import Link from "next/link";
+import { Check } from "lucide-react";
 
 const schema = Yup.object().shape({
   firstName: Yup.string().required("First name is required"),
@@ -208,19 +209,26 @@ export default function SignUpPage() {
                 </div>
             </div>
             
-            <ul className="mt-2 text-sm">
-                {passwordChecks.map((check, index) => (
-                  <li
-                    key={index}
-                    className={clsx(check.valid ? "text-green-600" : "text-[#F04438]")}
-                  >
-                    {check.label}
-                  </li>
-                ))}
-            </ul>
+            <div className="space-y-2">
+            <p className="text-[#1f1f1f] text-lg">Your password needs:</p>
+              <ul className="mt-2 text-sm space-y-3">
+                  {passwordChecks.map((check, index) => (
+                    <li
+                      key={index}
+                      className={`flex font-sans gap-2 items-center ${clsx(check.valid ? "text-green-600" : "text-[#666666]")}`}
+                    >
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${!check.valid ? 'border-[#666666]' : check.valid ? 'bg-[#00b35e] border-[#00b35e]' : 'bg-red-500 border-red-500'}`}>
+                      {<Check className="w-3 h-3 text-white" />}
+                    </div>
+                      <span className={`text-sm text-${!check.valid ? '[#666666]' : check.valid ? '[#00b35e]' : 'red-500'}`}>{check.label}</span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+
             <button
               type="submit"
-              className="w-full bg-primary mt-8 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
+              className="w-full bg-primary mt-4 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
             >
               Create Account
             </button>
