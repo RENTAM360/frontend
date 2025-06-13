@@ -1,5 +1,5 @@
 import UserProfileClient from "@/components/user-profile-client";
 
-export default function UserProfilePage({ params }: { params: { id: string } }) {
-  return <UserProfileClient userId={params.id} />
+export default function UserProfilePage(props: any) {
+  return <UserProfileClient userId={props.params.id} />
 }
