@@ -208,7 +208,7 @@ const itemsData = [
 export default function UserProfilePage({ params }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState("Items")
 
-  console.log(params)
+  console.log(params.id)
 
   const renderTabContent = () => {
     switch (activeTab) {
