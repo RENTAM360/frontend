@@ -8,7 +8,7 @@ export default function DashboardPage() {
       
         <PopularEquipment />
         <Vehicles />
-        <EquipmentCategory title="Vehicles" category="Vehicles" limit={10} />
+        <EquipmentCategory title="Vehicles" limit={10} />
       </div>
     )
   }
