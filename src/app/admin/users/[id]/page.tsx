@@ -23,6 +23,11 @@ import Image from "next/image"
 // import { getOwnerReviews } from "@/lib/data"
 // import { ReviewsPageClient } from "@/components/reviews-page-client"
 
+interface PageProps {
+  params: {
+    id: string
+  }
+}
 // Mock user data
 const userData = {
   id: 1,
@@ -205,7 +210,7 @@ const itemsData = [
   },
 ]
 
-export default function UserProfilePage({ params }: { params: { id: string } }) {
+export default function UserProfilePage({ params }: PageProps) {
   const [activeTab, setActiveTab] = useState("Items")
 
   console.log(params.id)
