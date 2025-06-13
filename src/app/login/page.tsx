@@ -54,8 +54,13 @@ export default function LoginPage() {
 
     router.push('/dashboard')
 
-   } catch (err: any) {
-    setLoginError(err.data?.message || err.message || 'Invalid login credentials. Please try again.')
+   } catch (err: unknown) {
+    if (typeof err === "object" && err !== null) {
+        const errorObj = err as { data?: { message?: string }; message?: string };
+        setLoginError(errorObj.data?.message || errorObj.message || "Something went wrong. Please try again.");
+      } else {
+        setLoginError("Something went wrong. Please try again.");
+      }
    }
   };
   return (

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Suspense, useEffect, useState } from "react"
+import { ComponentType, Suspense, useEffect, useState } from "react"
 import { LayoutGrid, Users, MessageSquare, FileText, Settings, Bell, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { PageHeaderProvider } from "@/context/page-header-context"
+import Image from "next/image"
 
 export default function AdminLayout({
   children,
@@ -38,7 +39,7 @@ export default function AdminLayout({
         <div className="w-[232px] bg-[#111111] text-white flex flex-col">
           <div className="p-6">
             <div className="flex items-center gap-2">
-              <img src="/adminLogo.svg" alt="Rentam360 Logo" />
+              <Image src="/adminLogo.svg" width={100} height={100} alt="Rentam360 Logo" />
             </div>
           </div>
 
@@ -96,7 +97,7 @@ export default function AdminLayout({
 }
 
 // Component for navigation items
-function NavItem({ icon: Icon, label, href }: { icon: any; label: string; href: string }) {
+function NavItem({ icon: Icon, label, href }: { icon: ComponentType<{ className?: string }>; label: string; href: string }) {
   const pathname = usePathname()
   const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href))
 

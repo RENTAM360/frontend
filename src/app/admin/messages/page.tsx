@@ -7,7 +7,7 @@ import { MessageView } from "@/components/message-view"
 import { Flag, MoreVertical } from "lucide-react"
 
 export default function MessagesPage() {
-  const [activeConversation, setActiveConversation] = useState({
+  const [activeConversation] = useState({
     id: "1",
     name: "Thankgod ogbonna",
     status: "Online",

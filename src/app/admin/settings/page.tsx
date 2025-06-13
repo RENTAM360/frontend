@@ -4,12 +4,17 @@ import { useState } from "react"
 import { PageHeader } from "@/context/page-header-context"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Upload } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { PaymentWalletSettings } from "@/components/payment-wallet-settings"
 import { AdminManagementSettings } from "@/components/admin-management-settings"
 import { NotificationSettings } from "@/components/notification-settings"
 import { SecurityAccessSettings } from "@/components/security-access-settings"
 import { PlatformPoliciesSettings } from "@/components/platform-policies-settings"
+
+type SettingsMenuItemType = {
+  id: string;
+  title: string;
+};
 
 // Settings menu items
 const settingsMenuItems = [
@@ -123,7 +128,7 @@ export default function SettingsPage() {
 }
 
 // Settings menu item component
-function SettingsMenuItem({ item, isActive, onClick }: { item: any; isActive: boolean; onClick: () => void }) {
+function SettingsMenuItem({ item, isActive, onClick }: { item: SettingsMenuItemType; isActive: boolean; onClick: () => void }) {
   return (
     <div
       className={`flex items-center border-b border-[#EBEBEB] justify-between p-4 cursor-pointer transition-colors ${

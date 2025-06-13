@@ -17,7 +17,9 @@ interface FeedbackModalProps {
   onSubmit: (data: { feedback: string; images: File[] }) => Promise<void>
 }
 
-export function FeedbackModal({ isOpen, onClose, ownerId, onSubmit }: FeedbackModalProps) {
+// ownerId
+
+export function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackModalProps) {
   const [feedback, setFeedback] = useState("")
   const [images, setImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])

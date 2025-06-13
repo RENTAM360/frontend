@@ -241,8 +241,8 @@ export function DatePicker({ onDateChange }: DatePickerProps) {
     return index % 7 === 6
   }
 
-  // Helper function to determine range styling
-  const getRangeStyle = (date: Date, index: number, days: any[]) => {
+  // Helper function to determine range styling days: any[]
+  const getRangeStyle = (date: Date, index: number, ) => {
     if (!startDate || !endDate) return ""
 
     const isStart = isStartDate(date)
@@ -327,8 +327,8 @@ export function DatePicker({ onDateChange }: DatePickerProps) {
           {days.map((day, index) => {
             const isStart = isStartDate(day.date)
             const isEnd = isEndDate(day.date)
-            // const isRange = isDateInRange(day.date)
-            const rangeStyle = getRangeStyle(day.date, index, days)
+            // const isRange = isDateInRange(day.date)days
+            const rangeStyle = getRangeStyle(day.date, index)
 
             return (
               <div key={index} className={`relative  flex items-center justify-center ${rangeStyle}`}>

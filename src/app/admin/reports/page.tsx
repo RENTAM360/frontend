@@ -2,9 +2,38 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight, Check } from "lucide-react"
+// import { Input } from "@/components/ui/input"
+import { ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight, Check } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
+import Image from "next/image"
+
+interface ReportedUser {
+  id: number
+  name: string
+  username: string
+  email: string
+  phone: string
+  verified: boolean
+  location: string
+  joinDate: string
+  address: string
+  bankAccount: string
+  bankName: string
+  bio: string
+  coverImage: string
+  profileImage: string
+}
+
+interface Report {
+  id: number
+  reporterName: string
+  reportedUserItem: string
+  reason: string
+  status: string
+  date: string
+  reportMessage: string
+  reportedUser: ReportedUser
+}
 
 // Mock reports data
 const reportsData = [
@@ -30,8 +59,8 @@ const reportsData = [
       bankAccount: "Bank account, 7077900016, FCMB",
       bankName: "Thankgod ogbonna",
       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-      coverImage: "/cover-image.jpg",
-      profileImage: "/user-avatar.png",
+      coverImage: "/report-coverImg.svg",
+      profileImage: "/report-profile.svg",
     },
   },
   {
@@ -56,8 +85,8 @@ const reportsData = [
       bankAccount: "Bank account, 7077900016, FCMB",
       bankName: "Thankgod ogbonna",
       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-      coverImage: "/cover-image.jpg",
-      profileImage: "/user-avatar.png",
+      coverImage: "/report-coverImg.svg",
+      profileImage: "/report-profile.svg",
     },
   },
   // Add more reports with the same structure...
@@ -83,18 +112,19 @@ const reportsData = [
       bankAccount: "Bank account, 7077900016, FCMB",
       bankName: "Thankgod ogbonna",
       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-      coverImage: "/cover-image.jpg",
-      profileImage: "/user-avatar.png",
+      coverImage: "/report-coverImg.svg",
+      profileImage: "/report-profile.svg",
     },
   })),
 ]
 
 export default function ReportsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedReport, setSelectedReport] = useState<any>(null)
-  const [reports, setReports] = useState(reportsData)
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+  console.log(reportsData)
 
   // Filter reports based on search and status
   const filteredReports = reportsData.filter((report) => {
@@ -108,8 +138,8 @@ export default function ReportsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleViewDetails = (report: number) => {
-   setSelectedReport(report)
+  const handleViewDetails = (report: Report) => {
+    setSelectedReport(report)
   }
 
   const handleCloseDetails = () => {
@@ -126,13 +156,8 @@ export default function ReportsPage() {
 
   const handleResolve = () => {
     if (selectedReport) {
-      // Update the report status to resolved
-      setReports((prevReports) =>
-        prevReports.map((report) => (report.id === selectedReport.id ? { ...report, status: "Resolved" } : report)),
-      )
-
       // Update the selected report
-      setSelectedReport((prev) => ({ ...prev, status: "Resolved" }))
+      setSelectedReport((prev) => (prev ? { ...prev, status: "Resolved" } : null))
 
       // Show success modal
       setShowSuccessModal(true)
@@ -143,7 +168,6 @@ export default function ReportsPage() {
     setShowSuccessModal(false)
     setSelectedReport(null)
   }
-
 
   return (
     <>
@@ -194,8 +218,8 @@ export default function ReportsPage() {
           {/* Table Rows */}
           {filteredReports.length > 0 ? (
             filteredReports.map((report) => (
-                <ReportRow key={report.id} report={report} onViewDetails={() => handleViewDetails(report)} />
-              ))
+              <ReportRow key={report.id} report={report} onViewDetails={() => handleViewDetails(report)} />
+            ))
           ) : (
             <div className="p-8 text-center text-gray-500">No reports found matching your criteria</div>
           )}
@@ -224,163 +248,164 @@ export default function ReportsPage() {
       </div>
 
       {/* Slide-in Report Details Panel */}
-        {selectedReport && (
-          <>
-            {/* Overlay - only covers the left side */}
-            <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-40" style={{ right: "400px" }} />
+      {selectedReport && (
+        <>
+          {/* Overlay - only covers the left side */}
+          <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-40" style={{ right: "400px" }} />
 
-            {/* Slide-in Panel */}
-            <div className="fixed top-0 right-0 w-[400px] h-full bg-white shadow-xl z-50 animate-in slide-in-from-right duration-300 flex flex-col">
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-4">
-                  {/* Back Button */}
-                  <button onClick={handleCloseDetails} className="mb-4 hover:bg-gray-100 p-1 rounded">
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
+          {/* Slide-in Panel */}
+          <div className="fixed top-0 right-0 w-[400px] h-full bg-white shadow-xl z-50 animate-in slide-in-from-right duration-300 flex flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
+                {/* Back Button */}
+                <button onClick={handleCloseDetails} className="mb-4 hover:bg-gray-100 p-1 rounded">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
 
-                  {/* Cover Image and Profile */}
-                  <div className="relative mb-10">
-                    <div className="h-48 rounded-lg overflow-hidden">
-                      <img src="/working-people.jpg" alt="Cover" className="w-full h-full object-cover" />
+                {/* Cover Image and Profile */}
+                <div className="relative mb-10">
+                  <div className="h-38 rounded-t-2xl rounded-b-[35px] overflow-hidden">
+                    <Image src="/report-coverImg.svg" alt="Cover" width={100} height={100} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-10">
+                    <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-white">
+                      <Image
+                        src={selectedReport.reportedUser.profileImage || "/placeholder.svg"}
+                        alt={selectedReport.reportedUser.name}
+                        className="w-full h-full object-cover"
+                        width={100} height={100}
+                      />
                     </div>
-                    <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-10">
-                      <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-white">
-                        <img
-                          src={selectedReport.reportedUser.profileImage || "/placeholder.svg"}
-                          alt={selectedReport.reportedUser.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                  </div>
+                </div>
+
+                {/* User Info */}
+                <div className="text-center mb-6 mt-8">
+                  <h3 className="text-xl font-bold">{selectedReport.reportedUser.name}</h3>
+                  {selectedReport.reportedUser.verified && (
+                    <div className="inline-block bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded mt-1">
+                      Verified
+                    </div>
+                  )}
+                  <p className="text-gray-600 mt-3 text-sm">{selectedReport.reportedUser.bio}</p>
+
+                  <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{selectedReport.reportedUser.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>Joined {selectedReport.reportedUser.joinDate}</span>
                     </div>
                   </div>
 
-                  {/* User Info */}
-                  <div className="text-center mb-6 mt-8">
-                    <h3 className="text-xl font-bold">{selectedReport.reportedUser.name}</h3>
-                    {selectedReport.reportedUser.verified && (
-                      <div className="inline-block bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded mt-1">
-                        Verified
-                      </div>
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-center gap-3 mt-6">
+                    <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={handleSuspend}>
+                      Suspend
+                    </Button>
+                    <Button className="bg-[#17b266] hover:bg-[#149655] text-white" onClick={handleMessage}>
+                      Message
+                    </Button>
+                    {selectedReport.status !== "Resolved" && (
+                      <Button
+                        variant="outline"
+                        className="border-[#17b266] text-[#17b266] hover:bg-[#17b266] hover:text-white"
+                        onClick={handleResolve}
+                      >
+                        Resolve
+                      </Button>
                     )}
-                    <p className="text-gray-600 mt-3 text-sm">{selectedReport.reportedUser.bio}</p>
+                  </div>
+                </div>
 
-                    <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{selectedReport.reportedUser.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>Joined {selectedReport.reportedUser.joinDate}</span>
-                      </div>
-                    </div>
+                {/* Report Message - Only show if not resolved */}
+                {selectedReport.status !== "Resolved" && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <h4 className="text-red-600 font-medium mb-2">Report message</h4>
+                    <p className="text-red-600 text-sm">{selectedReport.reportMessage}</p>
+                  </div>
+                )}
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-center gap-3 mt-6">
-                      <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={handleSuspend}>
-                        Suspend
-                      </Button>
-                      <Button className="bg-[#17b266] hover:bg-[#149655] text-white" onClick={handleMessage}>
-                        Message
-                      </Button>
-                      {selectedReport.status !== "Resolved" && (
-                        <Button
-                          variant="outline"
-                          className="border-[#17b266] text-[#17b266] hover:bg-[#17b266] hover:text-white"
-                          onClick={handleResolve}
-                        >
-                          Resolve
-                        </Button>
-                      )}
+                {/* Resolved Status Message */}
+                {selectedReport.status === "Resolved" && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <h4 className="text-green-600 font-medium mb-2">Status</h4>
+                    <p className="text-green-600 text-sm">
+                      This report has been resolved and appropriate actions have been completed.
+                    </p>
+                  </div>
+                )}
+
+                {/* Contact Information */}
+                <div className="space-y-4 pb-6">
+                  <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                    <MapPin className="w-5 h-5 text-[#17b266]" />
+                    <span className="text-gray-700">{selectedReport.reportedUser.address}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                    <Phone className="w-5 h-5 text-[#17b266]" />
+                    <span className="text-gray-700">{selectedReport.reportedUser.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                    <CreditCard className="w-5 h-5 text-[#17b266]" />
+                    <div>
+                      <span className="text-gray-700">{selectedReport.reportedUser.bankAccount}</span>
+                      <br />
+                      <span className="text-gray-500 text-sm">{selectedReport.reportedUser.bankName}</span>
                     </div>
                   </div>
-
-                  {/* Report Message - Only show if not resolved */}
-                  {selectedReport.status !== "Resolved" && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                      <h4 className="text-red-600 font-medium mb-2">Report message</h4>
-                      <p className="text-red-600 text-sm">{selectedReport.reportMessage}</p>
+                  <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                    <Mail className="w-5 h-5 text-[#17b266]" />
+                    <span className="text-gray-700">{selectedReport.reportedUser.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-t hover:bg-gray-50 rounded cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Trash2 className="w-5 h-5 text-[#17b266]" />
+                      <span className="text-gray-700">Delete account permanently</span>
                     </div>
-                  )}
-
-                  {/* Resolved Status Message */}
-                  {selectedReport.status === "Resolved" && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                      <h4 className="text-green-600 font-medium mb-2">Status</h4>
-                      <p className="text-green-600 text-sm">
-                        This report has been resolved and appropriate actions have been completed.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Contact Information */}
-                  <div className="space-y-4 pb-6">
-                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                      <MapPin className="w-5 h-5 text-[#17b266]" />
-                      <span className="text-gray-700">{selectedReport.reportedUser.address}</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                      <Phone className="w-5 h-5 text-[#17b266]" />
-                      <span className="text-gray-700">{selectedReport.reportedUser.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                      <CreditCard className="w-5 h-5 text-[#17b266]" />
-                      <div>
-                        <span className="text-gray-700">{selectedReport.reportedUser.bankAccount}</span>
-                        <br />
-                        <span className="text-gray-500 text-sm">{selectedReport.reportedUser.bankName}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                      <Mail className="w-5 h-5 text-[#17b266]" />
-                      <span className="text-gray-700">{selectedReport.reportedUser.email}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3 border-t hover:bg-gray-50 rounded cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <Trash2 className="w-5 h-5 text-[#17b266]" />
-                        <span className="text-gray-700">Delete account permanently</span>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
                   </div>
                 </div>
               </div>
-            </div>
-          </>
-        )}
-
-        {/* Success Modal */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-[100] flex items-center justify-center">
-            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
-              {/* Success Icon */}
-              <div className="mb-6 flex justify-center">
-                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center relative">
-                  <Check className="w-10 h-10 text-white" />
-                  <div className="absolute inset-0 rounded-full border-2 border-dashed border-pink-400"></div>
-                </div>
-              </div>
-
-              {/* Success Message */}
-              <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                The reported case has been reviewed and appropriate actions have been completed.
-              </p>
-
-              {/* Done Button */}
-              <Button
-                className="w-full bg-[#17b266] hover:bg-[#149655] text-white py-3 text-lg rounded-full"
-                onClick={handleSuccessModalClose}
-              >
-                Done
-              </Button>
             </div>
           </div>
-        )}
+        </>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-[100] flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            {/* Success Icon */}
+            <div className="mb-6 flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center relative">
+                <Check className="w-10 h-10 text-white" />
+                <div className="absolute inset-0 rounded-full border-2 border-dashed border-pink-400"></div>
+              </div>
+            </div>
+
+            {/* Success Message */}
+            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+              The reported case has been reviewed and appropriate actions have been completed.
+            </p>
+
+            {/* Done Button */}
+            <Button
+              className="w-full bg-[#17b266] hover:bg-[#149655] text-white py-3 text-lg rounded-full"
+              onClick={handleSuccessModalClose}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 // Component for report rows
-function ReportRow({ report, onViewDetails }: { report: any; onViewDetails: () => void }) {
+function ReportRow({ report, onViewDetails }: { report: Report; onViewDetails: () => void }) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":

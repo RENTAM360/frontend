@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
 import clsx from "clsx"
+import Image from "next/image"
 // import Image from "next/image"
 
 export function DashboardNavbar() {
@@ -121,10 +122,12 @@ export function DashboardNavbar() {
 
             <div className="relative">
               <Link href="/dashboard/profile" className="relative bg-[#FFFFFF21] rounded-full pr-2 flex justify-center items-center gap-3">
-                <img
+                <Image
                   src="/tg.svg"
                   alt="User"
                   className="h-8 w-8 rounded-full"
+                  width={100}
+                  height={100}
                 />
                 <div>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">

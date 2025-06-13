@@ -44,8 +44,13 @@ export default function ForgotPasswordPage() {
 
       setSuccessMessage(res.message)
 
-    } catch(err: any) {
-      setSubmitError(err.data?.message || err.message || "Something went wrong. Please try again.")
+    } catch(err: unknown) {
+      if (typeof err === "object" && err !== null) {
+        const errorObj = err as { data?: { message?: string }; message?: string };
+        setSubmitError(errorObj.data?.message || errorObj.message || "Something went wrong. Please try again.");
+      } else {
+        setSubmitError("Something went wrong. Please try again.");
+      }
     }
 
   };

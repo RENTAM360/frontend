@@ -141,7 +141,7 @@ export default function RentPage() {
         URL.revokeObjectURL(photo.preview)
       })
     }
-  }, [])
+  }, [photos])
 
   return (
     <div className="container font-sans mx-auto px-4 py-8 max-w-3xl">

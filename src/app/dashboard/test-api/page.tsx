@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export default function TestApiPage() {
   const [loading, setLoading] = useState(false)
-  const [response, setResponse] = useState<any>(null)
+  const [response, setResponse] = useState(null)
   const [error, setError] = useState<string | null>(null)
 
   const testApiCall = async () => {
@@ -168,8 +168,8 @@ export default function TestApiPage() {
       <div className="mt-8 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
         <h3 className="text-yellow-800 font-semibold mb-2">📝 Instructions:</h3>
         <ol className="text-yellow-700 space-y-1 list-decimal list-inside">
-          <li>Click "Test API Call" button</li>
-          <li>Open your browser's Developer Tools (F12)</li>
+          <li>Click &quot;Test API Call&quot; button</li>
+          <li>Open your browser&apos;s Developer Tools (F12)</li>
           <li>Go to the Console tab</li>
           <li>Look for the logged API response data</li>
           <li>Copy the response structure to share with me</li>

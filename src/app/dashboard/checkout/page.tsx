@@ -24,32 +24,32 @@ const equipmentData = {
 }
 
 // Sample saved cards
-const savedCards = [
-  {
-    id: "card1",
-    last4: "3456",
-    name: "Thankg",
-    type: "visa",
-  },
-  {
-    id: "card2",
-    last4: "3456",
-    name: "Thankg",
-    type: "mastercard",
-  },
-]
+// const savedCards = [
+//   {
+//     id: "card1",
+//     last4: "3456",
+//     name: "Thankg",
+//     type: "visa",
+//   },
+//   {
+//     id: "card2",
+//     last4: "3456",
+//     name: "Thankg",
+//     type: "mastercard",
+//   },
+// ]
 
 export default function CheckoutPage() {
   const [startDate, setStartDate] = useState<Date | null>(null)
   const [endDate, setEndDate] = useState<Date | null>(null)
   const [selectedCard, setSelectedCard] = useState<string>("card1")
   const [showAddCard, setShowAddCard] = useState(false)
-  const [newCardData, setNewCardData] = useState({
-    cardNumber: "",
-    cardName: "",
-    expiryDate: "",
-    cvv: "",
-  })
+  // const [newCardData, setNewCardData] = useState({
+  //   cardNumber: "",
+  //   cardName: "",
+  //   expiryDate: "",
+  //   cvv: "",
+  // })
   const [rentDuration, setRentDuration] = useState(2)
 
   const handleDateChange = (start: Date | null, end: Date | null) => {
@@ -88,16 +88,16 @@ const calculateTotalDays = () => {
   }
 
   // Format the current date and time
-  const formattedDate = new Date()
-    .toLocaleString("en-US", {
-      day: "numeric",
-      month: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    })
-    .replace(",", " at")
+  // const formattedDate = new Date()
+  //   .toLocaleString("en-US", {
+  //     day: "numeric",
+  //     month: "numeric",
+  //     year: "numeric",
+  //     hour: "numeric",
+  //     minute: "numeric",           
+  //     hour12: true,
+  //   })
+  //   .replace(",", " at")
 
   return (
     <div className="space-y-8 font-sans">

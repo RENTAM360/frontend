@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
+import { RootState } from "../store"
 
 export interface LoginCredentials {
   email: string
@@ -42,7 +43,8 @@ export const authApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_AUTH_API_URL || "",
     prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).auth.data
+      const state = getState() as RootState
+      const token = state.auth.data
 
       if (token) {
         headers.set("authorization", `Bearer ${token}`)

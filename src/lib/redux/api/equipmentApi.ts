@@ -73,8 +73,8 @@ export const equipmentApi = createApi({
   reducerPath: "equipmentApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://13.247.232.234/api/v1/dev/",
-    prepareHeaders: (headers, { getState }) => {
-      // Add any auth headers if needed
+    prepareHeaders: (headers) => {
+      // Add any auth headers if needed { getState }
       // const token = (getState() as RootState).auth.token
       // if (token) {
       //   headers.set('authorization', `Bearer ${token}`)

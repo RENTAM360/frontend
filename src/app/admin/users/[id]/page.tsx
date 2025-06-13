@@ -13,15 +13,15 @@ import {
   Trash2,
   ChevronRight,
   Star,
-  ArrowUpLeft,
   ChevronDown,
   ThumbsUp,
   MessageCircle,
   Paperclip,
   Send,
 } from "lucide-react"
-import { getOwnerReviews } from "@/lib/data"
-import { ReviewsPageClient } from "@/components/reviews-page-client"
+import Image from "next/image"
+// import { getOwnerReviews } from "@/lib/data"
+// import { ReviewsPageClient } from "@/components/reviews-page-client"
 
 // Mock user data
 const userData = {
@@ -83,11 +83,11 @@ const bankAccountsData = [
 
 // Mock reviews data
 // Owner data
-const ownerData = {
-  id: 1,
-  name: "Thankgod Ogbonna",
-  profileImage: "/diverse-group-profile.png",
-}
+// const ownerData = {
+//   id: 1,
+//   name: "Thankgod Ogbonna",
+//   profileImage: "/diverse-group-profile.png",
+// }
 
 // Reviews data 
 const reviewsData = [
@@ -205,7 +205,7 @@ const itemsData = [
   },
 ]
 
-export default function UserProfilePage({ params }: { params: { id: string } }) {
+export default function UserProfilePage({  }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState("Items")
 
   const renderTabContent = () => {
@@ -237,7 +237,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
           <div className="relative">
             {/* Cover Image */}
             <div className="h-40">
-              <img src="/profile-bg.svg" alt="Cover" className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover" />
+              <Image src="/profile-bg.svg" alt="Cover" width={100} height={100} className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover" />
             </div>
 
             {/* Profile Picture */}
@@ -364,10 +364,12 @@ function ReviewsContent() {
                 {/* Review Header */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden">
-                    <img
+                    <Image
                       src={review.user.profileImage || "/placeholder.svg"}
                       alt={review.user.name}
                       className="w-full h-full object-cover"
+                      width={100}
+                      height={100}
                     />
                   </div>
                   <div>
@@ -382,10 +384,12 @@ function ReviewsContent() {
               {/* Review Image (if any) */}
               {review.image && (
                 <div className="mb-3">
-                  <img
+                  <Image
                     src={review.image || "/placeholder.svg"}
                     alt="Review image"
                     className="rounded-lg max-w-[300px] h-auto"
+                    width={300}
+                    height={300}
                   />
                 </div>
               )}
@@ -416,10 +420,12 @@ function ReviewsContent() {
                     <div key={reply.id} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-full overflow-hidden">
-                          <img
+                          <Image
                             src={reply.user.profileImage || "/placeholder.svg"}
                             alt={reply.user.name}
                             className="w-full h-full object-cover"
+                            width={100}
+                            height={100}
                           />
                         </div>
                         <div>
@@ -524,7 +530,7 @@ function BankAccountItem({ account }) {
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
       <div className="flex items-center gap-3">
         <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white overflow-hidden">
-          <img src={account.logo || "/placeholder.svg"} alt={account.bankName} className="w-full h-full object-cover" />
+          <Image src={account.logo || "/placeholder.svg"} alt={account.bankName} className="w-full h-full object-cover" width={100} height={100} />
         </div>
         <div>
           <p className="font-bold text-sm">{account.bankName}</p>
