@@ -58,7 +58,7 @@ const equipmentData = {
   category: "Vehicles",
   rating: 4.5,
   owner: {
-    id: "owner1",
+    id: "1",
     name: "Thankgod Ogbonna",
     image: "/tg.svg",
     verified: true,
@@ -100,7 +100,7 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
   }
 
   return (
-    <div className="space-y-8 font-sans mt-10">
+    <div className="space-y-8 font-sans pt-4 md:mt-10">
         <header className="text-[23px] flex items-center gap-3 font-[700]">
           <svg className="cursor-pointer" onClick={() => router.back()} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9.57141 18.8201C9.38141 18.8201 9.19141 18.7501 9.04141 18.6001L2.97141 12.5301C2.68141 12.2401 2.68141 11.7601 2.97141 11.4701L9.04141 5.40012C9.33141 5.11012 9.81141 5.11012 10.1014 5.40012C10.3914 5.69012 10.3914 6.17012 10.1014 6.46012L4.56141 12.0001L10.1014 17.5401C10.3914 17.8301 10.3914 18.3101 10.1014 18.6001C9.96141 18.7501 9.76141 18.8201 9.57141 18.8201Z" fill="#292D32"/>
@@ -111,7 +111,7 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left side - Image Gallery */}
         <div className="w-full bg-white p-4 rounded-lg lg:flex-2">
-          <div className="relative aspect-[4/3] h-[370px] w-full overflow-hidden rounded-lg mb-4">
+          <div className="relative aspect-[4/3] md:h-[370px] w-full overflow-hidden rounded-lg mb-4">
             <Image
               src={equipmentData.images[selectedImage] || "/placeholder.svg"}
               alt={equipmentData.title}
@@ -120,7 +120,7 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
               priority
             />
           </div>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
             {equipmentData.images.map((image, index) => (
               <button
                 key={index}
@@ -152,11 +152,11 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
               <li className="mt-4 text-[#979797] ">{equipmentData.callToAction}</li>
             </ol>
 
-            <div className="mt-6 flex flex-wrap gap-4">
+            <div className="mt-6 justify-center md:justify-normal flex gap-4">
               {equipmentData.guarantees.map((guarantee, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 rounded-md border border-primary px-4 py-2 text-green-600"
+                  className="flex items-center gap-1 md:gap-2 rounded-md text-[10px] border border-primary px-2 md:px-4 py-2 text-green-600"
                 >
                     <span>{guarantee.icon}</span>
                   <span>{guarantee.text}</span>
@@ -205,7 +205,7 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
           {/* Middle Block - Renter Information and Feedback */}
           <div className="bg-white rounded-lg mb-6">
             <Link
-              href={`/dashboard/users/${equipmentData.owner.id}`}
+              href={`/dashboard/user/owner/${equipmentData.owner.id}`}
               className="flex items-center justify-between p-6 border-b"
             >
               <div className="flex items-center gap-4">

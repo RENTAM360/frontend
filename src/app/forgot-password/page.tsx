@@ -1,18 +1,54 @@
 "use client"
 
-// import { useForm } from 'react-hook-form';
-// import { yupResolver } from '@hookform/resolvers/yup';
-// import * as yup from 'yup';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import Image from 'next/image';
 import Link from 'next/link';
-// import { useState } from 'react';
+import { useState } from 'react';
+import { ForgotPasswordCredentials, useForgotPasswordMutation } from '@/lib/redux/api/authApi';
+import { useAppDispatch } from '@/lib/redux/hooks';
+import { clearError } from '@/lib/redux/slices/authSlice';
 
-// const schema = yup.object().shape({
-//   email: yup.string().email('Invalid email address').required('Email is required'),
-//   password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
-// });
+interface ForgotPasswordData {
+  email: string
+}
+
+const schema = yup.object().shape({
+  email: yup.string().email('Invalid email address').required('Email is required'),
+});
 
 export default function ForgotPasswordPage() {
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation()
+    const dispatch = useAppDispatch()
+    const [submitError, setSubmitError] = useState("")
+    const [successMessage, setSuccessMessage] = useState("")
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordData>({
+    resolver: yupResolver(schema),
+  });
+
+  const onSubmit = async (data: ForgotPasswordData) => {
+    setSubmitError("")
+    dispatch(clearError())
+
+    try {
+      const payload: ForgotPasswordCredentials = {
+        email: data.email
+      }
+
+      const res = await forgotPassword(payload).unwrap()
+
+      setSuccessMessage(res.message)
+
+    } catch(err: any) {
+      setSubmitError(err.data?.message || err.message || "Something went wrong. Please try again.")
+    }
+
+  };
  
   return (
     <main className="flex min-h-screen font-sans flex-col md:flex-row">
@@ -21,8 +57,8 @@ export default function ForgotPasswordPage() {
         <Image
           src="/warehouse-bg.png"
           alt="Warehouse background"
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{ objectFit: "cover" }}
           className="brightness-50"
         />
         <div className="absolute inset-0 p-10 flex max-w-md flex-col justify-between text-white z-10">
@@ -52,22 +88,61 @@ export default function ForgotPasswordPage() {
       <div className="flex-1 flex items-center justify-center py-12 px-6 md:px-20">
         <div className="w-full max-w-md">
         <h2 className="text-2xl font-semibold mb-4 text-center">Forgot Password</h2>
-          <p className="text-[14px] text-[#898A8D] mb-8 text-center">Enter your email address and we’ll send you a confirmation code to reset your password.</p>
+        <p className="text-[14px] text-[#898A8D] mb-8 text-center">Enter your email address and we’ll send you a confirmation code to reset your password.</p>
+        {submitError ? (
+            <div className="bg-[#F044380A] border border-red-400 text-[#F04438] px-4 py-2 rounded mb-4 text-sm">
+              {submitError}
+            </div>
+          ) : successMessage && (
+            <div className="bg-[#ECFDF3] border border-green-400 text-green-700 px-4 py-2 rounded mb-4 text-sm">
+              {successMessage}
+            </div>
+          )
+          
+          }
 
-          <form className="space-y-4 text-right">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-right">
             <div>
               <input
                 type="email"
                 placeholder="Email"
+                {...register("email")}
                 className={`w-full border rounded px-4 py-2 focus:outline-none`}
                 required
               />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
             <button
               type="submit"
               className="w-full bg-primary mt-8 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
             >
-              Continue
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+                  Sending...
+                </span>
+              ) : (
+                "Send Reset Link"
+              )}
             </button>
           </form>
         </div>

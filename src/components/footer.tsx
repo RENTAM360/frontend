@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Footer() {
     return (
-        <footer className="font-sans flex justify-between mb-8 md:mx-16">
+        <footer className="font-sans flex justify-between mb-8 mx-8 md:mx-16">
             <p className="font-medium">@ {new Date().getFullYear()} Rentam360.</p>
             <div className="flex gap-2">
                 <Link href="#">

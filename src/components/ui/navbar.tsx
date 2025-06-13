@@ -11,7 +11,7 @@ export default function Navbar() {
 
   return (
     <header className="w-full font-sans border-b bg-white">
-      <div className="container flex h-16 items-center justify-between py-4 px-4 md:px-16 md:py-12">
+      <div className="container flex h-20 items-center justify-between py-8 px-6 md:px-16 md:py-12">
         <Link href="/" className="flex items-center gap-2" aria-label="Rentam360 home">
         <svg width="197" height="40" viewBox="0 0 197 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.3994 0.600098V11.7998L14.932 18.8152L15.2532 7.93406L1.76953 8.06745L9.33217 0.600098H22.3994Z" fill="#12B76A"/>

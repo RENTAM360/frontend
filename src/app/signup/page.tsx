@@ -2,16 +2,30 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import clsx from "clsx";
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { RegisterData, useRegisterMutation } from "@/lib/redux/api/authApi";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { useRouter } from "next/navigation";
+import { clearError, setCredentials } from "@/lib/redux/slices/authSlice";
+
+interface SignUpFormData {
+  first_name: string
+  last_name: string
+  email: string
+  password: string
+  confirmPassword: string
+  dob: string
+  gender: "male" | "female" | "other";
+}
 
 const schema = Yup.object().shape({
-  firstName: Yup.string().required("First name is required"),
-  lastName: Yup.string().required("Last name is required"),
+  first_name: Yup.string().required("First name is required"),
+  last_name: Yup.string().required("Last name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string()
     .required("Password is required")
@@ -22,29 +36,53 @@ const schema = Yup.object().shape({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Please confirm your password"),
-  dob: Yup.date().required("Date of birth is required"),
-  gender: Yup.string().oneOf(["male", "female", "other"], "Select a gender"),
+  dob: Yup.string().required("Date of birth is required"),
+  gender: Yup.string()
+  .oneOf(["male", "female", "other"], "Select a gender")
+  .required("Gender is required"),
 });
 
 export default function SignUpPage() {
-  const [submitError, setSubmitError] = useState("");
+   const router = useRouter()
+  const dispatch = useAppDispatch()
+  const [ register, { isLoading } ] = useRegisterMutation()
+  const [submitError, setSubmitError] = useState("")
+
   const {
-    register,
+    register: registerField,
     handleSubmit,
     watch,
-    formState: { errors, touchedFields },
-  } = useForm({
+    formState: { errors },
+  } = useForm<SignUpFormData>({
     resolver: yupResolver(schema),
     mode: "onChange",
-  });
+  })
 
   const password = watch("password");
 
-  const onSubmit = (data: any) => {
-    console.log("Signup data:", data);
-    // Simulate an error
-    setSubmitError("Something went wrong. Please try again.");
-  };
+  const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
+    setSubmitError("")
+    dispatch(clearError())
+
+    try {
+      const payload: RegisterData = {
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      password: data.password,
+      dob: data.dob,
+      gender: data.gender,
+    };
+      const res = await register(payload).unwrap()
+      console.log(res)
+
+      dispatch(setCredentials(res))
+
+      router.push(`/signup/confirmation?email=${encodeURIComponent(data.email)}`)
+    } catch (err: any) {
+      setSubmitError(err.data?.message || err.message || "Registration failed. Please try again.")
+    }
+  }
 
   const passwordChecks = [
     {
@@ -100,7 +138,7 @@ export default function SignUpPage() {
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12">
+      <div className="flex-1 flex flex-col justify-center bg-[#F8F8FA] items-center p-6 md:p-12">
         <div className="w-full max-w-md">
           <h1 className="text-2xl font-semibold mb-8 text-center ">Create your account</h1>
 
@@ -116,26 +154,26 @@ export default function SignUpPage() {
                 <input
                   type="text"
                   placeholder="First name"
-                  {...register("firstName")}
+                  {...registerField("first_name")}
                   className={clsx(
                     "w-full px-4 py-2 rounded border",
-                    errors.firstName && "bg-[#F044380A] border-[#F044383D]"
+                    errors.first_name && "bg-[#F044380A] border-[#F044383D]"
                   )}
                 />
-                {errors.firstName && <p className="text-[#F04438] text-sm">{errors.firstName.message}</p>}
+                {errors.first_name && <p className="text-[#F04438] text-sm">{errors.first_name.message}</p>}
               </div>
 
               <div>
                 <input
                   type="text"
                   placeholder="Last name"
-                  {...register("lastName")}
+                  {...registerField("last_name")}
                   className={clsx(
                     "w-full px-4 py-2 rounded border",
-                    errors.lastName && "bg-[#F044380A] border-[#F044383D]"
+                    errors.last_name && "bg-[#F044380A] border-[#F044383D]"
                   )}
                 />
-                {errors.lastName && <p className="text-[#F04438] text-sm">{errors.lastName.message}</p>}
+                {errors.last_name && <p className="text-[#F04438] text-sm">{errors.last_name.message}</p>}
               </div>
             </div>
 
@@ -143,7 +181,7 @@ export default function SignUpPage() {
               <input
                 type="email"
                 placeholder="Email"
-                {...register("email")}
+                {...registerField("email")}
                 className={clsx(
                   "w-full px-4 py-2 focus:outline-none rounded border",
                   errors.email && "bg-[#F044380A] border-[#F044383D]"
@@ -156,7 +194,7 @@ export default function SignUpPage() {
               <input
                 type="password"
                 placeholder="Password"
-                {...register("password")}
+                {...registerField("password")}
                 className={clsx(
                   "w-full px-4 py-2 focus:outline-none rounded border",
                   errors.password && "bg-[#F044380A] border-[#F044383D]"
@@ -169,7 +207,7 @@ export default function SignUpPage() {
               <input
                 type="password"
                 placeholder="Confirm Password"
-                {...register("confirmPassword")}
+                {...registerField("confirmPassword")}
                 className={clsx(
                   "w-full px-4 py-2 focus:outline-none rounded border",
                   errors.confirmPassword && "bg-[#F044380A] border-[#F044383D]"
@@ -183,7 +221,7 @@ export default function SignUpPage() {
                 <div>
                 <input
                     type="date"
-                    {...register("dob")}
+                    {...registerField("dob")}
                     className={clsx(
                     "w-full px-4 py-2 focus:outline-none rounded border",
                     errors.dob && "bg-[#F044380A] border-[#F044383D]"
@@ -194,7 +232,7 @@ export default function SignUpPage() {
 
                 <div>
                 <select
-                    {...register("gender")}
+                    {...registerField("gender")}
                     className={clsx(
                     "w-full px-4 py-2 focus:outline-none rounded border",
                     errors.gender && "bg-[#F044380A] border-[#F044383D]"
@@ -230,7 +268,33 @@ export default function SignUpPage() {
               type="submit"
               className="w-full bg-primary mt-4 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
             >
-              Create Account
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+                  Signing Up...
+                </span>
+              ) : (
+                "Create account"
+              )}
             </button>
 
             <p className="text-sm text-center">

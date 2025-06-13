@@ -16,7 +16,7 @@ export default function GalleryCard({
     imgUrl: string;
   }) {
     return (
-      <section className="relative h-[313px] rounded-[10px] font-sans bg-[#F5F5F5]">
+      <section className="relative h-[243px] md:h-[313px] rounded-[10px] font-sans bg-[#F5F5F5]">
         {/* Background Image */}
         <div className="absolute rounded-[10px] inset-0">
           <Image

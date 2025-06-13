@@ -55,9 +55,9 @@ export const PopularEquipment = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Popular Equipment</h2>
-      <div className="flex gap-4 overflow-x-auto -mr-8 hide-scrollbar">
+      <div className="grid grid-col-1 md:flex gap-4 overflow-x-auto md:-mr-8 hide-scrollbar">
         {popularEquipment.map((equipment) => (
-          <EquipmentCard key={equipment.id} {...equipment} />
+          <EquipmentCard key={equipment.id} {...equipment} variant="default" />
         ))}
       </div>
     </div>

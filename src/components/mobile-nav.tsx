@@ -7,7 +7,7 @@ export function MobileNav() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed bottom-0 left-0 z-40 w-full border-t bg-white md:hidden">
+    <div className="fixed bottom-0 left-0 z-40 w-full font-sans border-t bg-white md:hidden">
       <div className="grid h-16 grid-cols-4">
         <Link
           href="/dashboard"

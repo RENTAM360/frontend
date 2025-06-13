@@ -1,11 +1,22 @@
 "use client"
 
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
+import { LoginCredentials, useLoginMutation } from "@/lib/redux/api/authApi";
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState } from 'react'
+import { clearError, setCredentials } from '@/lib/redux/slices/authSlice';
+import { useAppDispatch } from '@/lib/redux/hooks';
+import { useRouter } from 'next/navigation';
+
+interface LoginFormInputs {
+  email: string;
+  password: string;
+}
+
 
 const schema = yup.object().shape({
   email: yup.string().email('Invalid email address').required('Email is required'),
@@ -13,23 +24,39 @@ const schema = yup.object().shape({
 });
 
 export default function LoginPage() {
+  const [ login, { isLoading } ] = useLoginMutation();
+  const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useAppDispatch()
+  const router = useRouter()
   const [loginError, setLoginError] = useState('');
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({
+    formState: { errors },
+  } = useForm<LoginFormInputs>({
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = async (data: any) => {
-    // Fake login logic
-    if (data.email !== 'user@example.com' || data.password !== 'password123') {
-      setLoginError('Invalid login credentials. Please try again.');
-      return;
-    }
-    setLoginError('');
-    alert('Login successful!');
+  const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
+   setLoginError("")
+   dispatch(clearError())
+
+   try {
+    const payload: LoginCredentials = {
+      email: data.email,
+      password: data.password
+    };
+
+    const res = await login(payload).unwrap();
+    console.log(res)
+
+    dispatch(setCredentials(res))
+
+    router.push('/dashboard')
+
+   } catch (err: any) {
+    setLoginError(err.data?.message || err.message || 'Invalid login credentials. Please try again.')
+   }
   };
   return (
     <main className="flex min-h-screen font-sans flex-col md:flex-row">
@@ -38,8 +65,8 @@ export default function LoginPage() {
         <Image
           src="/warehouse-bg.png"
           alt="Warehouse background"
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{ objectFit: 'cover' }}
           className="brightness-50"
         />
         <div className="absolute inset-0 p-10 flex max-w-md flex-col justify-between text-white z-10">
@@ -68,7 +95,7 @@ export default function LoginPage() {
       {/* Right form section */}
       <div className="flex-1 flex items-center justify-center py-12 px-6 md:px-20">
         <div className="w-full max-w-md">
-          <h2 className="text-2xl font-semibold mb-8 text-center">Welcome back David</h2>
+          <h2 className="text-2xl font-semibold mb-8 text-center">Welcome back!</h2>
 
           {loginError && (
             <div className="bg-[#F044380A] border border-[#F044383D] text-[#F04438] px-4 py-4 rounded mb-6 text-sm">
@@ -94,9 +121,9 @@ export default function LoginPage() {
               )}
             </div>
             <a href="forgot-password" className="text-sm text-right text-primary ml-2 whitespace-nowrap">Forgot password</a>
-            <div className="mt-4">
+            <div className="relative mt-4">
               <input
-                type="password"
+                type={!showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 {...register('password')}
                 className={`w-full border block rounded px-4 py-2 focus:outline-none ${
@@ -106,6 +133,14 @@ export default function LoginPage() {
                 }`}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
               {errors.password && (
                 <p className="text-[#F04438] text-sm mt-1">{errors.password.message}</p>
               )}
@@ -114,7 +149,33 @@ export default function LoginPage() {
               type="submit"
               className="w-full bg-primary mt-8 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
             >
-              {isSubmitting ? 'Logging in...' : 'Continue'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+                  Loggin in...
+                </span>
+              ) : (
+                "Continue"
+              )}
             </button>
           </form>
 

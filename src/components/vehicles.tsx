@@ -55,9 +55,9 @@ export const Vehicles = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Vehicles</h2>
-      <div className="flex gap-4 overflow-x-auto -mr-8 hide-scrollbar">
+      <div className="md:flex grid grid-cols-1 gap-4 overflow-x-auto md:-mr-8 hide-scrollbar">
         {vehicles.map((vehicle) => (
-          <EquipmentCard key={vehicle.id} {...vehicle} />
+          <EquipmentCard key={vehicle.id} {...vehicle} variant="default"/>
         ))}
       </div>
     </div>

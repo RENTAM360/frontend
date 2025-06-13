@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function AboutSection() {
     return (
-      <section className="relative font-sans md:py-30 w-full bg-black">
+      <section className="relative font-sans px-4 py-15 md:py-30 w-full bg-black">
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image
@@ -17,7 +17,7 @@ export default function AboutSection() {
   
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <p className="text-3xl text-[#0A0A0A] leading-10 max-w-2xl">
+          <p className="text-xl md:text-3xl text-[#0A0A0A] md:leading-10 max-w-2xl">
             With Rentam360, renting items is fast, easy, and affordable. 
             Skip the hassle of buying—explore how it works, browse available 
             items, and find nearby locations
