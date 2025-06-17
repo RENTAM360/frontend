@@ -22,7 +22,7 @@ interface Product {
   phone: string
 }
 
-interface Conversation {
+export interface Conversation {
   id: string
   name: string
   status: string

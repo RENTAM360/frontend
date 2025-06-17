@@ -6,25 +6,35 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Trash2 } from "lucide-react"
 import { AddAdminModal } from "@/components/add-admin-modal"
 
+type Admin = {
+  id: number
+  fullName: string
+  password: string
+  email: string
+  role: string
+}
+
+type NewAdmin = Omit<Admin, "id">
+
 // Mock admin data
 const initialAdminData = [
   {
     id: 1,
-    name: "ThankGod Ogbonna",
+    fullName: "ThankGod Ogbonna",
     password: "87367w69ry",
     email: "Thankimedia@gmail.com",
     role: "Users Profile, FAQ",
   },
   {
     id: 2,
-    name: "ThankGod Ogbonna",
+    fullName: "ThankGod Ogbonna",
     password: "87367w69ry",
     email: "Thankimedia@gmail.com",
     role: "Users Profile, FAQ",
   },
   {
     id: 3,
-    name: "ThankGod Ogbonna",
+    fullName: "ThankGod Ogbonna",
     password: "87367w69ry",
     email: "Thankimedia@gmail.com",
     role: "Users Profile, FAQ",
@@ -56,7 +66,7 @@ export function AdminManagementSettings() {
     setIsAddModalOpen(true)
   }
 
-  const handleSaveAdmin = (newAdmin) => {
+  const handleSaveAdmin = (newAdmin: NewAdmin) => {
     const newAdminWithId = {
       ...newAdmin,
       id: adminData.length + 1,
@@ -110,7 +120,7 @@ export function AdminManagementSettings() {
                 className="border-gray-300"
               />
             </div>
-            <div className="col-span-3 flex items-center text-xs whitespace-nowrap font-medium">{admin.name}</div>
+            <div className="col-span-3 flex items-center text-xs whitespace-nowrap font-medium">{admin.fullName}</div>
             <div className="col-span-2 flex items-center text-xs whitespace-nowrap text-gray-600">{admin.password}</div>
             <div className="col-span-3 flex items-center text-xs whitespace-nowrap text-gray-600">{admin.email}</div>
             <div className="col-span-3 flex items-center text-xs whitespace-nowrap text-gray-600">{admin.role}</div>

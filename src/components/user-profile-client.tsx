@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { ReactNode, useState } from "react"
 import { PageHeader } from "@/context/page-header-context"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,6 +22,15 @@ import {
 import Image from "next/image"
 // import { getOwnerReviews } from "@/lib/data"
 // import { ReviewsPageClient } from "@/components/reviews-page-client"
+
+interface BankAccount {
+  id: number
+  bankName: string
+  accountNumber: string
+  accountName: string
+  logo: string
+}
+
 
 // Mock user data
 const userData = {
@@ -531,7 +540,7 @@ function WalletContent() {
 }
 
 // Component for bank account items
-function BankAccountItem({ account }) {
+function BankAccountItem({ account }: {account: BankAccount}) {
   return (
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
       <div className="flex items-center gap-3">
@@ -549,8 +558,13 @@ function BankAccountItem({ account }) {
   )
 }
 
+interface TabButtonProps {
+  children: ReactNode
+  active: boolean
+  onClick: () => void
+}
 // Component for tab buttons
-function TabButton({ children, active, onClick }) {
+function TabButton({ children, active, onClick }: TabButtonProps) {
   return (
     <button
       className={`px-3 py-3 rounded-lg text-sm ${
@@ -564,7 +578,7 @@ function TabButton({ children, active, onClick }) {
 }
 
 // Component for transaction items
-function TransactionItem({ transaction }) {
+function TransactionItem({ transaction }: { transaction: { type: string; date: string; amount: number }}) {
   return (
     <div className="flex items-center  border border-[#EEEEEE] rounded-lg justify-between p-4">
       <div className="flex items-center gap-3">
@@ -587,7 +601,7 @@ function TransactionItem({ transaction }) {
 }
 
 // Component for rental cards
-function ItemsCard({ item }) {
+function ItemsCard({ item }: { item: { image?: string; title: string; category: string; price: number; rating: number } }) {
   return (
     <div className="rounded-lg overflow-hidden">
       <div className="h-32">

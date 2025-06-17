@@ -21,7 +21,7 @@ export function EquipmentCategory({ title, limit = 10 }: EquipmentCategoryProps)
     isError: isErrorCategories
   } = useGetCategoriesQuery()
 
-  const categories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse])
+  const categories = useMemo(() => categoryResponse ?? [], [categoryResponse])
 
   const matchedCategoryId = useMemo(() => {
     return categories.find((cat) =>

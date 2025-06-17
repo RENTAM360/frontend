@@ -119,7 +119,19 @@ export default function Dashboard() {
 }
 
 // Component for stats cards
-function StatsCard({ title, value, percentage, lastMonth, lastMonthValue }) {
+function StatsCard({ 
+  title, 
+  value, 
+  percentage, 
+  lastMonth, 
+  lastMonthValue 
+} : {
+  title: string
+  value: string | number
+  percentage: string | number
+  lastMonth: string
+  lastMonthValue: string
+}) {
   return (
     <Card className="overflow-hidden border shadow-none border-[#EAEAEA]">
       <CardContent className="p-0">

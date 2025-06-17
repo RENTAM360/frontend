@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, ReactNode, MouseEventHandler } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -125,7 +125,7 @@ export default function UsersPage() {
   }, [])
 
   // Handle row click to navigate to user profile
-  const handleRowClick = (userId) => {
+  const handleRowClick = (userId: string | number) => {
     router.push(`/admin/users/${userId}`)
   }
 
@@ -258,7 +258,13 @@ export default function UsersPage() {
 }
 
 // Component for stats cards
-function StatsCard({ title, value, percentage, lastMonth, lastMonthValue }) {
+function StatsCard({ title, value, percentage, lastMonth, lastMonthValue } : {
+  title: string
+  value: string | number
+  percentage: string | number
+  lastMonth: string
+  lastMonthValue: string 
+}) {
   return (
     <Card className="overflow-hidden shadow-none border border-[#EAEAEA]">
       <CardContent className="p-0">
@@ -280,8 +286,14 @@ function StatsCard({ title, value, percentage, lastMonth, lastMonthValue }) {
   )
 }
 
+interface TabButtonProps {
+  children: ReactNode
+  active: boolean
+  onClick: MouseEventHandler<HTMLButtonElement>
+}
+
 // Component for tab buttons
-function TabButton({ children, active, onClick }) {
+function TabButton({ children, active, onClick }: TabButtonProps) {
   return (
     <button
       className={`px-4 m-1 rounded-lg py-2 text-sm ${
@@ -294,9 +306,24 @@ function TabButton({ children, active, onClick }) {
   )
 }
 
+interface User {
+  id: string | number
+  name: string
+  username: string
+  email: string
+  phone: string
+  date: string
+  status: "active" | "inactive" | "suspended" | string
+}
+
+interface UserRowProps {
+  user: User
+  onClick: MouseEventHandler<HTMLDivElement>
+}
+
 // Component for user rows
-function UserRow({ user, onClick }) {
-  const getStatusColor = (status) => {
+function UserRow({ user, onClick }: UserRowProps) {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-[#17b266]"
@@ -309,11 +336,11 @@ function UserRow({ user, onClick }) {
     }
   }
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1)
   }
 
-  const handleSuspendClick = (e) => {
+  const handleSuspendClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation() // Prevent row click when clicking the button
     // Handle suspend action
     console.log(`Suspend user ${user.id}`)

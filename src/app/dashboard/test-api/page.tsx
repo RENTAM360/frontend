@@ -76,7 +76,7 @@ export default function TestApiPage() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-          },
+          }as Record<string, string>,
         },
       },
       {
@@ -86,7 +86,7 @@ export default function TestApiPage() {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-          },
+          }as Record<string, string>,
         },
       },
       {
@@ -97,7 +97,7 @@ export default function TestApiPage() {
             "Content-Type": "application/json",
             Accept: "application/json",
             "User-Agent": "Rentam360-Web-App",
-          },
+          }as Record<string, string>,
         },
       },
     ]

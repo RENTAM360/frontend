@@ -68,8 +68,9 @@ async function getOwnerData(id: string) {
   }
 }
 
-export default async function OwnerProfilePage({ params }: { params: { id: string } }) {
-  const owner = await getOwnerData(params.id)
+export default async function OwnerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const owner = await getOwnerData(id)
 
   return (
     <div className="container font-sans mx-auto px-4 py-8">

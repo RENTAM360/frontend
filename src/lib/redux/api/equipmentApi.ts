@@ -94,13 +94,13 @@ export const equipmentApi = createApi({
       query: (params = {}) => {
         const searchParams = new URLSearchParams()
 
-        if (params.page) searchParams.append("page", params.page.toString())
-        if (params.limit) searchParams.append("limit", params.limit.toString())
-        if (params.categoryId) searchParams.append("categoryId", params.categoryId)
-        if (params.minPrice) searchParams.append("minPrice", params.minPrice.toString())
-        if (params.maxPrice) searchParams.append("maxPrice", params.maxPrice.toString())
-        if (params.search) searchParams.append("search", params.search)
-        if (params.location) searchParams.append("location", params.location)
+        if (params?.page) searchParams.append("page", params.page.toString())
+        if (params?.limit) searchParams.append("limit", params.limit.toString())
+        if (params?.categoryId) searchParams.append("categoryId", params.categoryId)
+        if (params?.minPrice) searchParams.append("minPrice", params.minPrice.toString())
+        if (params?.maxPrice) searchParams.append("maxPrice", params.maxPrice.toString())
+        if (params?.search) searchParams.append("search", params.search)
+        if (params?.location) searchParams.append("location", params.location)
 
         const queryString = searchParams.toString()
         return `equipment${queryString ? `?${queryString}` : ""}`

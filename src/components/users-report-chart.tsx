@@ -32,6 +32,7 @@ export function UsersReportChart() {
             ))}
           </Pie>
           <Pie
+            dataKey="value"
             data={[{ value: 100 }]}
             cx="50%"
             cy="50%"

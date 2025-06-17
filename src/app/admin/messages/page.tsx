@@ -3,11 +3,11 @@
 import { useState } from "react"
 import Image from "next/image"
 import { MessageList } from "@/components/message-list"
-import { MessageView } from "@/components/message-view"
+import { MessageView, Conversation } from "@/components/message-view"
 import { Flag, MoreVertical } from "lucide-react"
 
 export default function MessagesPage() {
-  const [activeConversation] = useState({
+  const [activeConversation] = useState<Conversation>({
     id: "1",
     name: "Thankgod ogbonna",
     status: "Online",
