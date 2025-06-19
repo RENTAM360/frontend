@@ -2,6 +2,12 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 import { authApi } from "../api/authApi"
 import type { AuthResponse } from "../api/authApi"
 
+const getCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? decodeURIComponent(match[2]) : null
+}
+
 interface AuthState {
   user: {
     id: string
@@ -25,8 +31,10 @@ const initialState: AuthState = {
   successMessage: null
 }
 
-if (typeof window !== "undefined") {
-  const token = localStorage.getItem("auth_token")
+const isBrowser = typeof window !== "undefined"
+
+if (isBrowser) {
+  const token = getCookie("auth_token")
   if (token) {
     initialState.data = token
   }
@@ -46,12 +54,18 @@ const authSlice = createSlice({
     setCredentials: (state, action: PayloadAction<AuthResponse>) => {
       state.user = action.payload.user
       state.data = action.payload.data
-      localStorage.setItem("auth_token", action.payload.data)
+      if (isBrowser) {
+        document.cookie =  `auth_token=${encodeURIComponent(
+          action.payload.data
+        )}; path=/; max-age=604800; secure; samesite=strict`
+      }
     },
     clearCredentials: (state) => {
       state.user = null
       state.data = null
-      localStorage.removeItem("auth_token")
+       if (isBrowser) {
+        document.cookie = "auth_token=; path=/; max-age=0"
+      }
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload
@@ -79,7 +93,11 @@ const authSlice = createSlice({
         state.error = null
         state.loading = false
         state.successMessage = "Login Successful"
-        localStorage.setItem("auth_token", payload.data)
+        if (isBrowser) {
+        document.cookie =  `auth_token=${encodeURIComponent(
+          payload.data
+        )}; path=/; max-age=604800; secure; samesite=strict`
+      }
       })
       // Handle login error
       .addMatcher(authApi.endpoints.login.matchRejected, (state, { error }) => {
@@ -93,7 +111,6 @@ const authSlice = createSlice({
         state.error = null
         state.loading = false
         state.successMessage = "Registration successful"
-        localStorage.setItem("auth_token", payload.data)
       })
       // Handle register error
       .addMatcher(authApi.endpoints.register.matchRejected, (state, { error }) => {
@@ -112,7 +129,9 @@ const authSlice = createSlice({
         state.user = null
         state.data = null
         state.loading = false
-        localStorage.removeItem("auth_token")
+        if (isBrowser) {
+          document.cookie = "auth_token=; path=/; max-age=0"
+        }
       })
       // Handle logout success
       .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
@@ -121,7 +140,9 @@ const authSlice = createSlice({
         state.loading = false
         state.successMessage = "Logged out successfully"
         state.error = null
-        localStorage.removeItem("auth_token")
+        if (isBrowser) {
+          document.cookie = "auth_token=; path=/; max-age=0"
+        }
       })
   },
 })

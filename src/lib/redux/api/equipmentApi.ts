@@ -68,6 +68,17 @@ export interface TransformedEquipment {
   updatedAt?: string
 }
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
+interface CategoriesResponse {
+  data: Category[];
+  message: string;
+  status: number;
+}
+
 // Create the API slice
 export const equipmentApi = createApi({
   reducerPath: "equipmentApi",
@@ -221,7 +232,7 @@ export const equipmentApi = createApi({
         }
       },
     }),
-     getCategories: builder.query<Array<{ _id: string; name: string }>, void>({
+     getCategories: builder.query<CategoriesResponse, void>({
       query: () => "equipment/category",
       providesTags: ["Equipment"],
     }),

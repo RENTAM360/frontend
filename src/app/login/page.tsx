@@ -48,11 +48,10 @@ export default function LoginPage() {
     };
 
     const res = await login(payload).unwrap();
-    console.log(res)
 
     dispatch(setCredentials(res))
 
-    router.push('/dashboard')
+    if (res.data) router.push('/dashboard')
 
    } catch (err: unknown) {
     if (typeof err === "object" && err !== null) {
@@ -176,7 +175,7 @@ export default function LoginPage() {
                       d="M4 12a8 8 0 018-8v8H4z"
                     />
                   </svg>
-                  Loggin in...
+                  Logging in...
                 </span>
               ) : (
                 "Continue"
