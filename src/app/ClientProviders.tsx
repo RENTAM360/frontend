@@ -3,6 +3,8 @@
 import { Providers } from "./providers";
 import { SnackbarProvider } from "notistack";
 import GlobalToastHandler from "@/context/GlobalToastHandler";
+import { PersistGate } from "redux-persist/integration/react";
+import { persistor } from "@/lib/redux/store";
 
 export default function ClientProviders({
   children,
@@ -10,11 +12,17 @@ export default function ClientProviders({
   children: React.ReactNode;
 }) {
   return (
-    <Providers>
-      <SnackbarProvider maxSnack={3}>
+    <PersistGate loading={null} persistor={persistor}>
+      <Providers>
+      <SnackbarProvider 
+        maxSnack={3} 
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
         <GlobalToastHandler />
         {children}
       </SnackbarProvider>
     </Providers>
+    </PersistGate>
+    
   );
 }

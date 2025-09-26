@@ -10,7 +10,7 @@ interface EquipmentCardProps {
   id: string
   title: string
   category: string
-  price: number
+  pricePerDay: number
   rating: number
   imageUrl: string
   variant?: "default" | "profile" | "saved"
@@ -20,7 +20,7 @@ export function EquipmentCard({
   id,
   title,
   category,
-  price,
+  pricePerDay,
   rating,
   imageUrl,
   variant = "default",
@@ -29,6 +29,12 @@ export function EquipmentCard({
   const dispatch = useAppDispatch()
   const isSaved = useAppSelector((state) => selectIsSaved(state, id))
   const { toast } = useToast()
+
+  const getValidImageUrl = (url?: string) => {
+  if (!url) return "/placeholder.svg";
+  if (url.startsWith("http")) return url; 
+  return `/${url}`; 
+};
     
   const handleToggleSave = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -45,7 +51,7 @@ export function EquipmentCard({
         id,
         title,
         category,
-        price,
+        price: pricePerDay,
         rating,
         imageUrl,
        }),
@@ -60,9 +66,15 @@ export function EquipmentCard({
 
   return (
     <section>
-        <Link href={`/dashboard/equipment/${id}`} className="relative p-2 rounded-[15.37px] bg-white flex flex-col w-full md:w-[280px] flex-shrink-0">
+        <Link 
+        href={
+          variant === "profile"
+            ? `/dashboard/profile/equipment/${id}`   
+            : `/dashboard/equipment/${id}` 
+        } 
+        className="relative p-2 rounded-[15.37px] bg-white flex flex-col w-full md:w-[280px] flex-shrink-0">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[15.37px]">
-            <Image src={imageUrl || "/placeholder.svg"} alt={title} fill className="object-cover" />
+            <Image src={getValidImageUrl(imageUrl)} alt={title} fill className="object-cover" />
             
             </div>
             <div className="mt-2">
@@ -111,8 +123,8 @@ export function EquipmentCard({
                     <p className="text-gray-500 text-sm">{category}</p>
                 
                 <div className="mt-1 flex items-center justify-between">
-                <p className="font-[500]">₦{price.toLocaleString()}</p>
-                <div className="flex items-center">
+                <p className="font-[500]">₦{pricePerDay?.toLocaleString()}</p>
+                {/* <div className="flex items-center">
                     <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -128,7 +140,7 @@ export function EquipmentCard({
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                     <span className="ml-1 text-[#676767]">{rating}</span>
-                </div>
+                </div> */}
                 </div>
             </div>
         </Link>

@@ -16,7 +16,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
     data: categoryResponse,
   } = useGetCategoriesQuery()
 
-  console.log(categoryResponse)
+  // console.log(categoryResponse)
 
   const categories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse])
 
@@ -44,7 +44,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
       ? allEquipments.data?.equipments ?? []
       : equipmentResponse?.equipments ?? []
 
-  console.log(categories)
+  console.log(equipments)
 
   const isLoading = selectedCategoryId === "all" ? allEquipments.isLoading : isLoadingEquipments
 
@@ -167,7 +167,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
                 id={equipment.id}
                 title={equipment.title}
                 category={equipment.category}
-                price={equipment.price}
+                pricePerDay={equipment.pricePerDay}
                 rating={equipment.rating}
                 imageUrl={equipment.imageUrl}
               />

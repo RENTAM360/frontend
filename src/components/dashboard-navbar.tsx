@@ -6,12 +6,37 @@ import { useAppSelector } from "@/lib/redux/hooks"
 import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
 import clsx from "clsx"
 import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
+import NotificationsDropdown from "./notifications-dropdown"
+import { useGetNotificationsQuery } from "@/lib/redux/api/notificationsApi"
+import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
 // import Image from "next/image"
 
 export function DashboardNavbar() {
   const pathname = usePathname()
   const savedItems = useAppSelector(selectSavedItems)
   const savedItemsCount = savedItems.length
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const {data: conversations = []} = useGetConversationsQuery()
+  const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
+
+  console.log(conversations)
+  const { data } = useGetNotificationsQuery({ page: 1, limit: 10, isRead: false });
+  const unreadCount = data?.data?.length ?? 0;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -87,9 +112,11 @@ export function DashboardNavbar() {
                   </svg>
                 </div>
                 Messages
-                  <span className="absolute right-4 -top-1 flex h-4 w-4 text-white items-center justify-center rounded-full bg-red-500 text-[8px] font-bold">
-                    10+
-                  </span>
+                  {totalUnread > 0 && (
+                    <span className="absolute right-4 -top-1 flex h-4 w-4 text-white items-center justify-center rounded-full bg-red-500 text-[8px] font-bold">
+                      {totalUnread > 9 ? "9+" : totalUnread}
+                    </span>
+                  )}
               </Link>
             </nav>
           </div>
@@ -110,15 +137,36 @@ export function DashboardNavbar() {
               />
             </div>
 
-            <button className="relative md:ml-6 rounded-full p-2 hover:bg-green-600">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 8.7667C9.65833 8.7667 9.375 8.48337 9.375 8.1417V5.3667C9.375 5.02503 9.65833 4.7417 10 4.7417C10.3417 4.7417 10.625 5.02503 10.625 5.3667V8.1417C10.625 8.4917 10.3417 8.7667 10 8.7667Z" fill="white"/>
-                  <path d="M10.0148 16.9584C7.86477 16.9584 5.7231 16.6168 3.68143 15.9334C2.9231 15.6834 2.3481 15.1418 2.0981 14.4584C1.8481 13.7751 1.93143 12.9918 2.33977 12.3084L3.3981 10.5418C3.63143 10.1501 3.83977 9.41678 3.83977 8.95845V7.20845C3.83977 3.80011 6.60643 1.03345 10.0148 1.03345C13.4231 1.03345 16.1898 3.80011 16.1898 7.20845V8.95845C16.1898 9.40845 16.3981 10.1501 16.6314 10.5418L17.6898 12.3084C18.0814 12.9584 18.1481 13.7334 17.8898 14.4418C17.6314 15.1501 17.0648 15.6918 16.3481 15.9334C14.3064 16.6251 12.1648 16.9584 10.0148 16.9584ZM10.0148 2.29178C7.2981 2.29178 5.08977 4.50011 5.08977 7.21678V8.96678C5.08977 9.64178 4.8231 10.6168 4.4731 11.1918L3.41477 12.9668C3.1981 13.3251 3.1481 13.7084 3.2731 14.0418C3.3981 14.3751 3.68143 14.6251 4.08143 14.7584C7.91477 16.0334 12.1314 16.0334 15.9648 14.7584C16.3231 14.6418 16.5981 14.3751 16.7231 14.0251C16.8564 13.6751 16.8148 13.2918 16.6231 12.9668L15.5648 11.2001C15.2148 10.6251 14.9481 9.65012 14.9481 8.97511V7.22511C14.9398 4.50011 12.7314 2.29178 10.0148 2.29178Z" fill="white"/>
-                  <path d="M10.0016 19.0833C9.1099 19.0833 8.2349 18.7167 7.60156 18.0833C6.96823 17.45 6.60156 16.575 6.60156 15.6833H7.85156C7.85156 16.25 8.0849 16.8 8.4849 17.2C8.8849 17.6 9.4349 17.8333 10.0016 17.8333C11.1849 17.8333 12.1516 16.8667 12.1516 15.6833H13.4016C13.4016 17.5583 11.8766 19.0833 10.0016 19.0833Z" fill="white"/>
-              </svg>
+            <div className="relative" ref={dropdownRef}>
+              <button onClick={() => setOpen((prev) => !prev)} className="relative md:ml-6 rounded-full p-2 hover:bg-green-600">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 8.7667C9.65833 8.7667 9.375 8.48337 9.375 8.1417V5.3667C9.375 5.02503 9.65833 4.7417 10 4.7417C10.3417 4.7417 10.625 5.02503 10.625 5.3667V8.1417C10.625 8.4917 10.3417 8.7667 10 8.7667Z" fill="white"/>
+                    <path d="M10.0148 16.9584C7.86477 16.9584 5.7231 16.6168 3.68143 15.9334C2.9231 15.6834 2.3481 15.1418 2.0981 14.4584C1.8481 13.7751 1.93143 12.9918 2.33977 12.3084L3.3981 10.5418C3.63143 10.1501 3.83977 9.41678 3.83977 8.95845V7.20845C3.83977 3.80011 6.60643 1.03345 10.0148 1.03345C13.4231 1.03345 16.1898 3.80011 16.1898 7.20845V8.95845C16.1898 9.40845 16.3981 10.1501 16.6314 10.5418L17.6898 12.3084C18.0814 12.9584 18.1481 13.7334 17.8898 14.4418C17.6314 15.1501 17.0648 15.6918 16.3481 15.9334C14.3064 16.6251 12.1648 16.9584 10.0148 16.9584ZM10.0148 2.29178C7.2981 2.29178 5.08977 4.50011 5.08977 7.21678V8.96678C5.08977 9.64178 4.8231 10.6168 4.4731 11.1918L3.41477 12.9668C3.1981 13.3251 3.1481 13.7084 3.2731 14.0418C3.3981 14.3751 3.68143 14.6251 4.08143 14.7584C7.91477 16.0334 12.1314 16.0334 15.9648 14.7584C16.3231 14.6418 16.5981 14.3751 16.7231 14.0251C16.8564 13.6751 16.8148 13.2918 16.6231 12.9668L15.5648 11.2001C15.2148 10.6251 14.9481 9.65012 14.9481 8.97511V7.22511C14.9398 4.50011 12.7314 2.29178 10.0148 2.29178Z" fill="white"/>
+                    <path d="M10.0016 19.0833C9.1099 19.0833 8.2349 18.7167 7.60156 18.0833C6.96823 17.45 6.60156 16.575 6.60156 15.6833H7.85156C7.85156 16.25 8.0849 16.8 8.4849 17.2C8.8849 17.6 9.4349 17.8333 10.0016 17.8333C11.1849 17.8333 12.1516 16.8667 12.1516 15.6833H13.4016C13.4016 17.5583 11.8766 19.0833 10.0016 19.0833Z" fill="white"/>
+                </svg>
+                {unreadCount > 0 && ( 
+                  <span className="absolute right-1 top-1 h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                )}
+              </button>
 
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"></span>
-            </button>
+              {open && (
+                <div className="fixed inset-0 z-50">
+                  {/* overlay */}
+                  <div
+                    className="absolute inset-0 bg-black/50 bg-opacity-50"
+                    onClick={() => setOpen(false)}
+                  />
+
+                  {/* dropdown anchored top-right */}
+                  <div className="absolute right-10 top-24 w-96 bg-white py-4 z-50">
+                    <NotificationsDropdown />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="relative">
               <Link href="/dashboard/profile" className="relative bg-[#FFFFFF21] rounded-full pr-2 flex justify-center items-center gap-3">
@@ -153,7 +201,7 @@ export function DashboardNavbar() {
           className="appearance-none placeholder:text-[#898A8D] text-[12px] ml-10 w-full h-full border-none outline-none"
         />
       </div>
-
+       {/* {open && <NotificationsDropdown setOpen={setOpen} />}          */}
     </>
   )
 }

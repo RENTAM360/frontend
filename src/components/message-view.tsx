@@ -2,57 +2,56 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { Paperclip, Send } from "lucide-react"
-
-interface Message {
-  id: string
-  text: string
-  sender: "user" | "other"
-  timestamp: string
-}
-
-interface Product {
-  id: string
-  name: string
-  price: string
-  image: string
-  period: string
-  phone: string
-}
-
-export interface Conversation {
-  id: string
-  name: string
-  status: string
-  avatar: string
-  messages: Message[]
-  product: Product
-}
+import { Conversation } from "@/types/messaging"
+import { useMessagingContext } from "@/context/messaging-context"
 
 interface MessageViewProps {
   conversation: Conversation
-  onSendMessage: (message: string) => void
   showProductCard: boolean
+  onSendMessage?: (message: string) => Promise<void>
 }
 
-export function MessageView({ conversation, onSendMessage, showProductCard }: MessageViewProps) {
+export function MessageView({ conversation, showProductCard }: MessageViewProps) {
   const [message, setMessage] = useState("")
+  const [isSending, setIsSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { sendMessage } = useMessagingContext()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  console.log(conversation, showProductCard)
+
+   useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [conversation.messages])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (message.trim()) {
-      onSendMessage(message)
-      setMessage("")
+    if (!message.trim() || isSending) return
+
+    const messageContent = message.trim()
+    setMessage("")          
+    setIsSending(true)
+
+    try {
+      await sendMessage(conversation.id, messageContent)
+      console.log("[v0] Message sent successfully via context")
+    } catch (error) {
+      console.error("[v0] Failed to send message:", error)
+      // Restore message on error
+      setMessage(messageContent)
+    } finally {
+      setIsSending(false)
     }
   }
 
+
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex h-screen overflow-hidden flex-col">
       <div className="flex-1 overflow-y-auto p-4">
         {/* Product card */}
-        {showProductCard && (
+        {showProductCard && conversation.product && (
           <div className="mb-6 flex justify-between items-center md:mx-auto md:w-[385px] rounded-lg bg-white p-3">
             <div className="flex">
               <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
@@ -92,10 +91,11 @@ export function MessageView({ conversation, onSendMessage, showProductCard }: Me
                   msg.sender === "user" ? "bg-[#DDF4C7] rounded-tl-full text-[#5A5555]" : "bg-gray-100 rounded-tr-full text-[#5A5555]"
                 }`}
               >
-                <p className="text-sm">{msg.text}</p>
+                <p className="text-sm">{msg.content}</p>
               </div>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export function MessageView({ conversation, onSendMessage, showProductCard }: Me
           <button
             type="submit"
             className="flex-shrink-0 rounded-full bg-emerald-500 p-2 text-white hover:bg-emerald-600"
-            disabled={!message.trim()}
+            // disabled={!message.trim() || isSending}
           >
             <Send className="h-5 w-5" />
           </button>

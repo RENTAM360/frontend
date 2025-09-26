@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SuccessModal } from "@/components/success-modal"
 import Image from "next/image"
+import { Category, useAddEquipmentMutation, useGetCategoriesQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 
-interface Category {
-  id: string
-  name: string
-}
+// interface Category {
+//   id: string
+//   name: string
+// }
 
 interface PhotoFile {
   id: string
@@ -30,20 +31,27 @@ export default function RentPage() {
   const [price, setPrice] = useState("50000")
   const [location, setLocation] = useState("")
   const [title, setTitle] = useState("")
+  const [name, setName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [addEquipment] = useAddEquipmentMutation()
+  const [uploadImages] = useUploadEquipmentImagesMutation()
+  const { data: categoriesData, isLoading } = useGetCategoriesQuery()
+  const categories = categoriesData?.data || []
 
-  const categories: Category[] = [
-    { id: "electronics", name: "Electronics" },
-    { id: "commercial", name: "Commercial equipments" },
-    { id: "property", name: "Property" },
-    { id: "vehicles", name: "Vehicles" },
-    { id: "building", name: "Building materials" },
-    { id: "tools", name: "Hand tools" },
-    { id: "cameras", name: "Photo and video cameras" },
-  ]
+  // console.log(categories)
+
+  // const categories: Category[] = [
+  //   { id: "electronics", name: "Electronics" },
+  //   { id: "commercial", name: "Commercial equipments" },
+  //   { id: "property", name: "Property" },
+  //   { id: "vehicles", name: "Vehicles" },
+  //   { id: "building", name: "Building materials" },
+  //   { id: "tools", name: "Hand tools" },
+  //   { id: "cameras", name: "Photo and video cameras" },
+  // ]
 
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -111,20 +119,24 @@ export default function RentPage() {
     setIsSubmitting(true)
 
     try {
-      // In a real implementation, you would upload the photos and form data here
-      // For example:
-      // const formData = new FormData()
-      // formData.append('category', selectedCategory.id)
-      // formData.append('price', price)
-      // formData.append('location', location)
-      // formData.append('title', title)
-      // photos.forEach(photo => {
-      //   formData.append('photos', photo.file)
-      // })
-      // await fetch('/api/items', { method: 'POST', body: formData })
+      const formData = new FormData()
+      photos.forEach((photo) => {
+        formData.append("image", photo.file)
+      })
+      const uploadRes = await uploadImages(formData).unwrap()
+      const imageUrls = uploadRes.data
+      console.log(imageUrls)
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const res = await addEquipment({
+        name: name,
+        description: title,
+        pricePerDay: Number(price),
+        category: selectedCategory._id,
+        media: imageUrls,
+        address: location,
+      }).unwrap()
+
+      console.log(res)
       setShowSuccessModal(true)
     } catch (error) {
       console.error("Error adding item:", error)
@@ -147,12 +159,26 @@ export default function RentPage() {
     <div className="container font-sans mx-auto px-4 py-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-8">Add new item</h1>
 
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <p className="text-gray-600 mb-6">
+      <div className="bg-white rounded-lg p-6">
+        <p className="text-[#5A5555] text-xs mb-6">
           Upload some photos of your item, so people can see the details. Try to spot all features
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* name */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-black mb-1">
+                Name
+              </label>
+              <Input
+                id="name"
+                placeholder="Enter equipment name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="bg-[#F8F8FA] py-6 rounded-lg border-none"
+                required
+              />
+          </div>
           {/* Category */}
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
@@ -161,17 +187,17 @@ export default function RentPage() {
             <button
               type="button"
               onClick={() => setShowCategoryModal(true)}
-              className="w-full flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4 text-left"
+              className="w-full flex items-center justify-between bg-[#F8F8FA] rounded-lg p-3 text-left"
             >
-              <span className="text-gray-500">{selectedCategory ? selectedCategory.name : "Enter category"}</span>
+              <span className="text-[#5a5555]">{selectedCategory ? selectedCategory.name : "Enter category"}</span>
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
           </div>
 
           {/* Photos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Add photo</label>
-            <p className="text-sm text-gray-500 mb-2">Add at least 6 photos for this category</p>
+            <label className="block text-sm font-medium text-black mb-1">Add photo</label>
+            <p className="text-xs text-[#5A5555] mb-2">Add at least 6 photos for this category</p>            
 
             <div className="flex flex-wrap gap-3">
               {photos.map((photo) => (
@@ -196,7 +222,7 @@ export default function RentPage() {
                 <button
                   type="button"
                   onClick={handleAddPhoto}
-                  className="w-24 h-24 flex items-center justify-center bg-green-50 rounded-lg border-2 border-dashed border-green-200"
+                  className="w-24 h-24 flex items-center justify-center bg-[#ECFDF3] rounded-lg"
                 >
                   <Plus className="w-6 h-6 text-primary" />
                 </button>
@@ -216,7 +242,7 @@ export default function RentPage() {
 
           {/* Price */}
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="price" className="block text-sm font-medium text-[#000000] mb-1">
               Price
             </label>
             <div className="relative">
@@ -226,7 +252,7 @@ export default function RentPage() {
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="pl-8 bg-gray-50"
+                className="pl-8 py-6 rounded-lg bg-[#F8F8FA] border-none"
                 required
               />
             </div>
@@ -234,7 +260,7 @@ export default function RentPage() {
 
           {/* Location */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="location" className="block text-sm font-medium text-black mb-1">
               Location
             </label>
             <Input
@@ -242,22 +268,22 @@ export default function RentPage() {
               placeholder="Enter location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="bg-gray-50"
+              className="bg-[#F8F8FA] py-6 rounded-lg border-none"
               required
             />
           </div>
 
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Title
+            <label htmlFor="title" className="block text-sm font-medium text-black mb-1">
+              Description
             </label>
             <Textarea
               id="title"
               placeholder="Enter product description"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-gray-50 min-h-[150px]"
+              className="bg-[#F8F8FA] border-none min-h-[150px]"
               required
             />
           </div>
@@ -291,23 +317,27 @@ export default function RentPage() {
           </div>
 
           <div className="max-h-[400px] hide-scrollbar overflow-y-auto">
-            {filteredCategories.map((category) => (
-              <div
-                key={category.id}
-                className="p-4 border mb-3 rounded-lg border-[#F0F0F0] hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                onClick={() => {
-                  setSelectedCategory(category)
-                  setShowCategoryModal(false)
-                }}
-              >
-                <span className="text-sm font-medium">{category.name}</span>
-                <div
-                  className={`w-5 h-5 rounded-full border ${
-                    selectedCategory?.id === category.id ? "border-primary bg-white" : "border-gray-300 bg-white"
-                  }`}
-                ></div>
-              </div>
-            ))}
+            {isLoading ? (
+              <p>Loading equipments...</p>
+            ) : (
+                filteredCategories.map((category) => (
+                  <div
+                    key={category._id}
+                    className="p-4 border mb-3 rounded-lg border-[#F0F0F0] hover:bg-[#F8F8FA] border-none cursor-pointer flex items-center justify-between"
+                    onClick={() => {
+                      setSelectedCategory(category)
+                      setShowCategoryModal(false)
+                    }}
+                  >
+                    <span className="text-sm font-medium">{category.name}</span>
+                    <div
+                      className={`w-5 h-5 rounded-full border ${
+                        selectedCategory?._id === category._id ? "border-primary bg-white" : "border-gray-300 bg-white"
+                      }`}
+                    ></div>
+                  </div>
+                ))
+            )}
           </div>
 
           <div className="p-4">
@@ -315,7 +345,7 @@ export default function RentPage() {
               onClick={() => setShowCategoryModal(false)}
               className="w-full bg-primary hover:bg-green-600 text-white py-6 rounded-full"
             >
-              Apply
+              {isSubmitting ? "Applying..." : "Apply"}
             </Button>
           </div>
         </DialogContent>
@@ -333,11 +363,11 @@ export default function RentPage() {
             URL.revokeObjectURL(photo.preview)
           })
           setPhotos([])
-          setPrice("50000")
+          setPrice("")
           setLocation("")
           setTitle("")
         }}
-        title="Your item is now live on the platform and ready for rent. Sit back, and get ready to earn while others rent what you own"
+        title="Your item is now live on the platform and ready for rent. Sit back, and get ready to earn while others rent what you own."
       />
     </div>
   )

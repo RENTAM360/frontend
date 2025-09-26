@@ -1,12 +1,28 @@
 "use client"
 
 import { Provider } from "react-redux"
-import { store } from "@/lib/redux/store"
+import { store, persistor } from "@/lib/redux/store"
+import { PersistGate } from "redux-persist/integration/react"
+import { SnackbarProvider } from "notistack"
+import GlobalToastHandler from "@/context/GlobalToastHandler"
+import { AuthGate } from "@/components/auth-gate"
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps {
+  children: React.ReactNode
+}
+
+export function Providers({ children }: ProvidersProps) {
   return (
     <Provider store={store}>
-        {children}
+      <PersistGate loading={null} persistor={persistor}>
+        <SnackbarProvider
+          maxSnack={3}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <GlobalToastHandler />
+          <AuthGate>{children}</AuthGate>
+        </SnackbarProvider>
+      </PersistGate>
     </Provider>
   )
 }

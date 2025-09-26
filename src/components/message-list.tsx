@@ -1,5 +1,6 @@
 "use client"
 
+import { User } from "lucide-react"
 import Image from "next/image"
 
 interface Conversation {
@@ -29,19 +30,28 @@ export function MessageList({ conversations, activeId, onSelect }: MessageListPr
           onClick={() => onSelect(conversation.id)}
         >
           <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full">
-            <Image
-              src={conversation.avatar || "/placeholder.svg"}
-              alt={conversation.name}
-              fill
-              className="object-cover"
-            />
+            {conversation.avatar ? (
+              <Image
+                src={conversation.avatar || "/placeholder.svg"}
+                alt={conversation.name}
+                fill
+                className="object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.style.display = "none"
+                }}
+              />
+            ) : null}
+            <div className="absolute inset-0 flex items-center bg-gray-100 justify-center text-gray-400">
+              <User className="h-6 w-6" />
+            </div>
           </div>
           <div className="flex-1 overflow-hidden">
             <div className="flex justify-between">
-              <h3 className="font-medium">{conversation.name}</h3>
-              <span className="text-xs text-gray-500">{conversation.time}</span>
+              <h3 className="font-sm font-medium text-[#5A5555]">{conversation.name}</h3>
+              <span className="text-xs text-[#5A5555]">{conversation.time}</span>
             </div>
-            <p className="truncate text-sm text-gray-500">{conversation.lastMessage}</p>
+            <p className="truncate text-xs text-[#5A5555]">{conversation.lastMessage}</p>
           </div>
         </button>
       ))}

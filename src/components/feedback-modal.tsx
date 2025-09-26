@@ -4,17 +4,18 @@ import type React from "react"
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { X, Plus } from "lucide-react"
+import { X, Plus, Star } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { DialogTitle } from "@radix-ui/react-dialog"
+import { enqueueSnackbar } from "notistack"
 
 interface FeedbackModalProps {
   isOpen: boolean
   onClose: () => void
   ownerId: string
-  onSubmit: (data: { feedback: string; images: File[] }) => Promise<void>
+  onSubmit: (data: { feedback: string; images: File[], rating: number }) => Promise<void>
 }
 
 // ownerId
@@ -23,6 +24,8 @@ export function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackModalProps)
   const [feedback, setFeedback] = useState("")
   const [images, setImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [rating, setRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -54,25 +57,42 @@ export function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackModalProps)
   }
 
   const handleSubmit = async () => {
-    if (!feedback.trim()) {
-      alert("Please write your feedback before submitting")
+    if (!feedback.trim() || rating === 0) {
+      alert("Please provide feedback and a rating")
       return
     }
 
     setIsSubmitting(true)
     try {
-      await onSubmit({ feedback, images })
+      await onSubmit({ feedback, images, rating })
       // Reset form after successful submission
       setFeedback("")
       setImages([])
       setPreviewUrls([])
       onClose()
-    } catch (error) {
-      console.error("Error submitting feedback:", error)
-      alert("Failed to submit feedback. Please try again.")
+    } catch (error: unknown) {
+      console.error("Error submitting feedback:", error);
+
+      let message = "Something went wrong!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "data" in error &&
+        typeof (error as { data?: unknown }).data === "object" &&
+        (error as { data: { message?: string } }).data.message
+      ) {
+        message = (error as { data: { message: string } }).data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
+      enqueueSnackbar(message, { variant: "error", autoHideDuration: 5000 });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
+
+
   }
 
   return (
@@ -84,7 +104,21 @@ export function FeedbackModal({ isOpen, onClose, onSubmit }: FeedbackModalProps)
           </button>
 
           <DialogTitle className="text-xl font-medium text-center text-primary mb-8">How was your experience?</DialogTitle>
-
+          
+          <div className="flex justify-center gap-2 mb-6">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-8 h-8 cursor-pointer ${
+                  star <= (hoverRating || rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                }`}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
+                onClick={() => setRating(star)}
+              />
+            ))}
+          </div>
+          
           <Textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}

@@ -7,35 +7,24 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-interface User {
-  id: string
-  name: string
-  phone: string
-  email?: string
-  location: string
-  country?: string
-  nin?: string
-  bio: string
-}
+import { UserProfile, useUpdateProfileMutation } from "@/lib/redux/api/authApi"
+import { enqueueSnackbar } from "notistack"
 
 interface ProfileEditFormProps {
-  user: User
+  profile?: UserProfile
   onCancel: () => void
 }
 
-export function ProfileEditForm({ user, onCancel }: ProfileEditFormProps) {
+export function ProfileEditForm({ profile, onCancel }: ProfileEditFormProps) {
   const [formData, setFormData] = useState({
-    name: user.name || "",
-    phone: user.phone || "",
-    email: user.email || "",
-    address: user.location || "",
-    country: user.country || "Nigeria",
-    nin: user.nin || "",
-    bio: user.bio || "",
+    firstName: profile?.firstName || "",
+    lastName: profile?.lastName || "",
+    address: profile?.address || "",
+    country: profile?.country || "Nigeria",
+    bio: profile?.bio || "",
   })
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [updateProfile, { isLoading }] = useUpdateProfileMutation()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -48,18 +37,20 @@ export function ProfileEditForm({ user, onCancel }: ProfileEditFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Form submitted:", formData)
-      onCancel() // Return to listed items view after successful submission
+     try {
+      const res = await updateProfile(formData).unwrap()
+      enqueueSnackbar(res.message || `profile updated successfully!`, {
+          variant: "success",
+          autoHideDuration: 3000,
+        })
+      console.log("Profile updated:", formData)
+      onCancel()
     } catch (error) {
-      console.error("Error submitting form:", error)
-    } finally {
-      setIsSubmitting(false)
+      enqueueSnackbar(`update failed`, { variant: "error" })
+      console.error("Error updating profile:", error)
     }
+   
   }
 
   return (
@@ -67,39 +58,17 @@ export function ProfileEditForm({ user, onCancel }: ProfileEditFormProps) {
       <h2 className="text-2xl font-bold mb-6">Edit profile</h2>
       <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6 space-y-8">
         <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+            First Name
+          </label>
+          <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className=" outline-none bg-gray-50" required />
+        </div>
+
+        <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            Name
+            Last Name
           </label>
-          <Input id="name" name="name" value={formData.name} onChange={handleChange} className=" outline-none bg-gray-50" required />
-        </div>
-
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-            Phone Number
-          </label>
-          <Input
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className=" outline-none bg-gray-50"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email Address
-          </label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            className=" outline-none bg-gray-50"
-            required
-          />
+          <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className=" outline-none bg-gray-50" required />
         </div>
 
         <div>
@@ -171,20 +140,6 @@ export function ProfileEditForm({ user, onCancel }: ProfileEditFormProps) {
         </div>
 
         <div>
-          <label htmlFor="nin" className="block text-sm font-medium text-gray-700 mb-1">
-            NIN
-          </label>
-          <Input
-            id="nin"
-            name="nin"
-            placeholder="Enter your NIN"
-            value={formData.nin}
-            onChange={handleChange}
-            className=" outline-none bg-gray-50"
-          />
-        </div>
-
-        <div>
           <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
             Bio
           </label>
@@ -201,9 +156,9 @@ export function ProfileEditForm({ user, onCancel }: ProfileEditFormProps) {
           <Button
             type="submit"
             className="w-3/4 bg-primary mb-10 hover:bg-green-600 text-white py-6 rounded-full"
-            disabled={isSubmitting}
+            disabled={isLoading}
           >
-            {isSubmitting ? "Saving..." : "Continue"}
+            {isLoading ? "Saving..." : "Continue"}
           </Button>
         </div>
       </form>

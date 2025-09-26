@@ -1,18 +1,23 @@
 import { configureStore } from "@reduxjs/toolkit"
 import { setupListeners } from "@reduxjs/toolkit/query"
 import authReducer from "./slices/authSlice"
-import { authApi } from "./api/authApi"
+import { persistReducer, persistStore } from "redux-persist"
+import storage from "redux-persist/lib/storage" 
+import { baseApi } from "./api/baseApi"
 import savedItemsReducer from "./slices/savedItemsSlice"
-import { equipmentApi } from "./api/equipmentApi"
-// import { rentalApi } from "./api/rentalApi"
+
+const persistConfig = {
+  key: "auth",
+  storage,
+}
+
+const persistedAuthReducer = persistReducer(persistConfig, authReducer)
 
 export const store = configureStore({
   reducer: {
-    auth: authReducer,
-    [authApi.reducerPath]: authApi.reducer,
+    auth: persistedAuthReducer,
+    [baseApi.reducerPath]: baseApi.reducer,
     savedItems: savedItemsReducer,
-    [equipmentApi.reducerPath]: equipmentApi.reducer,
-    // [rentalApi.reducerPath]: rentalApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -24,16 +29,14 @@ export const store = configureStore({
         ignoredPaths: [
           "auth.user",
           "auth.token",
-          `${authApi.reducerPath}.queries`,
-          `${authApi.reducerPath}.mutations`,
-          `${equipmentApi.reducerPath}.queries`,
-          `${equipmentApi.reducerPath}.mutations`,
-        //   `${rentalApi.reducerPath}.queries`,
-        //   `${rentalApi.reducerPath}.mutations`,
+          `${baseApi.reducerPath}.queries`,
+          `${baseApi.reducerPath}.mutations`,
         ],
       },
-    }).concat(authApi.middleware, equipmentApi.middleware),
+    }).concat(baseApi.middleware),
 })
+
+export const persistor = persistStore(store)
 
 // Enable refetchOnFocus and refetchOnReconnect
 setupListeners(store.dispatch)

@@ -117,21 +117,14 @@ const authSlice = createSlice({
         state.error = error.message || "Failed to register"
         state.loading = false
       })
-      // Handle get user success
-      .addMatcher(authApi.endpoints.getUser.matchFulfilled, (state, { payload }) => {
-        state.user = payload
-        state.error = null
-        state.loading = false
+      // Handle resend signup email
+      .addMatcher(authApi.endpoints.resendSignupEmail.matchFulfilled, (state) => {
+        state.successMessage = "Confirmation email resent! Please check your inbox.";
       })
-      // Handle get user error
-      .addMatcher(authApi.endpoints.getUser.matchRejected, (state, { error }) => {
-        state.error = error.message || "Failed to get user"
-        state.user = null
-        state.data = null
-        state.loading = false
-        if (isBrowser) {
-          document.cookie = "auth_token=; path=/; max-age=0"
-        }
+      // resendSignupEmail error
+      .addMatcher(authApi.endpoints.resendSignupEmail.matchRejected, (state, action) => {
+        const apiError = action.payload as { data?: { message?: string } };
+        state.error = apiError?.data?.message || "Failed to resend email. Try again.";
       })
       // Handle logout success
       .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {

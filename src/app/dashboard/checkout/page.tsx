@@ -3,25 +3,27 @@
 import { useState } from "react"
 import { DatePicker } from "@/components/date-picker"
 import Image from "next/image"
+import { useBookEquipmentMutation, useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
+import { useSearchParams } from "next/navigation"
 
 // Sample data for the Toyota Camry
-const equipmentData = {
-  id: "1",
-  title: "Toyota Camry for Rent – Smooth, Stylish, and Reliable!",
-  description:
-    "Looking for a comfortable and fuel-efficient ride? Our Toyota Camry is the perfect choice! Whether it's for a business trip, weekend getaway, or city cruising, this sedan offers:",
-  images: ["/toyota-black.svg"],
-  price: 50000,
-  location: "Rivers, Port harcourt, 7 woji road",
-  phoneNumber: "08107355412",
-  category: "Vehicles",
-  owner: {
-    id: "owner1",
-    name: "Thankgod Ogbonna",
-    image: "/tg.svg",
-    verified: true,
-  },
-}
+// const equipmentData = {
+//   id: "1",
+//   title: "Toyota Camry for Rent – Smooth, Stylish, and Reliable!",
+//   description:
+//     "Looking for a comfortable and fuel-efficient ride? Our Toyota Camry is the perfect choice! Whether it's for a business trip, weekend getaway, or city cruising, this sedan offers:",
+//   images: ["/toyota-black.svg"],
+//   price: 50000,
+//   location: "Rivers, Port harcourt, 7 woji road",
+//   phoneNumber: "08107355412",
+//   category: "Vehicles",
+//   owner: {
+//     id: "owner1",
+//     name: "Thankgod Ogbonna",
+//     image: "/tg.svg",
+//     verified: true,
+//   },
+// }
 
 // Sample saved cards
 // const savedCards = [
@@ -40,6 +42,12 @@ const equipmentData = {
 // ]
 
 export default function CheckoutPage() {
+  const searchParams = useSearchParams()
+  const equipmentId = searchParams.get("id")
+
+  const { data: equipmentData, isLoading, error } = useGetEquipmentByIdQuery(equipmentId || "")
+  const [bookEquipment, { isLoading: isBooking }] = useBookEquipmentMutation()
+
   const [startDate, setStartDate] = useState<Date | null>(null)
   const [endDate, setEndDate] = useState<Date | null>(null)
   const [selectedCard, setSelectedCard] = useState<string>("card1")
@@ -50,7 +58,7 @@ export default function CheckoutPage() {
   //   expiryDate: "",
   //   cvv: "",
   // })
-  const [rentDuration, setRentDuration] = useState(2)
+  // const [rentDuration, setRentDuration] = useState(2)
 
   const handleDateChange = (start: Date | null, end: Date | null) => {
     setStartDate(start)
@@ -65,39 +73,70 @@ export default function CheckoutPage() {
 //   }
 
 const calculateTotalDays = () => {
-    return rentDuration
+    if (!startDate || !endDate) return 2 
+
+    const timeDiff = endDate.getTime() - startDate.getTime()
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
+    return daysDiff > 0 ? daysDiff : 1
   }
 
   const calculateTotalPrice = () => {
-    return calculateTotalDays() * equipmentData.price
+    if (!equipmentData?.pricePerDay) return 0
+      return calculateTotalDays() * equipmentData.pricePerDay
   }
 
-  const handleCheckout = () => {
-    // Handle checkout logic here
-    alert("Checkout functionality will be implemented soon!")
-  }
+  const handleCheckout = async () => {
+    if (!equipmentId || !startDate || !endDate) {
+      alert("Please select rental dates before proceeding")
+      return
+    }
 
-  const incrementDuration = () => {
-    setRentDuration((prev) => prev + 1)
-  }
+    try {
+      const bookingData = {
+        startDate: startDate.toISOString().split("T")[0], // Format as YYYY-MM-DD
+        endDate: endDate.toISOString().split("T")[0],
+        quantity: 1, // Default quantity
+        shipping: false, // Default shipping
+      }
 
-  const decrementDuration = () => {
-    if (rentDuration > 1) {
-      setRentDuration((prev) => prev - 1)
+      const result = await bookEquipment({ equipmentId, bookingData }).unwrap()
+
+     if (result.status === 200 && result.data?.paymentInitialization?.data?.authorization_url) {
+        window.location.href = result.data.paymentInitialization.data.authorization_url
+      } else {
+        alert(`Booking failed: ${result.message || "Unknown error"}`)
+      }
+    } catch (error) {
+      console.error("Booking error:", error)
+      alert("An error occurred while booking. Please try again.")
     }
   }
 
-  // Format the current date and time
-  // const formattedDate = new Date()
-  //   .toLocaleString("en-US", {
-  //     day: "numeric",
-  //     month: "numeric",
-  //     year: "numeric",
-  //     hour: "numeric",
-  //     minute: "numeric",           
-  //     hour12: true,
-  //   })
-  //   .replace(",", " at")
+  // const incrementDuration = () => {
+  //   setRentDuration((prev) => prev + 1)
+  // }
+
+  // const decrementDuration = () => {
+  //   if (rentDuration > 1) {
+  //     setRentDuration((prev) => prev - 1)
+  //   }
+  // }
+
+if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading equipment details...</div>
+      </div>
+    )
+  }
+
+  if (error || !equipmentData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg text-red-600">Equipment not found or failed to load</div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8 font-sans">
@@ -112,7 +151,7 @@ const calculateTotalDays = () => {
             <div className="flex gap-4 mb-6">
               <div className="relative h-24 w-24 overflow-hidden rounded-lg flex-shrink-0">
                 <Image
-                  src={equipmentData.images[0] || "/placeholder.svg"}
+                  src={equipmentData.media?.[0] || "/placeholder.svg"}
                   alt={equipmentData.title}
                   fill
                   className="object-cover"
@@ -120,15 +159,15 @@ const calculateTotalDays = () => {
               </div>
               <div>
                 <h3 className="font-medium">{equipmentData.title}</h3>
-                <p className="text-[#676767] text-sm">{equipmentData.location}</p>
-                <p className="text-primary text-sm font-medium mt-2">₦{equipmentData.price.toLocaleString()} per day</p>
+                <p className="text-[#676767] text-sm">{equipmentData.address}</p>
+                <p className="text-primary text-sm font-medium mt-2">₦{equipmentData.pricePerDay.toLocaleString() || 0} per day</p>
               </div>
             </div>
 
              {/* Title and Timestamp */ }
           <div className="mb-4">
             <h2 className="text-2xl font-[600]">{equipmentData.title}</h2>
-            <p className="text-[#979797] text-[12px]">Today at 12:00 Am</p>
+            <p className="text-[#979797] text-[12px]">Today at {new Date().getTime()}</p>
           </div>
 
           {/* Rent Duration */}
@@ -137,14 +176,14 @@ const calculateTotalDays = () => {
               <span className="text-base">Rent duration</span>
               <div className="flex items-center">
                 <button
-                  onClick={decrementDuration}
+                  onClick={() => setStartDate((prev) => (prev ? new Date(prev.getTime() - 86400000) : null))}
                   className="h-8 w-8 flex items-center justify-center text-xl font-bold text-[#979797] hover:text-gray-700"
                 >
                   −
                 </button>
-                <span className="mx-4 text-base">{rentDuration}</span>
+                <span className="mx-4 text-base">{calculateTotalDays()}</span>
                 <button
-                  onClick={incrementDuration}
+                  onClick={() => setEndDate((prev) => (prev ? new Date(prev.getTime() + 86400000) : null))}
                   className="h-8 w-8 flex items-center justify-center text-xl font-bold text-[#979797] hover:text-gray-700"
                 >
                   +
@@ -171,7 +210,7 @@ const calculateTotalDays = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Daily Rate:</span>
-                  <span className="font-medium">₦{equipmentData.price.toLocaleString()}</span>
+                  <span className="font-medium">₦{equipmentData.pricePerDay.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -359,11 +398,11 @@ const calculateTotalDays = () => {
                 
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[12px] text-[#676767]">Pay per day</span>
-                  <span className="text-primary text-sm font-medium">₦50,000</span>
+                  <span className="text-primary text-sm font-medium">₦{equipmentData.pricePerDay?.toLocaleString() || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[12px] text-[#676767]">Sub total</span>
-                  <span className="text-primary text-sm font-medium">₦100,000</span>
+                  <span className="text-primary text-sm font-medium">₦{calculateTotalPrice().toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -371,6 +410,7 @@ const calculateTotalDays = () => {
 
           <button
             onClick={handleCheckout}
+            disabled={isBooking}
             className="w-full rounded-full bg-primary py-4 text-center text-base font-medium text-white hover:bg-green-600 transition-colors"
           >
             Checkout now
@@ -442,7 +482,7 @@ const calculateTotalDays = () => {
                   className="flex-1 rounded-full bg-primary px-4 py-4 text-white hover:bg-green-600 focus:outline-none focus:ring-2 placeholder:text-[#ADB3BC] placeholder:text-[13px] focus:ring-primary focus:ring-offset-2"
                   onClick={() => setShowAddCard(false)}
                 >
-                  Checkout now
+                  {isBooking ? "Processing..." : "Checkout now"}
                 </button>
               </div>
             </form>

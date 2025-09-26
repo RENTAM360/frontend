@@ -138,6 +138,10 @@
 //   }
 // }
 
+// import { equipmentApi } from "@/lib/redux/api/equipmentApi"
+import { store } from "@/lib/redux/store"
+import { baseApi } from "./redux/api/baseApi"
+
 // Mock data fetching function - replace with actual API calls in production
 export function getUserProfile() {
   // This would be replaced with your actual data fetching logic
@@ -206,76 +210,103 @@ export function getUserProfile() {
   }
 }
 
-export async function getOwnerReviews(id: string) {
-  // Mock data - replace with actual data fetching logic
-  const owner = {
-    id,
-    name: "Thankgod Ogbonna",
-    profileImage: "/diverse-group-profile.png",
+// export async function getOwnerReviews(id: string) {
+//   // Mock data - replace with actual data fetching logic
+//   const owner = {
+//     id,
+//     name: "Thankgod Ogbonna",
+//     profileImage: "/diverse-group-profile.png",
+//   }
+
+//     const reviews = [
+//       {
+//         id: "1",
+//         user: {
+//           id: "user1",
+//           name: "David ugo",
+//           profileImage: "/du.svg",
+//         },
+//         text: "Good rent and great customer service",
+//         date: "28/05/25",
+//         likes: 0,
+//         replies: [],
+//       },
+//       {
+//         id: "2",
+//         user: {
+//           id: "user2",
+//           name: "victor john",
+//           profileImage: "/vj.svg",
+//         },
+//         text: "Good rent and great customer service",
+//         date: "28/05/25",
+//         likes: 0,
+//         replies: [
+//           {
+//             id: "reply1",
+//             user: {
+//               id: id,
+//               name: "Thankgod ogbonna",
+//               profileImage: "/tg2.svg",
+//             },
+//             text: "OOh cool that sound great",
+//             date: "28/05/25",
+//             isOwner: true,
+//           },
+//           {
+//             id: "reply2",
+//             user: {
+//               id: "user3",
+//               name: "Wow cool",
+//               profileImage: "/tg.svg",
+//             },
+//             text: "Wow cool",
+//             date: "28/05/25",
+//             isOwner: false,
+//           },
+//         ],
+//       },
+//       {
+//         id: "3",
+//         user: {
+//           id: "user4",
+//           name: "Femi abu",
+//           profileImage: "/fa.svg",
+//         },
+//         text: "Got a Monitor Mount from him, it came really quickly and was as seen. Fits my monitor",
+//         date: "28/05/25",
+//         likes: 0,
+//         image: "/monitor-mount.svg",
+//         replies: [],
+//       },
+//     ]
+
+//   return { owner, reviews }
+// }
+export async function getOwnerReviews(ownerId: string) {
+  try {
+    // Use the Redux API endpoint to fetch owner reviews
+    const result = await store.dispatch(baseApi.endpoints.getEquipmentReviews.initiate(ownerId))
+
+    if (result.error) {
+      throw new Error("Failed to fetch owner reviews")
+    }
+
+    return result.data
+  } catch (error) {
+    console.error("Error fetching owner reviews:", error)
+
+    // Return empty data structure to prevent crashes
+    return {
+      owner: {
+        _id: ownerId,
+        firstName: "Unknown",
+        lastName: "Owner",
+        profileImage: null,
+        email: "",
+        createdAt: new Date().toISOString(),
+      },
+      reviews: [],
+    }
   }
-
-    const reviews = [
-      {
-        id: "1",
-        user: {
-          id: "user1",
-          name: "David ugo",
-          profileImage: "/du.svg",
-        },
-        text: "Good rent and great customer service",
-        date: "28/05/25",
-        likes: 0,
-        replies: [],
-      },
-      {
-        id: "2",
-        user: {
-          id: "user2",
-          name: "victor john",
-          profileImage: "/vj.svg",
-        },
-        text: "Good rent and great customer service",
-        date: "28/05/25",
-        likes: 0,
-        replies: [
-          {
-            id: "reply1",
-            user: {
-              id: id,
-              name: "Thankgod ogbonna",
-              profileImage: "/tg2.svg",
-            },
-            text: "OOh cool that sound great",
-            date: "28/05/25",
-            isOwner: true,
-          },
-          {
-            id: "reply2",
-            user: {
-              id: "user3",
-              name: "Wow cool",
-              profileImage: "/tg.svg",
-            },
-            text: "Wow cool",
-            date: "28/05/25",
-            isOwner: false,
-          },
-        ],
-      },
-      {
-        id: "3",
-        user: {
-          id: "user4",
-          name: "Femi abu",
-          profileImage: "/fa.svg",
-        },
-        text: "Got a Monitor Mount from him, it came really quickly and was as seen. Fits my monitor",
-        date: "28/05/25",
-        likes: 0,
-        image: "/monitor-mount.svg",
-        replies: [],
-      },
-    ]
-
-  return { owner, reviews }
 }

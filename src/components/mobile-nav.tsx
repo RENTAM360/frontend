@@ -12,7 +12,7 @@ export function MobileNav() {
         <Link
           href="/dashboard"
           className={`flex flex-col items-center justify-center ${
-            pathname === "/dashboard" ? "text-green-500" : "text-gray-500"
+            pathname === "/dashboard" ? "text-[#12B76A]" : "text-gray-500"
           }`}
         >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -24,7 +24,7 @@ export function MobileNav() {
         <Link
           href="/dashboard/saved"
           className={`flex flex-col items-center justify-center ${
-            pathname === "/dashboard/saved" ? "text-green-500" : "text-gray-500"
+            pathname === "/dashboard/saved" ? "text-[#12B76A]" : "text-gray-500"
           }`}
         >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -37,7 +37,7 @@ export function MobileNav() {
         <Link
           href="/dashboard/rent"
           className={`flex flex-col items-center justify-center ${
-            pathname === "/dashboard/rent" ? "text-green-500" : "text-gray-500"
+            pathname === "/dashboard/rent" ? "text-[#12B76A]" : "text-gray-500"
           }`}
         >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,7 +50,7 @@ export function MobileNav() {
         <Link
           href="/dashboard/messages"
           className={`flex flex-col items-center justify-center ${
-            pathname === "/dashboard/messages" ? "text-green-500" : "text-gray-500"
+            pathname === "/dashboard/messages" ? "text-[#12B76A]" : "text-gray-500"
           }`}
         >
           <div className="relative">

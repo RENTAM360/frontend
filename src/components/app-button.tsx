@@ -7,7 +7,7 @@ export default function AppButton() {
                 <Image
                 src="/google-play-badge.svg"
                 alt="Get it on Google Play"
-                className="md:h-12"
+                className="md:h-12 md:w-auto"
                 width={28}
                 height={35}
                 />

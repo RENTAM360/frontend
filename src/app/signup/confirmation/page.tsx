@@ -1,9 +1,19 @@
 "use client"
 
+import { useResendSignupEmailMutation } from '@/lib/redux/api/authApi';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FormEvent, useState } from 'react';
 
-export default function ForgotPasswordPage() {
+export default function ConfirmationPage() {
+  const [email, setEmail] = useState("");
+  const [resendSignupEmail, { isLoading, isSuccess, isError }] = useResendSignupEmailMutation();
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    resendSignupEmail({ email });
+};
  
   return (
     <main className="flex min-h-screen font-sans flex-col md:flex-row">
@@ -45,11 +55,13 @@ export default function ForgotPasswordPage() {
         <h2 className="text-2xl font-semibold mb-4 text-center">Confirm Your Email Address</h2>
           <p className="text-[14px] text-[#898A8D] mb-8 text-center">We&apos;ve sent a confirmation link to your email address. Please check your inbox and click the link to verify your account.</p>
 
-          <form className="space-y-4 text-right">
+          <form className="space-y-4 text-right" onSubmit={handleSubmit}>
             <div>
               <input
                 type="email"
                 placeholder="Email"
+                onChange={(e) => setEmail(e.target.value)}
+                value={email}
                 className={`w-full border rounded px-4 py-2 focus:outline-none`}
                 required
               />
@@ -58,9 +70,14 @@ export default function ForgotPasswordPage() {
               type="submit"
               className="w-full bg-primary mt-8 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
             >
-              Continue
+              {isLoading ? "Sending..." : "Continue"}
             </button>
+
+            <p className="text-[14px] text-[#898A8D] mb-8 text-center">If you did not receive the verification mail, please enter your email address and click Continue.</p>
           </form>
+
+          {isSuccess && <p className="text-green-600 mt-4 text-center">Email resent successfully!</p>}
+          {isError && <p className="text-red-600 mt-4 text-center">Failed to resend email. Try again.</p>}
         </div>
       </div>
     </main>
