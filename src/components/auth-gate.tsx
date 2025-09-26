@@ -3,6 +3,7 @@
 import { useAppSelector } from "@/lib/redux/hooks"
 import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { MessagingProvider } from "@/context/messaging-context"
+import { AnimatedLogo } from "./loading-logo"
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const userToken = useAppSelector((state) => state.auth.data)
@@ -11,7 +12,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   })
 
   if (!userToken) return <>{children}</>
-  if (isLoading) return <div>Loading app...</div>
+  if (isLoading) return <AnimatedLogo />
   if (!profile?.data) return <div>Failed to load user</div>
 
   return (

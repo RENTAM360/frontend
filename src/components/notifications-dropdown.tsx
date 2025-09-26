@@ -52,7 +52,7 @@ const notifications = data?.data?.length ? data.data : dummyNotifications;
   useEffect(() => {
     if (!socket) {
       socket = io(process.env.NEXT_PUBLIC_AUTH_API_URL as string, {
-        auth: {token: user.data},
+        auth: {token: user?.data},
         transports: ["websocket"],
       });
     }

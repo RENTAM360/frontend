@@ -16,6 +16,7 @@ import {
   useCreateUserFeedbackMutation,
 } from "@/lib/redux/api/feedbackApi"
 import { useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
+import { AnimatedLogo } from "./loading-logo"
 
 // type Owner = {
 //   _id: string
@@ -61,7 +62,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null)
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
   const [likedFeedbacks, setLikedFeedbacks] = useState<Set<string>>(new Set())
-  const { data: ownerProfile, isLoading: profileLoading } = useGetOtherUserProfileQuery(ownerId!, {
+  const { data: ownerProfile } = useGetOtherUserProfileQuery(ownerId!, {
       skip: !ownerId,
     })
   const [createFeedback] = useCreateUserFeedbackMutation()
@@ -143,14 +144,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="container font-sans mx-auto px-4 py-6">
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#12B76A] mx-auto mb-4"></div>
-          <p>Loading feedback...</p>
-        </div>
-      </div>
-    )
+    return <AnimatedLogo />
   }
 
   if (error) {

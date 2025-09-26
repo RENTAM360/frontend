@@ -6,6 +6,7 @@ import { MapPin, Phone } from "lucide-react"
 import { EquipmentCard } from "@/components/equipment-card"
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
+import { AnimatedLogo } from "./loading-logo"
 
 // async function getOwnerData(id: string) {
 //   // This would be replaced with your actual data fetching logic
@@ -90,7 +91,7 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
    console.log(ownerProfile?.data)
 
   if (isLoadingUserEquipments || profileLoading) {
-    return <p>Loading...</p>
+    return <AnimatedLogo />
   }
 
   if (!userEquipments || !ownerProfile) {
