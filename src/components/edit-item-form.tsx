@@ -115,23 +115,17 @@ export default function EditItemForm({ initialData }: EditItemFormProps) {
 
     try {
       const mediaUrls: string[] = []
+      const newFiles = photos.filter(photo => photo.file).map(photo => photo.file!)
+      const existingUrls = photos.filter(photo => photo.url).map(photo => photo.url!)
 
-      // Upload new images (files) and keep existing URLs
-      for (const photo of photos) {
-        if (photo.file) {
-          // Upload new image
-          const formData = new FormData()
-          formData.append("image", photo.file)
-
-          const uploadResult = await uploadImages(formData).unwrap()
-          if (uploadResult.data && uploadResult.data.length > 0) {
-            mediaUrls.push(uploadResult.data[0])
-          }
-        } else if (photo.url) {
-          // Keep existing image URL
-          mediaUrls.push(photo.url)
-        }
+    // Upload new images if any
+    if (newFiles.length > 0) {
+      const uploadResult = await uploadImages(newFiles).unwrap()
+      if (uploadResult.data && uploadResult.data.length > 0) {
+        mediaUrls.push(...uploadResult.data)
       }
+    }
+     mediaUrls.push(...existingUrls)
 
       const updateData = {
         name,

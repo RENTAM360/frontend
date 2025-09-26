@@ -122,7 +122,7 @@ export default function RentPage() {
      const files: File[] = photos.map((photo) => photo.file)
       const uploadRes = await uploadImages(files).unwrap()
       const imageUrls = uploadRes.data
-      console.log(imageUrls)
+      // console.log(imageUrls)
 
       const res = await addEquipment({
         name: name,
