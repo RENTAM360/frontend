@@ -5,7 +5,7 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { Paperclip, Send } from "lucide-react"
-import { Conversation } from "@/types/messaging"
+import type { Conversation } from "@/types/messaging"
 import { useMessagingContext } from "@/context/messaging-context"
 
 interface MessageViewProps {
