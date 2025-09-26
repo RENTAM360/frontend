@@ -22,7 +22,7 @@ export default function ProfilePage() {
     const [viewMode, setViewMode] = useState<ViewMode>("items")
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const user = getUserProfile()
-    const { data: profileData, isLoading, isError } = useGetProfileQuery()
+    const { data: profileData } = useGetProfileQuery()
     const [verifyType, setVerifyType] = useState<"NIN" | "BVN" | null>(null);
     const [showVerifyPhone, setShowVerifyPhone] = useState(false)
 
@@ -30,7 +30,7 @@ export default function ProfilePage() {
     const profile = profileData?.data
     const userId = profile?._id
 
-    const { data: userEquipments, isLoading: isLoadingUserEquipments } = useGetEquipmentsQuery({ userId })
+    const { data: userEquipments } = useGetEquipmentsQuery({ userId })
     console.log(userEquipments)
 
     const accountStages = useMemo<{
