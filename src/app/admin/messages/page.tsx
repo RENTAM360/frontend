@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Image from "next/image"
 import { MessageList } from "@/components/message-list"
-import { MessageView, Conversation } from "@/components/message-view"
+import type { Conversation } from "@/types/messaging"
+import { MessageView } from "@/components/message-view"
 import { Flag, MoreVertical } from "lucide-react"
 
 export default function MessagesPage() {
@@ -15,15 +16,17 @@ export default function MessagesPage() {
     messages: [
       {
         id: "1",
-        text: "i'm looking for information about your car I want to rent it, can I call you?",
+        content: "i'm looking for information about your car I want to rent it, can I call you?",
         sender: "user",
         timestamp: new Date().toISOString(),
+        read: true
       },
       {
         id: "2",
-        text: "Thanks for reaching out about our Toyota Camry. Yes, you can absolutely call us",
+        content: "Thanks for reaching out about our Toyota Camry. Yes, you can absolutely call us",
         sender: "other",
         timestamp: new Date().toISOString(),
+        read: false
       },
     ],
     product: {
@@ -35,6 +38,11 @@ export default function MessagesPage() {
       phone: "08107355412",
     },
   })
+
+  const handleSendMessage = async (message: string): Promise<void> => {
+    console.log("sending", message)
+
+  }
 
   return (
       <div className="flex h-[calc(100vh)] font-sans flex-col">
@@ -100,7 +108,7 @@ export default function MessagesPage() {
             <MessageView
               conversation={activeConversation}
               showProductCard={false}
-              onSendMessage={(message) => console.log("Sending message:", message)}
+              onSendMessage={handleSendMessage}
             />
           </div>
 
