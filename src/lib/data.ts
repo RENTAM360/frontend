@@ -139,8 +139,8 @@
 // }
 
 // import { equipmentApi } from "@/lib/redux/api/equipmentApi"
-import { store } from "@/lib/redux/store"
-import { baseApi } from "./redux/api/baseApi"
+// import { store } from "@/lib/redux/store"
+// import { baseApi } from "./redux/api/baseApi"
 
 // Mock data fetching function - replace with actual API calls in production
 export function getUserProfile() {
@@ -283,30 +283,30 @@ export function getUserProfile() {
 
 //   return { owner, reviews }
 // }
-export async function getOwnerReviews(ownerId: string) {
-  try {
-    // Use the Redux API endpoint to fetch owner reviews
-    const result = await store.dispatch(baseApi.endpoints.getEquipmentReviews.initiate(ownerId))
+// export async function getOwnerReviews(ownerId: string) {
+//   try {
+//     // Use the Redux API endpoint to fetch owner reviews
+//     const result = await store.dispatch(baseApi.endpoints.getEquipmentReviews.initiate(ownerId))
 
-    if (result.error) {
-      throw new Error("Failed to fetch owner reviews")
-    }
+//     if (result.error) {
+//       throw new Error("Failed to fetch owner reviews")
+//     }
 
-    return result.data
-  } catch (error) {
-    console.error("Error fetching owner reviews:", error)
+//     return result.data
+//   } catch (error) {
+//     console.error("Error fetching owner reviews:", error)
 
-    // Return empty data structure to prevent crashes
-    return {
-      owner: {
-        _id: ownerId,
-        firstName: "Unknown",
-        lastName: "Owner",
-        profileImage: null,
-        email: "",
-        createdAt: new Date().toISOString(),
-      },
-      reviews: [],
-    }
-  }
-}
+//     // Return empty data structure to prevent crashes
+//     return {
+//       owner: {
+//         _id: ownerId,
+//         firstName: "Unknown",
+//         lastName: "Owner",
+//         profileImage: null,
+//         email: "",
+//         createdAt: new Date().toISOString(),
+//       },
+//       reviews: [],
+//     }
+//   }
+// }
