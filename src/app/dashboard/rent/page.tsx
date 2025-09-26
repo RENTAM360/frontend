@@ -119,11 +119,8 @@ export default function RentPage() {
     setIsSubmitting(true)
 
     try {
-      const formData = new FormData()
-      photos.forEach((photo) => {
-        formData.append("image", photo.file)
-      })
-      const uploadRes = await uploadImages(formData).unwrap()
+     const files: File[] = photos.map((photo) => photo.file)
+      const uploadRes = await uploadImages(files).unwrap()
       const imageUrls = uploadRes.data
       console.log(imageUrls)
 

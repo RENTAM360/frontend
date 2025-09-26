@@ -89,7 +89,7 @@ export default function SavedPage() {
             id={item.id}
             title={item.title}
             category={item.category}
-            price={item.price}
+            pricePerDay={item.price}
             rating={item.rating}
             imageUrl={item.imageUrl}
             variant="saved"

@@ -5,6 +5,7 @@ import { DatePicker } from "@/components/date-picker"
 import Image from "next/image"
 import { useBookEquipmentMutation, useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
 import { useSearchParams } from "next/navigation"
+import { AnimatedLogo } from "@/components/loading-logo"
 
 // Sample data for the Toyota Camry
 // const equipmentData = {
@@ -73,7 +74,7 @@ export default function CheckoutPage() {
 //   }
 
 const calculateTotalDays = () => {
-    if (!startDate || !endDate) return 2 
+    if (!startDate || !endDate) return 1 
 
     const timeDiff = endDate.getTime() - startDate.getTime()
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
@@ -123,11 +124,7 @@ const calculateTotalDays = () => {
   // }
 
 if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading equipment details...</div>
-      </div>
-    )
+    return <AnimatedLogo />
   }
 
   if (error || !equipmentData) {
