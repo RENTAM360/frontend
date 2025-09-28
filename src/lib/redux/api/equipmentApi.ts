@@ -314,6 +314,16 @@ interface ImageUploadResponse {
   data: string[];
 }
 
+export interface ReportUserRequest {
+  reason: string
+}
+
+export interface ReportUserResponse {
+  status: number
+  message: string
+  data: Record<string, unknown>
+}
+
 
 // Create the API slice
 export const equipmentApi = baseApi.injectEndpoints({
@@ -595,6 +605,17 @@ export const equipmentApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, id) => [{ type: "Equipment", id }, "Equipment"],
     }),
 
+    reportUser: builder.mutation<
+      ReportUserResponse,
+      { equipmentId: string; reportedId: string; report: ReportUserRequest }
+    >({
+      query: ({ equipmentId, reportedId, report }) => ({
+        url: `equipment/${equipmentId}/report/${reportedId}`,
+        method: "POST",
+        body: report,
+      }),
+    }),
+
   }),
 })
 
@@ -617,4 +638,5 @@ export const {
   useUpdateEquipmentMutation,
   useDeleteEquipmentMutation,
   useBookEquipmentMutation,
+  useReportUserMutation,
 } = equipmentApi

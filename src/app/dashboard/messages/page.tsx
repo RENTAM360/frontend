@@ -7,9 +7,12 @@ import { Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
 import { useMessagingContext } from "@/context/messaging-context"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ReportModal } from "@/components/report-modal"
 
 export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
   const {
     conversations,
@@ -87,6 +90,14 @@ export default function MessagesPage() {
     }
 
     await sendMessage(activeConversation.id, message)
+  }
+
+  const handleOpenReportModal = () => {
+    setIsReportModalOpen(true)
+  }
+
+  const handleCloseReportModal = () => {
+    setIsReportModalOpen(false)
   }
 
   return (
@@ -183,9 +194,19 @@ export default function MessagesPage() {
                   <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
                     <Flag className="h-5 w-5" fill="#12B76A" />
                   </button>
-                  <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
-                    <MoreVertical className="h-5 w-5" />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
+                        <MoreVertical className="h-5 w-5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleOpenReportModal}>
+                        <Flag className="h-4 w-4 mr-2" />
+                        Report User
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
@@ -224,6 +245,16 @@ export default function MessagesPage() {
           </div>
         </div>
       </div>
+
+      {activeConversation && activeConversation.product && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={handleCloseReportModal}
+          reportedUserId={activeConversation.id}
+          reportedUserName={activeConversation.name}
+          equipmentId={activeConversation.product.id}
+        />
+      )}
     </div>
   )
 }

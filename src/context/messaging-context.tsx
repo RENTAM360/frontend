@@ -253,7 +253,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
   const conv = conversations.find(c => c.id === activeConversationId)
 
   if (conv) {
-    setActiveConversation({ ...conv, messages: messages || [] })
+    setActiveConversation({ ...conv, messages: messages || [], product: tempConversationRef.current?.product ?? conv.product, })
   } else if (tempConversationRef.current?.id === activeConversationId) {
     setActiveConversation(tempConversationRef.current)
   } else {
@@ -268,7 +268,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
 
       setActiveConversationId(conversationId)
 
-      if (conv) {
+      if (conv?.product) {
         tempConversationRef.current = conv
       }
 

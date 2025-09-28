@@ -144,6 +144,11 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
       return
     }
     const receiverId = equipmentData.owner.id
+    if (equipmentData) {
+      const existing = JSON.parse(localStorage.getItem("conversationProducts") || "{}")
+      existing[receiverId] = equipmentData
+      localStorage.setItem("conversationProducts", JSON.stringify(existing))
+    }
 
     socketService.joinChat(receiverId)
 

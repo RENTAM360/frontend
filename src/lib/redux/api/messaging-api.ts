@@ -19,16 +19,21 @@ const transformApiMessage = (apiMessage: ApiMessage, currentUserId: string): Mes
 })
 
 // Helper function to transform API conversation to UI conversation
-const transformApiConversation = (apiConv: ApiConversation): Conversation => ({
-  id: apiConv.userId,
-  name: apiConv.name,
-  avatar: apiConv.avatar,
-  status: "Online", // Default status, could be enhanced
-  messages: [], // Messages loaded separately
-  lastMessage: apiConv.lastMessage,
-  lastMessageTime: apiConv.lastMessageTime,
-  unreadCount: apiConv.unreadCount,
-})
+const transformApiConversation = (apiConv: ApiConversation): Conversation => {
+  const storedProducts = JSON.parse(localStorage.getItem("conversationProducts") || "{}")
+
+  return {
+    id: apiConv.userId,
+    name: apiConv.name,
+    avatar: apiConv.avatar,
+    status: "Online",
+    messages: [],
+    lastMessage: apiConv.lastMessage,
+    lastMessageTime: apiConv.lastMessageTime,
+    unreadCount: apiConv.unreadCount,
+    product: storedProducts[apiConv.userId] || undefined,
+  }
+}
 
 export const messagingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
