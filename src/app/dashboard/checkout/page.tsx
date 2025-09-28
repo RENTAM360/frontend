@@ -6,6 +6,7 @@ import Image from "next/image"
 import { useBookEquipmentMutation, useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
 import { useSearchParams } from "next/navigation"
 import { AnimatedLogo } from "@/components/loading-logo"
+import { enqueueSnackbar } from "notistack"
 
 // Sample data for the Toyota Camry
 // const equipmentData = {
@@ -88,16 +89,16 @@ const calculateTotalDays = () => {
 
   const handleCheckout = async () => {
     if (!equipmentId || !startDate || !endDate) {
-      alert("Please select rental dates before proceeding")
+      enqueueSnackbar("Please select rental dates before proceeding", {variant: "warning"})
       return
     }
 
     try {
       const bookingData = {
-        startDate: startDate.toISOString().split("T")[0], // Format as YYYY-MM-DD
+        startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
-        quantity: 1, // Default quantity
-        shipping: false, // Default shipping
+        quantity: 1, 
+        shipping: false, 
       }
 
       const result = await bookEquipment({ equipmentId, bookingData }).unwrap()
@@ -105,11 +106,11 @@ const calculateTotalDays = () => {
      if (result.status === 200 && result.data?.paymentInitialization?.data?.authorization_url) {
         window.location.href = result.data.paymentInitialization.data.authorization_url
       } else {
-        alert(`Booking failed: ${result.message || "Unknown error"}`)
+        enqueueSnackbar(`Booking failed: ${result.message || "Unknown error"}`, {variant: "error"})
       }
     } catch (error) {
       console.error("Booking error:", error)
-      alert("An error occurred while booking. Please try again.")
+      enqueueSnackbar("An error occurred while booking. Please try again.", {variant: "error"})
     }
   }
 

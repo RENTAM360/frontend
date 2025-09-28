@@ -60,6 +60,8 @@ export interface UserProfile {
   bio: string
   message: string
   account: boolean
+  avatar: string
+  coverPhoto: string
 }
 
 interface BusinessStaff {

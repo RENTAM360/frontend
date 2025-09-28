@@ -6,14 +6,15 @@ import { Star, Phone, ChevronRight, Info } from "lucide-react"
 import { EquipmentCard } from "@/components/equipment-card"
 import { getUserProfile } from "@/lib/data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { ProfileEditForm } from "@/components/profile-edit-form"
 import { WalletView } from "@/components/wallet-view"
 import { SuccessModal } from "@/components/success-modal"
-import { useGetProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetProfileQuery, useUpdateProfileMutation } from "@/lib/redux/api/authApi"
 import { VerifyNinModal } from "@/components/verify-nin-modal"
-import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
+import { useGetEquipmentsQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import { VerifyPhoneModal } from "@/components/verifyPhoneNumber"
+import { enqueueSnackbar } from "notistack"
 
 type ViewMode = "items" | "edit" | "wallet"
 type StageStatus = "gray" | "green" | "orange";
@@ -25,6 +26,13 @@ export default function ProfilePage() {
     const { data: profileData } = useGetProfileQuery()
     const [verifyType, setVerifyType] = useState<"NIN" | "BVN" | null>(null);
     const [showVerifyPhone, setShowVerifyPhone] = useState(false)
+    const [uploadEquipmentImages] = useUploadEquipmentImagesMutation()
+    const [updateProfile] = useUpdateProfileMutation()
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [uploadTarget, setUploadTarget] = useState<"cover" | "avatar" | null>(null)
+    const [uploadingTarget, setUploadingTarget] = useState<"cover" | "avatar" | null>(null)
+
+
 
     console.log(profileData)
     const profile = profileData?.data
@@ -110,6 +118,33 @@ export default function ProfilePage() {
     // Here you would typically call an API to delete the account
     // Then redirect to logout or home page
   }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length || !uploadTarget) return
+
+    try {
+      setUploadingTarget(uploadTarget)
+      enqueueSnackbar("Uploading image...", { variant: "info" })
+
+      const file = e.target.files[0]
+      const response = await uploadEquipmentImages([file]).unwrap()
+      const uploadedUrl = response.data[0]
+
+      if (uploadTarget === "cover") {
+        await updateProfile({ coverPhoto: uploadedUrl }).unwrap()
+      } else if (uploadTarget === "avatar") {
+        await updateProfile({ avatar: uploadedUrl }).unwrap()
+      }
+      enqueueSnackbar("Profile updated successfully!", { variant: "success" })
+    } catch (error) {
+      console.error("Image upload failed:", error)
+      enqueueSnackbar("Image upload failed. Please try again.", { variant: "error" })
+    } finally {
+      setUploadTarget(null)
+      if (fileInputRef.current) fileInputRef.current.value = "" 
+    }
+  }
+
 
   const capitalize = (str?: string) => {
     if (!str) return "";
@@ -202,21 +237,83 @@ export default function ProfilePage() {
 
   return (
     <div className="container font-sans mx-auto px-4 py-8">
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleImageChange}
+      />
+
       <div className="flex flex-col md:flex-row gap-8">
         {/* Owner Profile Section */}
         <div className="w-full bg-white rounded-t-3xl md:w-1/3">
           <div className="relative mb-6">
             <div className="relative w-full h-44 rounded-t-3xl rounded-b-[30px] overflow-hidden">
-              <Image src="/profile-bg.svg" alt="Profile background" fill className="object-cover" />
+              <Image
+                src={profile?.coverPhoto || "/profile-bg.svg"}
+                alt="Profile background"
+                fill
+                className="object-cover"
+              />
+              {uploadingTarget === "cover" && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setUploadTarget("cover")
+                  fileInputRef.current?.click()
+                }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7h4l2-3h6l2 3h4v13H3V7z"
+                  />
+                </svg>
+              </button>
             </div>
             <div className="absolute -bottom-12 left-[37%] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
               <Image
-                src={user.profileImage}
-                alt={user.name}
+                src={profile?.avatar || user.profileImage}
+                alt={profile?.firstName || user.name || "User Avatar"}
                 width={96}
                 height={96}
                 className="object-cover"
               />
+              <button
+                onClick={() => {
+                  setUploadTarget("avatar")
+                  fileInputRef.current?.click()
+                }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7h4l2-3h6l2 3h4v13H3V7z"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
 
