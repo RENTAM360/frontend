@@ -79,17 +79,15 @@ export function EquipmentCard({
             </div>
             <div className="mt-2">
                 
-                    <div className="flex justify-between">
-                        <h3 className="text-base font-bold">{title}</h3>
-                        {/* Only show save button if not on profile page */}
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm md:text-base font-bold">{title}</h3>
                         {variant !== "profile" && (
                           <button
                             onClick={handleToggleSave}
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-green-500 hover:bg-white"
+                            className="flex h-4 w-4 md:h-8 md:w-8 items-center justify-center rounded-full bg-white/80 text-green-500 hover:bg-white"
                             aria-label={isSaved ? "Remove from saved" : "Save equipment"}
                           >
                             {variant === "saved" || isSaved ? (
-                              // Minus icon for saved items page
                               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
                                   d="M14.5 11.4H9.5C9.09 11.4 8.75 11.06 8.75 10.65C8.75 10.24 9.09 9.90002 9.5 9.90002H14.5C14.91 9.90002 15.25 10.24 15.25 10.65C15.25 11.06 14.91 11.4 14.5 11.4Z"
@@ -101,7 +99,6 @@ export function EquipmentCard({
                                 />
                               </svg>
                             ) : (
-                              // Plus icon for default view
                               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
                                   d="M14.5 11.4H9.5C9.09 11.4 8.75 11.06 8.75 10.65C8.75 10.24 9.09 9.90002 9.5 9.90002H14.5C14.91 9.90002 15.25 10.24 15.25 10.65C15.25 11.06 14.91 11.4 14.5 11.4Z"
@@ -120,10 +117,10 @@ export function EquipmentCard({
                           </button>
                         )}
                     </div>
-                    <p className="text-gray-500 text-sm">{category}</p>
+                    <p className="text-gray-500 text-xs md:text-sm">{category}</p>
                 
                 <div className="mt-1 flex items-center justify-between">
-                <p className="font-[500]">₦{pricePerDay?.toLocaleString()}</p>
+                <p className="text-sm md:text-base font-[500]">₦{pricePerDay?.toLocaleString()}</p>
                 {/* <div className="flex items-center">
                     <svg
                     xmlns="http://www.w3.org/2000/svg"

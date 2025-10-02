@@ -10,6 +10,8 @@ import { useEffect, useRef, useState } from "react"
 import NotificationsDropdown from "./notifications-dropdown"
 import { useGetNotificationsQuery } from "@/lib/redux/api/notificationsApi"
 import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
+import { useGetProfileQuery } from "@/lib/redux/api/authApi"
+import { User } from "lucide-react"
 // import Image from "next/image"
 
 export function DashboardNavbar() {
@@ -17,6 +19,7 @@ export function DashboardNavbar() {
   const savedItems = useAppSelector(selectSavedItems)
   const savedItemsCount = savedItems.length
   const [open, setOpen] = useState(false);
+  const { data: profileData } = useGetProfileQuery()
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {data: conversations = []} = useGetConversationsQuery()
@@ -169,19 +172,21 @@ export function DashboardNavbar() {
             </div>
 
             <div className="relative">
-              <Link href="/dashboard/profile" className="relative bg-[#FFFFFF21] rounded-full pr-2 flex justify-center items-center gap-3">
-                <Image
-                  src="/tg.svg"
+              <Link href="/dashboard/profile" className="relative rounded-full pr-2 flex justify-center items-center gap-3">
+                {profileData?.data?.avatar ? (<Image
+                  src={`${profileData?.data?.avatar}`}
                   alt="User"
                   className="h-8 w-8 rounded-full"
                   width={100}
                   height={100}
-                />
-                <div>
+                />) : (
+                  <User className="w-8 h-8" />
+                )}
+                {/* <div>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M7.49922 10.4999C7.06172 10.4999 6.62422 10.3312 6.29297 9.9999L2.21797 5.9249C2.03672 5.74365 2.03672 5.44365 2.21797 5.2624C2.39922 5.08115 2.69922 5.08115 2.88047 5.2624L6.95547 9.3374C7.25547 9.6374 7.74297 9.6374 8.04297 9.3374L12.118 5.2624C12.2992 5.08115 12.5992 5.08115 12.7805 5.2624C12.9617 5.44365 12.9617 5.74365 12.7805 5.9249L8.70547 9.9999C8.37422 10.3312 7.93672 10.4999 7.49922 10.4999Z" fill="white"/>
                   </svg>
-                </div>
+                </div> */}
               </Link>
               {/* Dropdown menu would go here */}
             </div>
@@ -206,7 +211,7 @@ export function DashboardNavbar() {
   )
 }
 
-interface NavLinkProps {
+export interface NavLinkProps {
   href: string
   badge?: number
   children?: React.ReactNode

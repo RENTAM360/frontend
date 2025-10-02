@@ -7,7 +7,7 @@ export default function AppButton() {
                 <Image
                 src="/google-play-badge.svg"
                 alt="Get it on Google Play"
-                className="md:h-12 md:w-auto"
+                className="md:h-12"
                 width={28}
                 height={35}
                 />
@@ -25,7 +25,7 @@ export default function AppButton() {
                 height={35}
                 />
                 <div className="flex items-start flex-col">
-                    <span className="text-foreground text-[10px] font-bold">GET IT ON</span>
+                    <span className="text-foreground text-[10px] font-bold">Download on the</span>
                     <span className="text-foreground text-sm md:text-base font-[600]">App Store</span>
                 </div>
             </div>

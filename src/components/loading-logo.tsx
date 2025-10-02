@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion } from "motion/react"
 import React from "react"
 
 export function AnimatedLogo() {
@@ -30,7 +30,7 @@ export function AnimatedLogo() {
           variants={draw}
           initial="hidden"
           animate="visible"
-          custom={0} // Pass index for stagger
+          custom={0}
         />
         <motion.path
           d="M0,71.41h99.97v228.49h0C44.76,299.9,0,255.14,0,199.93V71.41Z"

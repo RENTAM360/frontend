@@ -616,6 +616,13 @@ export const equipmentApi = baseApi.injectEndpoints({
       }),
     }),
 
+    getAddressSuggestions: builder.query<{ data: string[]; message: string; status: string }, string>({
+      query: (address) => ({
+        url: `equipment/autocomplete/address?address=${encodeURIComponent(address)}`,
+        method: "GET",
+      }),
+    }),
+
   }),
 })
 
@@ -639,4 +646,5 @@ export const {
   useDeleteEquipmentMutation,
   useBookEquipmentMutation,
   useReportUserMutation,
+  useGetAddressSuggestionsQuery,
 } = equipmentApi

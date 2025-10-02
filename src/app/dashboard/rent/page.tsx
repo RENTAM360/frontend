@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SuccessModal } from "@/components/success-modal"
 import Image from "next/image"
-import { Category, useAddEquipmentMutation, useGetCategoriesQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
+import { Category, useAddEquipmentMutation, useGetCategoriesQuery, useUploadEquipmentImagesMutation, useGetAddressSuggestionsQuery  } from "@/lib/redux/api/equipmentApi"
 
 // interface Category {
 //   id: string
@@ -30,6 +30,7 @@ export default function RentPage() {
   const [photos, setPhotos] = useState<PhotoFile[]>([])
   const [price, setPrice] = useState("50000")
   const [location, setLocation] = useState("")
+  const [selectedLocation, setSelectedLocation] = useState("")
   const [title, setTitle] = useState("")
   const [name, setName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,20 +39,27 @@ export default function RentPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [addEquipment] = useAddEquipmentMutation()
   const [uploadImages] = useUploadEquipmentImagesMutation()
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const { data: addressData } = useGetAddressSuggestionsQuery(location, {
+  skip: !location || location.length < 3,
+})
   const { data: categoriesData, isLoading } = useGetCategoriesQuery()
   const categories = categoriesData?.data || []
 
-  // console.log(categories)
+ useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
 
-  // const categories: Category[] = [
-  //   { id: "electronics", name: "Electronics" },
-  //   { id: "commercial", name: "Commercial equipments" },
-  //   { id: "property", name: "Property" },
-  //   { id: "vehicles", name: "Vehicles" },
-  //   { id: "building", name: "Building materials" },
-  //   { id: "tools", name: "Hand tools" },
-  //   { id: "cameras", name: "Photo and video cameras" },
-  // ]
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
 
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -130,7 +138,7 @@ export default function RentPage() {
         pricePerDay: Number(price),
         category: selectedCategory._id,
         media: imageUrls,
-        address: location,
+        address: selectedLocation || location,
       }).unwrap()
 
       console.log(res)
@@ -151,6 +159,8 @@ export default function RentPage() {
       })
     }
   }, [photos])
+
+  const suggestions = addressData?.data ?? [];
 
   return (
     <div className="container font-sans mx-auto px-4 py-8 max-w-3xl">
@@ -256,7 +266,7 @@ export default function RentPage() {
           </div>
 
           {/* Location */}
-          <div>
+          <div className="relative">
             <label htmlFor="location" className="block text-sm font-medium text-black mb-1">
               Location
             </label>
@@ -264,10 +274,30 @@ export default function RentPage() {
               id="location"
               placeholder="Enter location"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                setShowSuggestions(true);
+              }}
               className="bg-[#F8F8FA] py-6 rounded-lg border-none"
               required
             />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full bg-white shadow-lg border rounded-lg mt-1 max-h-60 overflow-y-auto">
+                {addressData?.data.map((addr, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSelectedLocation(addr)
+                      setLocation(addr)
+                      setShowSuggestions(false);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  >
+                    {addr}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Title */}

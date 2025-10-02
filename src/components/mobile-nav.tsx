@@ -2,9 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useAppSelector } from "@/lib/redux/hooks"
+import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
+import { NavLinkProps } from "./dashboard-navbar"
+import clsx from "clsx"
+import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
 
 export function MobileNav() {
   const pathname = usePathname()
+  const savedItems = useAppSelector(selectSavedItems)
+  const savedItemsCount = savedItems.length
+  const {data: conversations = []} = useGetConversationsQuery()
+    const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
 
   return (
     <div className="fixed bottom-0 left-0 z-40 w-full font-sans border-t bg-white md:hidden">
@@ -21,8 +30,9 @@ export function MobileNav() {
             </svg>
             <span className="text-xs">Home</span>
         </Link>
-        <Link
+        <NavLink
           href="/dashboard/saved"
+          badge={savedItemsCount > 0 ? savedItemsCount : undefined}
           className={`flex flex-col items-center justify-center ${
             pathname === "/dashboard/saved" ? "text-[#12B76A]" : "text-gray-500"
           }`}
@@ -33,7 +43,7 @@ export function MobileNav() {
                 <path d="M15.8906 18.9584C15.4656 18.9584 14.999 18.8334 14.549 18.5751L10.4823 16.3167C10.2406 16.1834 9.76563 16.1834 9.52396 16.3167L5.45729 18.5751C4.63229 19.0334 3.79062 19.0834 3.14896 18.7001C2.50729 18.3251 2.14062 17.5667 2.14062 16.6251V4.88341C2.14062 2.76675 3.86562 1.04175 5.98229 1.04175H14.024C16.1406 1.04175 17.8656 2.76675 17.8656 4.88341V16.6251C17.8656 17.5667 17.499 18.3251 16.8573 18.7001C16.5656 18.8751 16.2323 18.9584 15.8906 18.9584ZM9.99896 14.9667C10.3906 14.9667 10.774 15.0501 11.0823 15.2251L15.149 17.4834C15.574 17.7251 15.9656 17.7751 16.2156 17.6251C16.4656 17.4751 16.6073 17.1167 16.6073 16.6251V4.88341C16.6073 3.45841 15.4406 2.29175 14.0156 2.29175H5.98229C4.55729 2.29175 3.39063 3.45841 3.39063 4.88341V16.6251C3.39063 17.1167 3.53229 17.4834 3.78229 17.6251C4.03229 17.7667 4.41563 17.7251 4.84896 17.4834L8.91563 15.2251C9.22396 15.0501 9.60729 14.9667 9.99896 14.9667Z" fill="currentColor"/>
             </svg>
             <span className="text-xs">Saved</span>
-        </Link>
+        </NavLink>
         <Link
           href="/dashboard/rent"
           className={`flex flex-col items-center justify-center ${
@@ -61,13 +71,30 @@ export function MobileNav() {
                 <path d="M5.66536 11.8251C5.1987 11.8251 4.83203 11.4501 4.83203 10.9918C4.83203 10.5334 5.20703 10.1584 5.66536 10.1584C6.1237 10.1584 6.4987 10.5334 6.4987 10.9918C6.4987 11.4501 6.1237 11.8251 5.66536 11.8251Z" fill="currentColor"/>
                 <path d="M14.9497 13.5751C14.783 13.5751 14.6164 13.5084 14.4997 13.3834C14.3664 13.2501 14.308 13.0584 14.333 12.8751C14.358 12.7001 14.3664 12.5168 14.3664 12.3251V8.99176C14.3664 6.66676 13.3247 5.62508 10.9997 5.62508H5.66636C5.47469 5.62508 5.29138 5.63341 5.11638 5.65008C4.93305 5.67508 4.74137 5.6084 4.60804 5.4834C4.4747 5.35007 4.39969 5.16676 4.41636 4.98342C4.56636 3.18342 5.49136 1.04175 8.99969 1.04175H14.333C17.3497 1.04175 18.9497 2.64176 18.9497 5.65842V8.99176C18.9497 12.5001 16.808 13.4168 15.008 13.5751C14.983 13.5751 14.9664 13.5751 14.9497 13.5751ZM5.76638 4.37508H10.9914C14.008 4.37508 15.608 5.97509 15.608 8.99176V12.2168C17.0247 11.8668 17.6914 10.8251 17.6914 8.99176V5.65842C17.6914 3.33342 16.6497 2.29175 14.3247 2.29175H8.99138C7.15805 2.29175 6.12472 2.95841 5.76638 4.37508Z" fill="currentColor"/>
             </svg>
-            <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white">
-              10+
-            </span>
+            {totalUnread > 0 && (
+              <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white">
+                {totalUnread > 9 ? "9+" : totalUnread}
+              </span>
+            )}
           </div>
           <span className="text-xs">Messages</span>
         </Link>
       </div>
     </div>
+  )
+}
+
+function NavLink({ href, badge, children, className }: NavLinkProps) {
+  return (
+   <Link href={href} className={clsx("relative", className)}>
+      {badge !== undefined && (
+        <span className="absolute top-2 right-7 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
+      <div className="flex-col flex md:flex-row items-center md:gap-2">
+        {children}
+      </div>
+    </Link>
   )
 }

@@ -13,7 +13,7 @@ export default function HeroSection() {
             width={100}
             height={100}
           />
-          <div className="absolute inset-0 bg-[#3D3D3DF2]" /> {/* dark overlay */}
+          <div className="absolute inset-0 bg-[#3D3D3DF2]" /> 
         </div>
   
         {/* Content */}
@@ -31,11 +31,11 @@ export default function HeroSection() {
   
           {/* Phone Mockup */}
           <Image
-            src="/phone-mockup.svg"
+            src="/iPhone-mockup.png"
             alt="App Screenshot"
-            className="w-72 md:w-96 drop-shadow-xl"
-            width={28}
-            height={35}
+            className="w-72 md:w-96"
+            width={286.99}
+            height={580.81}
           />
         </div>
       </section>

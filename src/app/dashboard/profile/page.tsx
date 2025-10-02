@@ -129,9 +129,12 @@ export default function ProfilePage() {
       const file = e.target.files[0]
       const response = await uploadEquipmentImages([file]).unwrap()
       const uploadedUrl = response.data[0]
+      console.log(uploadedUrl)
+      console.log(uploadTarget)
 
       if (uploadTarget === "cover") {
-        await updateProfile({ coverPhoto: uploadedUrl }).unwrap()
+        const res = await updateProfile({ coverPhoto: uploadedUrl }).unwrap()
+        console.log(res)
       } else if (uploadTarget === "avatar") {
         await updateProfile({ avatar: uploadedUrl }).unwrap()
       }
@@ -140,6 +143,7 @@ export default function ProfilePage() {
       console.error("Image upload failed:", error)
       enqueueSnackbar("Image upload failed. Please try again.", { variant: "error" })
     } finally {
+      setUploadingTarget(null)
       setUploadTarget(null)
       if (fileInputRef.current) fileInputRef.current.value = "" 
     }
@@ -292,6 +296,11 @@ export default function ProfilePage() {
                 height={96}
                 className="object-cover"
               />
+              {uploadingTarget === "avatar" && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
               <button
                 onClick={() => {
                   setUploadTarget("avatar")

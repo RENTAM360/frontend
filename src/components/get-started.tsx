@@ -1,5 +1,10 @@
+"use client"
+
 import Image from "next/image";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button"
+import { motion } from "motion/react"
+
+const MotionButton = motion(Button)
 
 export default function GetStartedSection() {
     return (
@@ -30,17 +35,23 @@ export default function GetStartedSection() {
                 but it also has a price that is usually more expensive than renting from an individual. 
             </p>
 
-            <Button>Get started</Button>
+            <MotionButton
+              className="bg-emerald-500 z-[12] hover:bg-emerald-600"
+              whileHover={{ scale: 1.1, transition: { duration: 0.1 } }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Get started
+            </MotionButton>
           </div>
   
           {/* Mobile Mockup */}
           <div className="flex items-center justify-center flex-1">
             <Image
-            src="/get-started-phone-mockup.svg"
+            src="/iPhone-rent-mockup.png"
             alt="Phone Mockup"
-            className="w-52 md:w-60 drop-shadow-xl"
-            width={28}
-            height={35}
+            className="w-52 md:w-60"
+            width={239.08}
+            height={483.86}
             />
           </div>
         </div>

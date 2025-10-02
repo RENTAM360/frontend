@@ -88,7 +88,7 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
     skip: !userId,
   })
 
-   console.log(ownerProfile?.data)
+   console.log(ownerProfile)
 
   if (isLoadingUserEquipments || profileLoading) {
     return <AnimatedLogo />
@@ -109,7 +109,7 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
             </div>
             <div className="absolute -bottom-12 left-[37%] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
               <Image
-                src="/tg.svg"
+                src={ownerProfile?.data.avatar}
                 alt={`${ownerProfile?.data.firstName} ${ownerProfile?.data.lastName}`}
                 width={96}
                 height={96}
@@ -141,17 +141,29 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
               </Link>
             </div> */}
 
-            <p className="mt-4 text-black text-[12px] leading-relaxed">{ownerProfile?.data.bio}</p>
+            {ownerProfile?.data.bio ? (
+              <p className="mt-4 text-black text-[12px] leading-relaxed">{ownerProfile?.data.bio}</p>
+            ) : (
+              <p className="mt-4 text-black text-[12px] leading-relaxed">No bio data yet.</p>
+            )}
 
             <div className="mt-6 space-y-3">
-              <div className="flex items-center gap-3 text-sm">
+              {ownerProfile?.data.address ? (
+                <div className="flex items-center gap-3 text-sm">
                 <MapPin className="w-5 h-5 text-primary" />
                 <span>{ownerProfile?.data.address}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              ): (
+                null
+              )}
+              {ownerProfile?.data.phone ? (
+                <div className="flex items-center gap-3 text-sm">
                 <Phone className="w-5 h-5 text-primary" />
                 <span>{ownerProfile?.data.phone}</span>
               </div>
+              ) : (
+                null
+              )}
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ const mockEquipmentData = {
         <path d="M15.0404 7.12501C15.0407 6.17097 14.7948 5.233 14.3263 4.4019C13.8579 3.57079 13.1828 2.8747 12.3664 2.381C11.5501 1.8873 10.6201 1.61272 9.66647 1.58384C8.71287 1.55496 7.76796 1.77275 6.92322 2.21614C6.07847 2.65952 5.3625 3.31349 4.84461 4.11472C4.32672 4.91595 4.02445 5.83732 3.96707 6.78963C3.90968 7.74193 4.09912 8.69293 4.51704 9.55055C4.93497 10.4082 5.56723 11.1434 6.35262 11.685L3.95703 15.8333L5.74303 15.907L6.69937 17.4167L9.44328 12.6635L9.4987 12.6667C9.52641 12.6683 9.53512 12.6643 9.55412 12.6635L12.298 17.4167L13.2734 15.9394L15.0404 15.8333L12.6448 11.685C13.3839 11.1761 13.9882 10.4951 14.4055 9.70073C14.8228 8.90633 15.0407 8.02236 15.0404 7.12501ZM5.54037 7.12501C5.54037 6.34212 5.77252 5.57682 6.20746 4.92588C6.64241 4.27493 7.26062 3.76758 7.98391 3.46798C8.7072 3.16839 9.50309 3.09 10.2709 3.24273C11.0388 3.39547 11.7441 3.77246 12.2977 4.32604C12.8512 4.87963 13.2282 5.58493 13.381 6.35278C13.5337 7.12062 13.4553 7.91651 13.1557 8.6398C12.8561 9.36309 12.3488 9.98129 11.6978 10.4162C11.0469 10.8512 10.2816 11.0833 9.4987 11.0833C8.44888 11.0833 7.44207 10.6663 6.69973 9.92397C5.9574 9.18164 5.54037 8.17482 5.54037 7.12501Z" fill="#12B76A"/>
         <path d="M9.5 9.5C10.8117 9.5 11.875 8.43668 11.875 7.125C11.875 5.81332 10.8117 4.75 9.5 4.75C8.18832 4.75 7.125 5.81332 7.125 7.125C7.125 8.43668 8.18832 9.5 9.5 9.5Z" fill="#12B76A"/>
         </svg>),
-      text: "Guaranteed Car",
+      text: "Guaranteed Delivery",
     },
     {
         icon: (<svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -252,7 +252,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
             <p className="mt-2 text-[#979797]">{equipmentData.title}</p>
             <p className="mt-2 text-[#979797]">{equipmentData.description}</p>
             <ol className="mt-4 space-y-2 list-decimal pl-5">
-              <li>
+              {/* <li>
                 <ul className="space-y-2 text-[#979797]">
                   {mockEquipmentData.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
@@ -261,7 +261,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                     </li>
                   ))}
                 </ul>
-              </li>
+              </li> */}
               <li className="mt-4 text-[#979797] ">{mockEquipmentData.callToAction}</li>
             </ol>
 
@@ -271,8 +271,8 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                   key={index}
                   className="flex items-center gap-1 md:gap-2 rounded-md text-[10px] border border-primary px-2 md:px-4 py-2 text-green-600"
                 >
-                    <span>{guarantee.icon}</span>
-                  <span>{guarantee.text}</span>
+                    <span className="bg-[#F6FEF9]">{guarantee.icon}</span>
+                  <span className="bg-[#F6FEF9]">{guarantee.text}</span>
                 </div>
               ))}
             </div>

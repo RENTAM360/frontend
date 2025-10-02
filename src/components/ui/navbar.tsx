@@ -5,12 +5,26 @@ import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { motion } from "motion/react"
+
+const MotionButton = motion(Button)
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="w-full font-sans border-b bg-white">
+    <motion.header 
+      className="w-full font-sans border-b bg-white"
+      initial={{
+        x: -100,
+        opacity: 0
+      }}
+      animate={{
+        x: 0,
+        opacity: 1
+      }}
+      transition={{ duration: 1, ease: "backInOut" }}
+    >
       <div className="container flex h-20 items-center justify-between py-8 px-6 md:px-16 md:py-12">
         <Link href="/" className="flex items-center gap-2" aria-label="Rentam360 home">
         <svg width="197" height="40" viewBox="0 0 197 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +48,7 @@ export default function Navbar() {
         </button>
 
         {/* Desktop navigation */}
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden relative items-center gap-6 md:flex">
           <Link href="/explore" className="text-sm font-medium transition-colors hover:text-primary">
             Explore
           </Link>
@@ -51,9 +65,13 @@ export default function Navbar() {
           <Link href="/signup" className="text-sm font-medium transition-colors hover:text-primary">
             Sign up
           </Link>
-          <Button className="bg-emerald-500 hover:bg-emerald-600">
+          <MotionButton 
+            className="bg-emerald-500 hover:bg-emerald-600"
+            whileHover={{ scale: 1.1, transition: { duration: 0.1 } }}
+            whileTap={{ scale: 0.95 }}
+          >
             <Link href="/login">Login</Link>
-          </Button>
+          </MotionButton>
         </div>
 
         {/* Mobile menu */}
@@ -103,6 +121,6 @@ export default function Navbar() {
           </nav>
         </div>
       </div>
-    </header>
+    </motion.header>
   )
 }

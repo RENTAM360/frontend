@@ -92,9 +92,9 @@ export default function MessagesPage() {
     await sendMessage(activeConversation.id, message)
   }
 
-  const handleOpenReportModal = () => {
-    setIsReportModalOpen(true)
-  }
+  // const handleOpenReportModal = () => {
+  //   setIsReportModalOpen(true)
+  // }
 
   const handleCloseReportModal = () => {
     setIsReportModalOpen(false)
@@ -201,7 +201,12 @@ export default function MessagesPage() {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleOpenReportModal}>
+                      <DropdownMenuItem 
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setIsReportModalOpen(true);
+                        }}
+                      >
                         <Flag className="h-4 w-4 mr-2" />
                         Report User
                       </DropdownMenuItem>
