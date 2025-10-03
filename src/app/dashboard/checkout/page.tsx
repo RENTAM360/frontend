@@ -157,7 +157,7 @@ if (isLoading) {
               </div>
               <div>
                 <h3 className="font-medium">{equipmentData.title}</h3>
-                <p className="text-[#676767] text-sm">{equipmentData.address}</p>
+                <p className="text-[#676767] text-xs">{equipmentData.address}</p>
                 <p className="text-primary text-sm font-medium mt-2">₦{equipmentData.pricePerDay.toLocaleString() || 0} per day</p>
               </div>
             </div>
@@ -165,7 +165,7 @@ if (isLoading) {
              {/* Title and Timestamp */ }
           <div className="mb-4">
             <h2 className="text-2xl font-[600]">{equipmentData.title}</h2>
-            <p className="text-[#979797] text-[12px]">Today at {new Date().getTime()}</p>
+            <p className="text-[#979797] text-[12px]">Today at {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
           </div>
 
           {/* Rent Duration */}
@@ -243,16 +243,16 @@ if (isLoading) {
                 </svg>
               </div>
               <div className="">
-                <h3 className="text-xl font-bold mb-2">Important Notice</h3>
-                <p className="text-[14px] text-[#979797] mb-2">To keep your transactions safe, please remember:</p>
-                <p className="text-[14px] text-[#979797] mb-2">
+                <h3 className="md:text-xl font-bold mb-2">Important Notice</h3>
+                <p className="text-xs text-[#979797] mb-2">To keep your transactions safe, please remember:</p>
+                <p className="text-xs text-[#979797] mb-2">
                   Your money will be held securely until you have seen the product in person and confirmed that
                   everything is okay.
                 </p>
-                <p className="text-[14px] text-[#979797] mb-2">
+                <p className="text-xs text-[#979797] mb-2">
                   Only after your confirmation will the payment be released to the equipment owner.
                 </p>
-                <p className="text-[14px] text-[#979797]">
+                <p className="text-xs text-[#979797]">
                   This helps protect both you and the seller from fraud or misunderstandings.
                 </p>
               </div>

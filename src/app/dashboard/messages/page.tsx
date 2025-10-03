@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { MessageList } from "@/components/message-list"
 import { MessageView } from "@/components/message-view"
-import { Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
+import { ArrowLeft, Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
 import { useMessagingContext } from "@/context/messaging-context"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -24,6 +24,7 @@ export default function MessagesPage() {
     isLoadingMessages,
     isConnected,
     connectionError,
+    setActiveConversation,
   } = useMessagingContext()
 
   // console.log(isConnected, activeConversation, conversations)
@@ -103,7 +104,9 @@ export default function MessagesPage() {
     <div className="flex h-screen -mx-6 font-sans overflow-hidden">
       <div className="flex bg-[#F9F9F9] flex-1 overflow-hidden">
         {/* Messages list */}
-        <div className="w-full bg-white md:w-1/3 lg:w-1/3 flex flex-col">
+        <div className={`w-full bg-white md:w-1/3 lg:w-1/3 ${
+            activeConversation ? "hidden md:flex" : "flex"
+          } flex-col`}>
           {/* Header */}
           <div className="flex h-16 items-center justify-between px-4 border-b">
             <h1 className="text-xl font-bold">Messages</h1>
@@ -161,12 +164,21 @@ export default function MessagesPage() {
         </div>
 
         {/* Active conversation */}
-        <div className="hidden flex-1 flex-col md:flex overflow-hidden">
+        <div className={`${
+            activeConversation ? "flex" : "hidden"
+          } flex-1 flex-col md:flex m d:overflow-hidden`}>
           {activeConversation ? (
             <>
               {/* Conversation Header */}
               <div className="flex bg-white h-16 items-center justify-between p-4 border-b">
                 <div className="flex items-center space-x-3">
+                  {/* Back button (mobile only) */}
+                  <button
+                    onClick={() => setActiveConversation(null)}
+                    className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                  </button>
                   <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-100">
                     <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                       <User className="h-5 w-5" />
@@ -220,11 +232,13 @@ export default function MessagesPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
                 </div>
               ) : (
-                <MessageView
-                  conversation={activeConversation}
-                  showProductCard={true}
-                  onSendMessage={handleSendMessage}
-                />
+                <div className="flex-1 overflow-hidden">
+                  <MessageView
+                    conversation={activeConversation}
+                    showProductCard={true}
+                    onSendMessage={handleSendMessage}
+                  />
+                </div>
               )}
             </>
           ) : (

@@ -608,7 +608,7 @@ export default function ProfilePage() {
             {viewMode === "items" &&
             <>
                 <h2 className="text-2xl font-bold mb-6">Listed items</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 overflow-auto hide-scrollbar md:-mr-10 lg:grid-cols-3 gap-x-16 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 overflow-auto hide-scrollbar md:-mr-10 lg:grid-cols-3 md:gap-x-16 gap-4">
                     {userEquipments?.equipments?.map((item) => (
                     <EquipmentCard key={item.id} {...item} variant="profile" />
                     ))}

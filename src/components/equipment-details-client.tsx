@@ -271,8 +271,8 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                   key={index}
                   className="flex items-center gap-1 md:gap-2 rounded-md text-[10px] border border-primary px-2 md:px-4 py-2 text-green-600"
                 >
-                    <span className="bg-[#F6FEF9]">{guarantee.icon}</span>
-                  <span className="bg-[#F6FEF9]">{guarantee.text}</span>
+                    <span className="bg-[#F6FEF9] whitespace-nowrap">{guarantee.icon}</span>
+                  <span className="bg-[#F6FEF9] whitespace-nowrap">{guarantee.text}</span>
                 </div>
               ))}
             </div>

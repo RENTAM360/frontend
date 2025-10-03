@@ -19,6 +19,7 @@ interface MessagingContextType extends MessagingState {
   joinConversation: (conversationId: string, conv?: Conversation) => void
   sendMessage: (conversationId: string, content: string, media?: string) => Promise<void>
   markAsRead: (conversationId: string) => void
+  setActiveConversation: React.Dispatch<React.SetStateAction<Conversation | null>>
 
   // Connection management
   connect: (authToken: string) => Promise<void>
@@ -399,6 +400,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     connect,
     disconnect,
     isLoadingConversations,
+    setActiveConversation,
     isLoadingMessages,
   }
 
