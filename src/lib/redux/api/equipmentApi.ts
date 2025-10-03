@@ -359,7 +359,7 @@ export const equipmentApi = baseApi.injectEndpoints({
           name: item.name,
           category: item.category[0]?.name || "Uncategorized",
           categoryId: item.category[0]?._id || "",
-          pricePerDay: item.pricePerDay || 50000, // Default price since it's missing from API
+          pricePerDay: item.pricePerDay || 50000,
           rating: item.rating,
           imageUrl: item.media[0] || "/placeholder.svg",
           media: item.media,

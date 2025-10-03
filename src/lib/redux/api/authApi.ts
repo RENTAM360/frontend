@@ -20,6 +20,7 @@ export interface ForgotPasswordCredentials {
 }
 
 export interface ResetPasswordCredentials {
+  code: string
   token: string
   password: string
 }
@@ -289,6 +290,12 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
+    googleLogin: builder.query<{ url: string }, void>({
+      query: () => ({
+        url: "/auth/google",
+        method: "GET",
+      }),
+    }),
   }),
 })
 
@@ -306,4 +313,6 @@ export const {
   useGetOtherUserProfileQuery, 
   useUpdatePhoneMutation,
   useVerifyPhoneMutation, 
+  useGoogleLoginQuery,
+  useLazyGoogleLoginQuery,
 } = authApi

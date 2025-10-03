@@ -128,22 +128,24 @@ export function DashboardNavbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative md:py-1 rounded-full bg-white w-[300px] hidden md:block">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9.58464 18.1251C4.8763 18.1251 1.04297 14.2917 1.04297 9.58342C1.04297 4.87508 4.8763 1.04175 9.58464 1.04175C14.293 1.04175 18.1263 4.87508 18.1263 9.58342C18.1263 14.2917 14.293 18.1251 9.58464 18.1251ZM9.58464 2.29175C5.55964 2.29175 2.29297 5.56675 2.29297 9.58342C2.29297 13.6001 5.55964 16.8751 9.58464 16.8751C13.6096 16.8751 16.8763 13.6001 16.8763 9.58342C16.8763 5.56675 13.6096 2.29175 9.58464 2.29175Z" fill="#979797"/>
-                      <path d="M18.3326 18.9583C18.1742 18.9583 18.0159 18.9 17.8909 18.775L16.2242 17.1083C15.9826 16.8666 15.9826 16.4666 16.2242 16.225C16.4659 15.9833 16.8659 15.9833 17.1076 16.225L18.7742 17.8916C19.0159 18.1333 19.0159 18.5333 18.7742 18.775C18.6492 18.9 18.4909 18.9583 18.3326 18.9583Z" fill="#979797"/>
-                  </svg>
+            {pathname === "/dashboard" && (
+              <div className="relative md:py-1 rounded-full bg-white w-[300px] hidden md:block">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9.58464 18.1251C4.8763 18.1251 1.04297 14.2917 1.04297 9.58342C1.04297 4.87508 4.8763 1.04175 9.58464 1.04175C14.293 1.04175 18.1263 4.87508 18.1263 9.58342C18.1263 14.2917 14.293 18.1251 9.58464 18.1251ZM9.58464 2.29175C5.55964 2.29175 2.29297 5.56675 2.29297 9.58342C2.29297 13.6001 5.55964 16.8751 9.58464 16.8751C13.6096 16.8751 16.8763 13.6001 16.8763 9.58342C16.8763 5.56675 13.6096 2.29175 9.58464 2.29175Z" fill="#979797"/>
+                        <path d="M18.3326 18.9583C18.1742 18.9583 18.0159 18.9 17.8909 18.775L16.2242 17.1083C15.9826 16.8666 15.9826 16.4666 16.2242 16.225C16.4659 15.9833 16.8659 15.9833 17.1076 16.225L18.7742 17.8916C19.0159 18.1333 19.0159 18.5333 18.7742 18.775C18.6492 18.9 18.4909 18.9583 18.3326 18.9583Z" fill="#979797"/>
+                    </svg>
 
+                </div>
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e)=>dispatch(setSearchTerm(e.target.value))}
+                  placeholder="I am looking for..."
+                  className="appearance-none placeholder:text-[#898A8D] text-black text-[12px] md:ml-10 w-full h-full border-none outline-none"
+                />
               </div>
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(e)=>dispatch(setSearchTerm(e.target.value))}
-                placeholder="I am looking for..."
-                className="appearance-none placeholder:text-[#898A8D] text-black text-[12px] md:ml-10 w-full h-full border-none outline-none"
-              />
-            </div>
+            )}
 
             <div className="relative" ref={dropdownRef}>
               <button onClick={() => setOpen((prev) => !prev)} className="relative md:ml-6 rounded-full p-2 hover:bg-green-600">

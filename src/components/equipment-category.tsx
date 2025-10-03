@@ -111,7 +111,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
         ) : (
           <div 
             ref={containerRef}
-            className="grid grid-cols-2 md:flex gap-4 overflow-x-auto md:-mr-8 hide-scrollbar"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2"
             style={{ scrollBehavior: "smooth" }}
           >
             {filteredEquipments.map((equipment) => (

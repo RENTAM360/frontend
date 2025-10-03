@@ -12,6 +12,7 @@ import { RegisterData, useRegisterMutation } from "@/lib/redux/api/authApi";
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { useRouter } from "next/navigation";
 import { clearError, setCredentials } from "@/lib/redux/slices/authSlice";
+import { AuthButtons } from "@/components/auth-buttons";
 
 interface SignUpFormData {
   first_name: string
@@ -308,16 +309,7 @@ export default function SignUpPage() {
           </form>
 
           {/* Social auth */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button className="flex items-center gap-2 border rounded px-4 py-2 w-full justify-center">
-            <Image src="/google-play-badge.svg" alt="Google" width={20} height={20} />
-            <span>Google</span>
-            </button>
-            <button className="flex items-center gap-2 border rounded px-4 py-2 w-full justify-center">
-            <Image src="/app-store-badge.svg" alt="Apple" width={20} height={20} />
-            <span>Apple</span>
-            </button>
-          </div>
+          <AuthButtons />
         </div>
       </div>
     </div>

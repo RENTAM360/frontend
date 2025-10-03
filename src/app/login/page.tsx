@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { clearError, setCredentials } from '@/lib/redux/slices/authSlice';
 import { useAppDispatch } from '@/lib/redux/hooks';
 import { useRouter } from 'next/navigation';
+import { AuthButtons } from '@/components/auth-buttons';
 
 interface LoginFormInputs {
   email: string;
@@ -188,16 +189,7 @@ export default function LoginPage() {
             <a href="/signup" className="text-primary font-medium">Sign up</a>
           </p>
 
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button className="flex items-center gap-2 border rounded px-4 py-2 w-full justify-center">
-              <Image src="/google-play-badge.svg" alt="Google" width={20} height={20} />
-              <span>Google</span>
-            </button>
-            <button className="flex items-center gap-2 border rounded px-4 py-2 w-full justify-center">
-              <Image src="/app-store-badge.svg" alt="Apple" width={20} height={20} />
-              <span>Apple</span>
-            </button>
-          </div>
+          <AuthButtons />
         </div>
       </div>
     </main>

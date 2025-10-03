@@ -19,6 +19,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ conversations, activeId, onSelect }: MessageListProps) {
+  console.log(conversations)
   return (
     <div className="divide-y bg-white overflow-y-auto">
       {conversations.map((conversation) => (
@@ -41,10 +42,12 @@ export function MessageList({ conversations, activeId, onSelect }: MessageListPr
                   target.style.display = "none"
                 }}
               />
-            ) : null}
-            <div className="absolute inset-0 flex items-center bg-gray-100 justify-center text-gray-400">
-              <User className="h-6 w-6" />
-            </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center bg-gray-100 justify-center text-gray-400">
+                <User className="h-6 w-6" />
+              </div>
+            )}
+            
           </div>
           <div className="flex-1 overflow-hidden">
             <div className="flex justify-between">
