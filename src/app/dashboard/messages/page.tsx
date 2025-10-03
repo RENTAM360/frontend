@@ -6,7 +6,7 @@ import { MessageView } from "@/components/message-view"
 import { Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
 import { useMessagingContext } from "@/context/messaging-context"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ReportModal } from "@/components/report-modal"
 
@@ -26,7 +26,7 @@ export default function MessagesPage() {
     connectionError,
   } = useMessagingContext()
 
-  console.log(isConnected, activeConversation, conversations)
+  // console.log(isConnected, activeConversation, conversations)
 
   const searchParams = useSearchParams()
   const convId = searchParams.get("conversation")
@@ -44,16 +44,8 @@ export default function MessagesPage() {
     }
   }, [convId, joinConversation, conversations, isLoadingConversations])
 
-  // Filter conversations based on search query
-  const filteredConversations = conversations.filter(
-    (conv) =>
-      conv.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (conv.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())),
-  )
-
   // Format conversations for MessageList component
-  const formattedConversations = filteredConversations.map((conv) => {
-    // Format time for display
+  const formattedConversations = useMemo(() => {
     const formatTime = (timestamp?: string) => {
       if (!timestamp) return ""
 
@@ -66,14 +58,13 @@ export default function MessagesPage() {
       } else if (diffInHours < 24) {
         return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       } else if (diffInHours < 168) {
-        // 7 days
         return date.toLocaleDateString([], { weekday: "short" })
       } else {
         return date.toLocaleDateString([], { month: "short", day: "numeric" })
       }
     }
 
-    return {
+    return conversations.map((conv) => ({
       id: conv.id,
       name: conv.name,
       lastMessage: conv.lastMessage || "No messages yet",
@@ -81,8 +72,8 @@ export default function MessagesPage() {
       avatar: conv.avatar,
       isActive: conv.id === activeConversationId,
       unreadCount: conv.unreadCount,
-    }
-  })
+    }))
+  }, [conversations, activeConversationId])
 
   const handleSendMessage = async (message: string) => {
     if (!activeConversation) {
@@ -99,6 +90,14 @@ export default function MessagesPage() {
   const handleCloseReportModal = () => {
     setIsReportModalOpen(false)
   }
+
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery) return formattedConversations
+    return formattedConversations.filter((conv) =>
+    (conv.name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [formattedConversations, searchQuery])
+
 
   return (
     <div className="flex h-screen -mx-6 font-sans overflow-hidden">
@@ -146,14 +145,14 @@ export default function MessagesPage() {
               <div className="flex items-center justify-center h-32">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
               </div>
-            ) : formattedConversations.length === 0 ? (
+            ) : filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-300">
                 <MessageCircle className="w-8 h-8 mb-2" />
                 <p className="text-sm">{searchQuery ? "No conversations found" : "No conversations yet"}</p>
               </div>
             ) : (
               <MessageList
-                conversations={formattedConversations}
+                conversations={filteredConversations}
                 activeId={activeConversationId ?? ""}
                 onSelect={joinConversation}
               />

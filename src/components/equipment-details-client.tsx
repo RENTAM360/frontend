@@ -248,8 +248,8 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
           </div>
 
           <div className="mt-8 text-[12px]">
-            <h2 className="text-xl font-bold">Description</h2>
-            <p className="mt-2 text-[#979797]">{equipmentData.title}</p>
+            <h2 className="text-2xl font-bold">Description</h2>
+            <p className="mt-2 font-medium text-lg text-[#979797]">{equipmentData.title}</p>
             <p className="mt-2 text-[#979797]">{equipmentData.description}</p>
             <ol className="mt-4 space-y-2 list-decimal pl-5">
               {/* <li>
@@ -262,7 +262,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                   ))}
                 </ul>
               </li> */}
-              <li className="mt-4 text-[#979797] ">{mockEquipmentData.callToAction}</li>
+              {/* <li className="mt-4 text-[#979797] ">{mockEquipmentData.callToAction}</li> */}
             </ol>
 
             <div className="mt-6 justify-center md:justify-normal flex gap-4">

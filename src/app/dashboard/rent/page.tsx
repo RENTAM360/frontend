@@ -12,6 +12,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SuccessModal } from "@/components/success-modal"
 import Image from "next/image"
 import { Category, useAddEquipmentMutation, useGetCategoriesQuery, useUploadEquipmentImagesMutation, useGetAddressSuggestionsQuery  } from "@/lib/redux/api/equipmentApi"
+import { useRouter } from "next/navigation"
 
 // interface Category {
 //   id: string
@@ -41,9 +42,10 @@ export default function RentPage() {
   const [uploadImages] = useUploadEquipmentImagesMutation()
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const router = useRouter()
   const { data: addressData } = useGetAddressSuggestionsQuery(location, {
-  skip: !location || location.length < 3,
-})
+    skip: !location || location.length < 3,
+  })
   const { data: categoriesData, isLoading } = useGetCategoriesQuery()
   const categories = categoriesData?.data || []
 
@@ -393,6 +395,9 @@ export default function RentPage() {
           setPrice("")
           setLocation("")
           setTitle("")
+        }}
+        onConfirm={() => {
+          router.push("/dashboard/profile")
         }}
         title="Your item is now live on the platform and ready for rent. Sit back, and get ready to earn while others rent what you own."
       />

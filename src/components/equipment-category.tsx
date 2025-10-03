@@ -5,6 +5,7 @@ import { useGetCategoriesQuery, useGetEquipmentsQuery } from "@/lib/redux/api/eq
 import { EquipmentCard } from "@/components/equipment-card"
 import { Button } from "@/components/ui/button"
 import { skipToken } from "@reduxjs/toolkit/query"
+import { useAppSelector } from "@/lib/redux/hooks"
 
 interface EquipmentCategoryProps {
   title: string
@@ -12,13 +13,15 @@ interface EquipmentCategoryProps {
 }
 
 export function EquipmentCategory({ title }: EquipmentCategoryProps) {
+  const searchTerm = useAppSelector((state)=>state.search.term)
   const {
     data: categoryResponse,
   } = useGetCategoriesQuery()
 
-  // console.log(categoryResponse)
+  console.log(categoryResponse)
 
   const categories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse])
+  console.log(categories)
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
@@ -39,10 +42,11 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
     skip: selectedCategoryId !== "all",
   })
 
-  const equipments =
-    selectedCategoryId === "all"
+  const equipments = useMemo(() => {
+    return selectedCategoryId === "all"
       ? allEquipments.data?.equipments ?? []
       : equipmentResponse?.equipments ?? []
+  }, [selectedCategoryId, allEquipments.data, equipmentResponse])
 
   console.log(equipments)
 
@@ -53,65 +57,14 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
       ? "All Equipments"
       : categories.find((cat) => cat._id === selectedCategoryId)?.name ?? ""
 
-
-  // const matchedCategoryId = useMemo(() => {
-  //   return categories.find((cat) =>
-  //     cat.name.toLowerCase() === title.toLowerCase()
-  //   )?._id
-  // }, [categories, title])
-
-  // console.log(matchedCategoryId)
-
-  // const { data, isLoading, isError } = useGetEquipmentsQuery(
-  //   matchedCategoryId ? { categoryId: matchedCategoryId, limit } : skipToken
-  // )
-
-  // console.log(data)
-  // const equipments = data?.equipments || []
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Show loading state
-  // if ( isLoadingCategories) {
-  //   return (
-  //     <div className="space-y-4">
-  //       <h2 className="text-2xl font-bold">{title}</h2>
-  //       <div className="flex gap-4 overflow-hidden">
-  //         {[...Array(4)].map((_, i) => (
-  //           <div key={i} className="min-w-[280px] animate-pulse">
-  //             <div className="bg-gray-200 aspect-[4/3] rounded-lg mb-4"></div>
-  //             <div className="space-y-2">
-  //               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-  //               <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-  //               <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-  //             </div>
-  //           </div>
-  //         ))}
-  //       </div>
-  //     </div>
-  //   )
-  // }
-
-  // Show error state
-  // if (isErrorCategories) {
-  //   return (
-  //     <div className="space-y-4">
-  //       <h2 className="text-2xl font-bold">{title}</h2>
-  //       <div className="bg-red-50 p-4 rounded-lg text-red-700">Failed to load equipment. Please try again later.</div>
-  //     </div>
-  //   )
-  // }
-
-  // Show empty state
-  // if (equipments.length === 0) {
-  //   return (
-  //     <div className="space-y-4">
-  //       <h2 className="text-2xl font-bold">{title}</h2>
-  //       <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
-  //         No equipment available in this category.
-  //       </div>
-  //     </div>
-  //   )
-  // }
+  const filteredEquipments = useMemo(() => {
+    if (!searchTerm) return equipments
+    return equipments.filter((eq) =>
+      eq.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [equipments, searchTerm])
 
   return (
     <div className="space-y-4">
@@ -148,11 +101,11 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
               </div>
             ))}
           </div>
-        ) : equipments.length === 0 ? (
+        ) : filteredEquipments.length === 0 ? (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">{title}</h2>
             <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
-              No equipment available in this category.
+              No equipment found {searchTerm ? `for "${searchTerm}"` : "in this category"}.
             </div>
           </div>
         ) : (
@@ -161,7 +114,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
             className="grid grid-cols-2 md:flex gap-4 overflow-x-auto md:-mr-8 hide-scrollbar"
             style={{ scrollBehavior: "smooth" }}
           >
-            {equipments.map((equipment) => (
+            {filteredEquipments.map((equipment) => (
               <EquipmentCard
                 key={equipment.id}
                 id={equipment.id}

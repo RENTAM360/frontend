@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useSnackbar } from "notistack"
 import { useVerifyBvnMutation, useVerifyNinMutation } from "@/lib/redux/api/bankApi"
+import Image from "next/image"
 
 interface AddBankModalProps {
   isOpen: boolean
@@ -102,6 +103,9 @@ export function VerifyNinModal({ isOpen, onClose, verifyText }: AddBankModalProp
             {isLoading ? "Verifying..." : "Verify"}
           </Button>
         </form>
+        <div className="flex text-xs mt-4 text-black justify-center items-center gap-2">
+          Secured by <Image src="/prembly_logo.svg" alt="Prembly Logo" width="70" height="70" />
+        </div>
       </DialogContent>
     </Dialog>
   )

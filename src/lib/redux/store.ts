@@ -5,6 +5,7 @@ import { persistReducer, persistStore } from "redux-persist"
 import storage from "redux-persist/lib/storage" 
 import { baseApi } from "./api/baseApi"
 import savedItemsReducer from "./slices/savedItemsSlice"
+import searchReducer from "./slices/searchSlice"
 
 const persistConfig = {
   key: "auth",
@@ -18,6 +19,7 @@ export const store = configureStore({
     auth: persistedAuthReducer,
     [baseApi.reducerPath]: baseApi.reducer,
     savedItems: savedItemsReducer,
+    search: searchReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

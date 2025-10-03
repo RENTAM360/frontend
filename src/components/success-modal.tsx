@@ -11,6 +11,7 @@ interface SuccessModalProps {
   description?: string
   icon?: "success" | "warning"
   amount?: number
+  onConfirm?: () => void
   actionLabel?: string
   cancelLabel?: string
   onAction?: () => void
@@ -23,13 +24,13 @@ export function SuccessModal({
   description,
   icon = "success",
   amount,
+  onConfirm,
   actionLabel = "Done",
   cancelLabel,
-  onAction,
 }: SuccessModalProps) {
   const handleAction = () => {
-    if (onAction) {
-      onAction()
+    if (onConfirm) {
+      onConfirm()
     } else {
       onClose()
     }

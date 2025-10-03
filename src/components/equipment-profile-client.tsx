@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
 import Link from "next/link"
+import { AnimatedLogo } from "./loading-logo"
 
 interface EquipmentIdProps {
   equipmentId: string
@@ -29,12 +30,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#12B76A] mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold">Loading equipment...</h2>
-        </div>
-      </div>
+      <AnimatedLogo />
     )
   }
 
@@ -156,7 +152,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                         fill="#12B76A"
                     />
                     </svg>
-                    <span>Guaranteed Equipment</span>
+                    <span className="bg-[#F6FEF9]">Guaranteed Equipment</span>
                 </div>
                 <div className="flex items-center gap-1 md:gap-2 rounded-md text-[10px] border border-[#12B76A] px-2 md:px-4 py-2 text-[#12B76A]">
                     <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -165,7 +161,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                         fill="#12B76A"
                     />
                     </svg>
-                    <span>Money back Guarantee</span>
+                    <span className="bg-[#F6FEF9]">Money back Guarantee</span>
                 </div>
                 </div>
             </div>

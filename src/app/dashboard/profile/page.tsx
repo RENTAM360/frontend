@@ -15,6 +15,9 @@ import { VerifyNinModal } from "@/components/verify-nin-modal"
 import { useGetEquipmentsQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import { VerifyPhoneModal } from "@/components/verifyPhoneNumber"
 import { enqueueSnackbar } from "notistack"
+import { clearCredentials } from "@/lib/redux/slices/authSlice"
+import { useAppDispatch } from "@/lib/redux/hooks"
+import { useRouter } from "next/navigation"
 
 type ViewMode = "items" | "edit" | "wallet"
 type StageStatus = "gray" | "green" | "orange";
@@ -23,6 +26,8 @@ export default function ProfilePage() {
     const [viewMode, setViewMode] = useState<ViewMode>("items")
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const user = getUserProfile()
+    const router = useRouter()
+    const dispatch = useAppDispatch()
     const { data: profileData } = useGetProfileQuery()
     const [verifyType, setVerifyType] = useState<"NIN" | "BVN" | null>(null);
     const [showVerifyPhone, setShowVerifyPhone] = useState(false)
@@ -238,6 +243,10 @@ export default function ProfilePage() {
     }
   }
 
+  const handleLogout = () => {
+    dispatch(clearCredentials())
+    router.push("/login")
+  }
 
   return (
     <div className="container font-sans mx-auto px-4 py-8">
@@ -574,7 +583,7 @@ export default function ProfilePage() {
               </svg>
 
             </button>
-            <Link href="/logout" className="flex items-center justify-between p-4 hover:bg-gray-50">
+            <button onClick={handleLogout} className="flex w-full items-center justify-between p-4 hover:bg-gray-50">
               <div className="flex items-center gap-3">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7.9987 15.1667C4.04536 15.1667 0.832031 11.9534 0.832031 8.00004C0.832031 4.04671 4.04536 0.833374 7.9987 0.833374C8.27203 0.833374 8.4987 1.06004 8.4987 1.33337C8.4987 1.60671 8.27203 1.83337 7.9987 1.83337C4.5987 1.83337 1.83203 4.60004 1.83203 8.00004C1.83203 11.4 4.5987 14.1667 7.9987 14.1667C11.3987 14.1667 14.1654 11.4 14.1654 8.00004C14.1654 7.72671 14.392 7.50004 14.6654 7.50004C14.9387 7.50004 15.1654 7.72671 15.1654 8.00004C15.1654 11.9534 11.952 15.1667 7.9987 15.1667Z" fill="#F04438"/>
@@ -586,7 +595,7 @@ export default function ProfilePage() {
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M6.68172 15.5025C6.53922 15.5025 6.39672 15.45 6.28422 15.3375C6.06672 15.12 6.06672 14.76 6.28422 14.5425L11.1742 9.65251C11.5342 9.29251 11.5342 8.70751 11.1742 8.34751L6.28422 3.45751C6.06672 3.24001 6.06672 2.88001 6.28422 2.66251C6.50172 2.44501 6.86172 2.44501 7.07922 2.66251L11.9692 7.55251C12.3517 7.93501 12.5692 8.45252 12.5692 9.00002C12.5692 9.54751 12.3592 10.065 11.9692 10.4475L7.07922 15.3375C6.96672 15.4425 6.82422 15.5025 6.68172 15.5025Z" fill="#292D32"/>
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
 

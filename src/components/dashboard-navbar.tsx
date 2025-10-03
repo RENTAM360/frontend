@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useAppSelector } from "@/lib/redux/hooks"
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
 import clsx from "clsx"
 import Image from "next/image"
@@ -12,10 +12,13 @@ import { useGetNotificationsQuery } from "@/lib/redux/api/notificationsApi"
 import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
 import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { User } from "lucide-react"
+import { setSearchTerm } from "@/lib/redux/slices/searchSlice"
 // import Image from "next/image"
 
 export function DashboardNavbar() {
   const pathname = usePathname()
+  const dispatch = useAppDispatch()
+  const searchTerm = useAppSelector((state)=>state.search.term)
   const savedItems = useAppSelector(selectSavedItems)
   const savedItemsCount = savedItems.length
   const [open, setOpen] = useState(false);
@@ -135,8 +138,10 @@ export function DashboardNavbar() {
               </div>
               <input
                 type="search"
+                value={searchTerm}
+                onChange={(e)=>dispatch(setSearchTerm(e.target.value))}
                 placeholder="I am looking for..."
-                className="appearance-none placeholder:text-[#898A8D] text-[12px] md:ml-10 w-full h-full border-none outline-none"
+                className="appearance-none placeholder:text-[#898A8D] text-black text-[12px] md:ml-10 w-full h-full border-none outline-none"
               />
             </div>
 
@@ -180,7 +185,7 @@ export function DashboardNavbar() {
                   width={100}
                   height={100}
                 />) : (
-                  <User className="w-8 h-8" />
+                  <User className="w-5 h-5" />
                 )}
                 {/* <div>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -202,6 +207,8 @@ export function DashboardNavbar() {
         </div>
         <input
           type="search"
+          value={searchTerm}
+          onChange={(e)=> dispatch(setSearchTerm(e.target.value))}
           placeholder="I am looking for..."
           className="appearance-none placeholder:text-[#898A8D] text-[12px] ml-10 w-full h-full border-none outline-none"
         />

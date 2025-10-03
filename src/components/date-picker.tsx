@@ -12,6 +12,8 @@ export function DatePicker({ onDateChange }: DatePickerProps) {
   const [endDate, setEndDate] = useState<Date | null>(null)
   const [showMonthSelector, setShowMonthSelector] = useState(false)
   const [showYearSelector, setShowYearSelector] = useState(false)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   useEffect(() => {
     onDateChange(startDate, endDate)
@@ -99,6 +101,7 @@ export function DatePicker({ onDateChange }: DatePickerProps) {
   }
 
   const handleDateClick = (date: Date) => {
+    if (date < today) return
     if (!startDate || (startDate && endDate)) {
       setStartDate(date)
       setEndDate(null)
@@ -327,6 +330,7 @@ export function DatePicker({ onDateChange }: DatePickerProps) {
           {days.map((day, index) => {
             const isStart = isStartDate(day.date)
             const isEnd = isEndDate(day.date)
+             const isPast = day.date < today
             // const isRange = isDateInRange(day.date)days
             const rangeStyle = getRangeStyle(day.date, index)
 
@@ -334,11 +338,13 @@ export function DatePicker({ onDateChange }: DatePickerProps) {
               <div key={index} className={`relative  flex items-center justify-center ${rangeStyle}`}>
                 <button
                   onClick={() => handleDateClick(day.date)}
+                  disabled={isPast}
                   className={`
                     h-8 w-8 flex items-center justify-center flex-shrink-0 rounded-full text-[12px]
                     ${!day.isCurrentMonth ? "text-gray-300" : ""}
+                     ${isPast ? "text-gray-300 cursor-not-allowed" : ""}
                     ${isStart || isEnd ? "bg-primary text-white" : ""}
-                    ${!isStart && !isEnd && day.isCurrentMonth ? "hover:bg-gray-100" : ""}
+                    ${!isStart && !isEnd && day.isCurrentMonth && !isPast ? "hover:bg-gray-100" : ""}
                   `}
                 >
                   {day.date.getDate()}

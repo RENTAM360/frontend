@@ -52,7 +52,7 @@ export default function CheckoutPage() {
 
   const [startDate, setStartDate] = useState<Date | null>(null)
   const [endDate, setEndDate] = useState<Date | null>(null)
-  const [selectedCard, setSelectedCard] = useState<string>("card1")
+  // const [selectedCard, setSelectedCard] = useState<string>("card1")
   const [showAddCard, setShowAddCard] = useState(false)
   // const [newCardData, setNewCardData] = useState({
   //   cardNumber: "",
@@ -270,7 +270,6 @@ if (isLoading) {
               <span className="text-[14px] text-[#979797]">Total price</span>
               <div className="text-right">
                 <span className="text-[20px] font-bold">₦{calculateTotalPrice().toLocaleString()}</span>
-                <span className="text-[#979797] text-lg ml-2">Per a day</span>
               </div>
             </div>
           </div>
@@ -280,8 +279,8 @@ if (isLoading) {
             <h2 className="text-base font-bold mb-6">Payment method</h2>
 
             <div className="space-y-4">
-              {/* Visa Card */}
-              <div
+              
+              {/* <div
                 className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
                 onClick={() => setSelectedCard("card1")}
               >
@@ -318,7 +317,7 @@ if (isLoading) {
                 </div>
               </div>
 
-              {/* Mastercard */}
+             
               <div
                 className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
                 onClick={() => setSelectedCard("card2")}
@@ -351,7 +350,7 @@ if (isLoading) {
                 </div>
               </div>
 
-              {/* Add New Card */}
+             
               <div
                 className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
                 onClick={() => setShowAddCard(true)}
@@ -388,7 +387,7 @@ if (isLoading) {
                 >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
-              </div>
+              </div> */}
 
               {/* Order Summary */}
               <h2 className="text-base font-medium">Order summary</h2>
