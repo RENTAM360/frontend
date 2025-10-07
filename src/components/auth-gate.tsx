@@ -33,7 +33,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   return (
     <MessagingProvider
-      currentUserId={profile.data._id}
+      currentUserId={profile.data.user._id}
       authToken={userToken}
     >
       {children}
