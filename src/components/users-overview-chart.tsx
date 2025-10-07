@@ -1,61 +1,66 @@
 "use client"
 
+import { useGetAdminUserChartQuery } from "@/lib/redux/api/adminApi"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
+import { AnimatedLogo } from "./loading-logo"
 
-const data = [
-  { name: "JAN", newUsers: 10, oldUsers: 5 },
-  { name: "FEB", newUsers: 15, oldUsers: 8 },
-  { name: "MAR", newUsers: 25, oldUsers: 15 },
-  { name: "APR", newUsers: 55, oldUsers: 35 },
-  { name: "MAY", newUsers: 65, oldUsers: 45 },
-  { name: "JUN", newUsers: 75, oldUsers: 55, highlight: true },
-  { name: "JUL", newUsers: 60, oldUsers: 60 },
-  { name: "AUG", newUsers: 40, oldUsers: 60 },
-  { name: "SEP", newUsers: 30, oldUsers: 55 },
-  { name: "OCT", newUsers: 35, oldUsers: 53 },
-  { name: "NOV", newUsers: 45, oldUsers: 58 },
-  { name: "DEC", newUsers: 55, oldUsers: 65 },
-]
+// const data = [
+//   { name: "JAN", newUsers: 10, oldUsers: 5 },
+//   { name: "FEB", newUsers: 15, oldUsers: 8 },
+//   { name: "MAR", newUsers: 25, oldUsers: 15 },
+//   { name: "APR", newUsers: 55, oldUsers: 35 },
+//   { name: "MAY", newUsers: 65, oldUsers: 45 },
+//   { name: "JUN", newUsers: 75, oldUsers: 55, highlight: true },
+//   { name: "JUL", newUsers: 60, oldUsers: 60 },
+//   { name: "AUG", newUsers: 40, oldUsers: 60 },
+//   { name: "SEP", newUsers: 30, oldUsers: 55 },
+//   { name: "OCT", newUsers: 35, oldUsers: 53 },
+//   { name: "NOV", newUsers: 45, oldUsers: 58 },
+//   { name: "DEC", newUsers: 55, oldUsers: 65 },
+// ]
 
 // Define proper types for the dot props
+
 type CustomizedDotProps = {
   cx?: number
   cy?: number
-  payload?: {
-    highlight?: boolean
-    name?: string
-  }
   value?: number
 }
 
-const CustomizedDot = (props: CustomizedDotProps) => {
-  const { cx = 0, cy = 0, payload } = props
-
-  // Return early if we don't have the required properties
-  if (!cx || !cy || !payload) {
-    return null
-  }
-
+const CustomizedDot = ({ cx = 0, cy = 0, value }: CustomizedDotProps) => {
+  if (!cx || !cy) return null
   return (
     <svg x={cx - 10} y={cy - 10} width={20} height={20} fill="white" viewBox="0 0 20 20">
-      <circle cx="10" cy="10" r="6" stroke="black" strokeWidth="2" fill="white" />
-      {payload.highlight && (
+      <circle cx="10" cy="10" r="6" stroke="black" strokeWidth="2" fill="white" /> 
         <g>
           <rect x="-25" y="-45" width="60" height="30" fill="black" rx="4" />
           <text x="5" y="-25" fill="white" textAnchor="middle" dominantBaseline="middle" fontSize="12">
-            100k
+            {value}
           </text>
         </g>
-      )}
     </svg>
   )
 }
 
+
 export function UsersOverviewChart() {
+  const { data, isLoading, isError } = useGetAdminUserChartQuery()
+
+  console.log(data)
+
+  if (isLoading) return <AnimatedLogo />
+  if (isError) return <p>Error loading chart</p>
+
+  const chartData =
+    data?.data?.labels.map((label, i) => ({
+      name: label,
+      newUsers: data.data.data[i],
+    })) ?? []
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart
-        data={data}
+        data={chartData}
         margin={{
           top: 20,
           right: 30,

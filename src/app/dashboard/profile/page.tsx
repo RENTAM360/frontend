@@ -10,7 +10,7 @@ import { useMemo, useRef, useState } from "react"
 import { ProfileEditForm } from "@/components/profile-edit-form"
 import { WalletView } from "@/components/wallet-view"
 import { SuccessModal } from "@/components/success-modal"
-import { useGetProfileQuery, useUpdateProfileMutation } from "@/lib/redux/api/authApi"
+import { OtherUserProfile, useGetProfileQuery, useUpdateProfileMutation } from "@/lib/redux/api/authApi"
 import { VerifyNinModal } from "@/components/verify-nin-modal"
 import { useGetEquipmentsQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import { VerifyPhoneModal } from "@/components/verifyPhoneNumber"
@@ -39,12 +39,12 @@ export default function ProfilePage() {
 
 
 
-    console.log(profileData)
-    const profile = profileData?.data
+    // console.log(profileData)
+    const profile = profileData?.data?.user
     const userId = profile?._id
 
     const { data: userEquipments } = useGetEquipmentsQuery({ userId })
-    console.log(userEquipments)
+    // console.log(userEquipments)
 
     const accountStages = useMemo<{
       details: StageStatus;
@@ -160,7 +160,7 @@ export default function ProfilePage() {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
-  const fullName = `${capitalize(profileData?.data?.firstName)} ${capitalize(profileData?.data?.lastName)}`;
+  const fullName = `${capitalize(profile?.firstName)} ${capitalize(profile?.lastName)}`;
 
   // const user = profileData?.data
 
@@ -337,7 +337,7 @@ export default function ProfilePage() {
 
           <div className="mt-16 px-8">
             <div className="flex flex-col items-center gap-2">
-              <h1 className="text-base text-center font-bold">{fullName}</h1>
+              {fullName || (profile as OtherUserProfile)?.businessName}
               {profile?.isVerify ? (
                 <span className="text-xs text-primary bg-green-50 px-2 py-0.5 rounded">
                   Verified
@@ -364,7 +364,7 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            <p className="mt-4 text-muted-foreground text-[12px] leading-relaxed">{profile?.bio}</p>
+            {profile?.bio && <p className="mt-4 text-muted-foreground text-[12px] leading-relaxed">{profile?.bio}</p>}
 
             <div className="mt-6 space-y-6">
               <div className="flex items-center gap-3 text-sm">
@@ -385,10 +385,10 @@ export default function ProfilePage() {
                 </div>
                 <span>{profile?.email}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              {profile?.phone && <div className="flex items-center gap-3 text-sm">
                 <div className="rounded-full bg-[#F6FEF9] p-2"><Phone className="w-4 h-4 text-primary" /></div>
                 <span>{profile?.phone}</span>
-              </div>
+              </div>}
               <button
                   onClick={() => setViewMode(viewMode === "edit" ? "items" : "edit")}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"

@@ -6,7 +6,7 @@ export default function Registration() {
     <main className="flex justify-center font-sans h-screen items-center">
       <div>
         <h1 className="text-2xl text-center font-semibold mb-6">Select your account type</h1>
-        <div className="flex flex-col md:flex-col gap-6">
+        <div className="flex flex-col md:flex-row gap-6">
           {/* Personal Account */}
           <Link href="/signup/personal">
             <div className="border-[1.51px] w-[383.4px]  p-4 rounded-[12.87px] border-[#F4F4F4] transition-transform duration-300 ease-out hover:-translate-y-2 cursor-pointer">

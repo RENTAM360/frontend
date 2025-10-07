@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, ReactNode, MouseEventHandler } from "react"
+import { useState, useMemo, ReactNode, MouseEventHandler, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -8,121 +8,164 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
 import { useRouter } from "next/navigation"
+import { useGetAdminActiveStatusQuery, useGetAdminSuspendedUsersQuery, useGetAdminTotalUsersQuery, useGetAdminUsersQuery, User } from "@/lib/redux/api/adminApi"
+import { AnimatedLogo } from "@/components/loading-logo"
 
 // Mock user data
-const mockUsers = [
-  {
-    id: 1,
-    name: "ThankGod Ogbonna",
-    username: "thankimedia",
-    email: "Thankimedia@gmail.com",
-    phone: "08107355412",
-    date: "01-Oct-2014",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "John Smith",
-    username: "johnsmith",
-    email: "john.smith@example.com",
-    phone: "08107355413",
-    date: "15-Nov-2015",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Sarah Johnson",
-    username: "sarahj",
-    email: "sarah.johnson@example.com",
-    phone: "08107355414",
-    date: "22-Mar-2016",
-    status: "inactive",
-  },
-  {
-    id: 4,
-    name: "Michael Brown",
-    username: "mikebrown",
-    email: "michael.brown@example.com",
-    phone: "08107355415",
-    date: "10-Jul-2017",
-    status: "suspended",
-  },
-  {
-    id: 5,
-    name: "Emily Davis",
-    username: "emilyd",
-    email: "emily.davis@example.com",
-    phone: "08107355416",
-    date: "05-Feb-2018",
-    status: "active",
-  },
-  {
-    id: 6,
-    name: "David Wilson",
-    username: "davidw",
-    email: "david.wilson@example.com",
-    phone: "08107355417",
-    date: "18-Sep-2019",
-    status: "inactive",
-  },
-  {
-    id: 7,
-    name: "Jessica Taylor",
-    username: "jessicat",
-    email: "jessica.taylor@example.com",
-    phone: "08107355418",
-    date: "30-Apr-2020",
-    status: "suspended",
-  },
-  {
-    id: 8,
-    name: "Daniel Martinez",
-    username: "danielm",
-    email: "daniel.martinez@example.com",
-    phone: "08107355419",
-    date: "12-Dec-2021",
-    status: "active",
-  },
-]
+// const mockUsers = [
+//   {
+//     id: 1,
+//     name: "ThankGod Ogbonna",
+//     username: "thankimedia",
+//     email: "Thankimedia@gmail.com",
+//     phone: "08107355412",
+//     date: "01-Oct-2014",
+//     status: "active",
+//   },
+//   {
+//     id: 2,
+//     name: "John Smith",
+//     username: "johnsmith",
+//     email: "john.smith@example.com",
+//     phone: "08107355413",
+//     date: "15-Nov-2015",
+//     status: "active",
+//   },
+//   {
+//     id: 3,
+//     name: "Sarah Johnson",
+//     username: "sarahj",
+//     email: "sarah.johnson@example.com",
+//     phone: "08107355414",
+//     date: "22-Mar-2016",
+//     status: "inactive",
+//   },
+//   {
+//     id: 4,
+//     name: "Michael Brown",
+//     username: "mikebrown",
+//     email: "michael.brown@example.com",
+//     phone: "08107355415",
+//     date: "10-Jul-2017",
+//     status: "suspended",
+//   },
+//   {
+//     id: 5,
+//     name: "Emily Davis",
+//     username: "emilyd",
+//     email: "emily.davis@example.com",
+//     phone: "08107355416",
+//     date: "05-Feb-2018",
+//     status: "active",
+//   },
+//   {
+//     id: 6,
+//     name: "David Wilson",
+//     username: "davidw",
+//     email: "david.wilson@example.com",
+//     phone: "08107355417",
+//     date: "18-Sep-2019",
+//     status: "inactive",
+//   },
+//   {
+//     id: 7,
+//     name: "Jessica Taylor",
+//     username: "jessicat",
+//     email: "jessica.taylor@example.com",
+//     phone: "08107355418",
+//     date: "30-Apr-2020",
+//     status: "suspended",
+//   },
+//   {
+//     id: 8,
+//     name: "Daniel Martinez",
+//     username: "danielm",
+//     email: "daniel.martinez@example.com",
+//     phone: "08107355419",
+//     date: "12-Dec-2021",
+//     status: "active",
+//   },
+// ]
 
 export default function UsersPage() {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState("all")
     const [searchQuery, setSearchQuery] = useState("")
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+    const [page, setPage] = useState(1)
+    const limit = 10
+
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedSearch(searchQuery)
+      }, 500)
+
+      return () => {
+        clearTimeout(handler)
+      }
+    }, [searchQuery])
+
+    const { data: totalUsers } = useGetAdminTotalUsersQuery()
+    const { data: activeStatus } = useGetAdminActiveStatusQuery()
+    const { data: suspendedStatus } = useGetAdminSuspendedUsersQuery()
+    const { data: usersData, isLoading } = useGetAdminUsersQuery({
+      filter: activeTab !== "all" ? activeTab.toLowerCase().replace(" users", "") : undefined,
+      search: debouncedSearch || undefined,
+      page,
+      limit,
+    })
+    const users = usersData?.data?.users ?? []
+    const total = usersData?.data?.total ?? 0
+    const totalPages = total ? Math.ceil(total / limit) : page + (users.length === limit ? 1 : 0)
+
+    // console.log(users)
+
+    const userCounts = useMemo(() => {
+    return {
+      total: totalUsers?.data.thisMonth ?? 0,
+      active: activeStatus?.data.active.thisMonth ?? 0,
+      inactive: activeStatus?.data.inActive.thisMonth ?? 0,
+      suspended: suspendedStatus?.data.thisMonth ?? 0,
+      lastMonthTotal: totalUsers?.data.lastMonth ?? 0,
+      lastMonthActive: activeStatus?.data.active.lastMonth ?? 0,
+      lastMonthInactive: activeStatus?.data.inActive.lastMonth ?? 0,
+      lastMonthSuspended: suspendedStatus?.data.lastMonth ?? 0,
+    }
+  }, [totalUsers, activeStatus, suspendedStatus])
 
   // Filter users based on active tab and search query
-  const filteredUsers = useMemo(() => {
-    let filtered = [...mockUsers]
+  // const filteredUsers = useMemo(() => {
+  //   let filtered = [...mockUsers]
 
-    // Filter by tab
-    if (activeTab !== "all") {
-      filtered = filtered.filter((user) => user.status === activeTab.toLowerCase().replace(" users", ""))
-    }
+  //   // Filter by tab
+  //   if (activeTab !== "all") {
+  //     filtered = filtered.filter((user) => user.status === activeTab.toLowerCase().replace(" users", ""))
+  //   }
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query) ||
-          user.username.toLowerCase().includes(query) ||
-          user.phone.includes(query),
-      )
-    }
+  //   // Filter by search query
+  //   if (searchQuery) {
+  //     const query = searchQuery.toLowerCase()
+  //     filtered = filtered.filter(
+  //       (user) =>
+  //         user.name.toLowerCase().includes(query) ||
+  //         user.email.toLowerCase().includes(query) ||
+  //         user.username.toLowerCase().includes(query) ||
+  //         user.phone.includes(query),
+  //     )
+  //   }
 
-    return filtered
-  }, [activeTab, searchQuery])
+  //   return filtered
+  // }, [activeTab, searchQuery])
 
   // Count users by status for the stats cards
-  const userCounts = useMemo(() => {
-    const total = mockUsers.length
-    const active = mockUsers.filter((user) => user.status === "active").length
-    const inactive = mockUsers.filter((user) => user.status === "inactive").length
-    const suspended = mockUsers.filter((user) => user.status === "suspended").length
+  // const userCounts = useMemo(() => {
+  //   const total = mockUsers.length
+  //   const active = mockUsers.filter((user) => user.status === "active").length
+  //   const inactive = mockUsers.filter((user) => user.status === "inactive").length
+  //   const suspended = mockUsers.filter((user) => user.status === "suspended").length
 
-    return { total, active, inactive, suspended }
-  }, [])
+  //   return { total, active, inactive, suspended }
+  // }, [])
 
   // Handle row click to navigate to user profile
   const handleRowClick = (userId: string | number) => {
@@ -143,37 +186,49 @@ export default function UsersPage() {
         <StatsCard
           title="Total Users"
           value={userCounts.total.toLocaleString()}
-          percentage="+23%"
+          percentage={`${userCounts.total - userCounts.lastMonthTotal >= 0 ? "+" : ""}${(
+            ((userCounts.total - userCounts.lastMonthTotal) / (userCounts.lastMonthTotal || 1)) *
+            100
+          ).toFixed(2)}%`}
           lastMonth="Last Month"
-          lastMonthValue="18,345"
+          lastMonthValue={userCounts.lastMonthTotal.toLocaleString()}
         />
         <StatsCard
           title="Active Users"
           value={userCounts.active.toLocaleString()}
-          percentage="+23%"
+          percentage={`${userCounts.active - userCounts.lastMonthActive >= 0 ? "+" : ""}${(
+            ((userCounts.active - userCounts.lastMonthActive) / (userCounts.lastMonthActive || 1)) *
+            100
+          ).toFixed(2)}%`}
           lastMonth="Last Month"
-          lastMonthValue="500"
+          lastMonthValue={userCounts.lastMonthActive.toLocaleString()}
         />
         <StatsCard
           title="Inactive Users"
           value={userCounts.inactive.toLocaleString()}
-          percentage="+23%"
+          percentage={`${userCounts.inactive - userCounts.lastMonthInactive >= 0 ? "+" : ""}${(
+            ((userCounts.inactive - userCounts.lastMonthInactive) / (userCounts.lastMonthInactive || 1)) *
+            100
+          ).toFixed(2)}%`}
           lastMonth="Last Month"
-          lastMonthValue="500"
+          lastMonthValue={userCounts.lastMonthInactive.toLocaleString()}
         />
         <StatsCard
           title="Suspended Users"
           value={userCounts.suspended.toLocaleString()}
-          percentage="+23%"
+          percentage={`${userCounts.suspended - userCounts.lastMonthSuspended >= 0 ? "+" : ""}${(
+            ((userCounts.suspended - userCounts.lastMonthSuspended) / (userCounts.lastMonthSuspended || 1)) *
+            100
+          ).toFixed(2)}%`}
           lastMonth="Last Month"
-          lastMonthValue="500"
+          lastMonthValue={userCounts.lastMonthSuspended.toLocaleString()}
         />
       </div>
 
       {/* Users Table */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">
-          {activeTab === "all" ? `All Users (${userCounts.total})` : `${activeTab} (${filteredUsers.length})`}
+          {activeTab === "all" ? `All Users (${total})` : `${activeTab} (${users.length})`}
         </h2>
 
         <div className="flex justify-between items-center mb-4">
@@ -198,7 +253,7 @@ export default function UsersPage() {
               placeholder="Search by name, email, address"
               className="w-[300px] pl-9 shadow-none py-4 rounded-lg border-[#EAEAEA]"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
             />
           </div>
         </div>
@@ -206,8 +261,8 @@ export default function UsersPage() {
         <div className="bg-white rounded-md border">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-6 p-4 border-b font-medium text-gray-500" style={{ fontSize: "14px" }}>
-            <div className="col-span-2">Full Name</div>
-            <div className="col-span-3">Email</div>
+            <div className="col-span-3">Full Name</div>
+            <div className="col-span-2">Email</div>
             <div className="col-span-2">Phone Number</div>
             <div className="col-span-2">Date Joined</div>
             <div className="col-span-1">Activity</div>
@@ -215,37 +270,45 @@ export default function UsersPage() {
           </div>
 
           {/* Table Rows */}
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => <UserRow key={user.id} user={user} onClick={() => handleRowClick(user.id)} />)
+          {isLoading ? (
+            <div className="p-10 flex justify-center items-center">
+              <AnimatedLogo />
+            </div>
+          ) : users.length > 0 ? (
+            users.map((user) => (
+              <UserRow key={user._id} user={user} onClick={() => handleRowClick(user._id)} />
+            ))
           ) : (
             <div className="p-8 text-center text-gray-500">No users found matching your criteria</div>
           )}
-
           {/* Pagination */}
-          {filteredUsers.length > 0 && (
+          {users.length > 0 && (
             <div className="flex justify-end items-center p-4 border-t">
-              <div className="text-sm text-gray-500 mr-4">Page 1 of {Math.ceil(filteredUsers.length / 5)}</div>
+              <div className="text-sm text-gray-500 mr-4">
+                Page {page} of {totalPages}
+              </div>
               <div className="flex space-x-1">
-                <Button variant="outline" size="sm" className="px-2">
+                <Button variant="outline" size="sm" className="px-2" onClick={() => setPage(page - 1)} disabled={page === 1}>
                   &lt; Prev
                 </Button>
-                <Button variant="outline" size="sm" className="px-2 bg-gray-100">
-                  1
-                </Button>
-                <Button variant="outline" size="sm" className="px-2">
-                  2
-                </Button>
-                {filteredUsers.length > 10 && (
-                  <>
-                    <Button variant="outline" size="sm" className="px-2 text-gray-400">
-                      ...
-                    </Button>
-                    <Button variant="outline" size="sm" className="px-2">
-                      {Math.ceil(filteredUsers.length / 5)}
-                    </Button>
-                  </>
-                )}
-                <Button variant="outline" size="sm" className="px-2">
+                {[...Array(totalPages)].map((_, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="sm"
+                    className={`px-2 ${page === i + 1 ? "bg-gray-200" : ""}`}
+                    onClick={() => setPage(i + 1)}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-2"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                >
                   Next &gt;
                 </Button>
               </div>
@@ -306,15 +369,15 @@ function TabButton({ children, active, onClick }: TabButtonProps) {
   )
 }
 
-interface User {
-  id: string | number
-  name: string
-  username: string
-  email: string
-  phone: string
-  date: string
-  status: "active" | "inactive" | "suspended" | string
-}
+// interface User {
+//   id: string | number
+//   name: string
+//   username: string
+//   email: string
+//   phone: string
+//   date: string
+//   status: "active" | "inactive" | "suspended" | string
+// }
 
 interface UserRowProps {
   user: User
@@ -343,7 +406,7 @@ function UserRow({ user, onClick }: UserRowProps) {
   const handleSuspendClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation() // Prevent row click when clicking the button
     // Handle suspend action
-    console.log(`Suspend user ${user.id}`)
+    console.log(`Suspend user ${user._id}`)
   }
 
   return (
@@ -352,26 +415,34 @@ function UserRow({ user, onClick }: UserRowProps) {
       style={{ fontSize: "12px" }}
       onClick={onClick}
     >
-      <div className="col-span-2 flex items-center gap-3">
+      <div className="col-span-3 flex items-center gap-3">
         <Avatar>
-          <AvatarImage src="/user-avatar.png" alt={user.name} />
-          <AvatarFallback>{user.name.substring(0, 2)}</AvatarFallback>
+          <AvatarImage src="/user-avatar.png" alt={user.firstName} />
+          <AvatarFallback>{`${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "NA"}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium">{user.name}</p>
-          <p className="text-gray-500" style={{ fontSize: "10px" }}>
-           @{user.username}
-          </p>
+          <p className="font-medium">{user.firstName} {user.lastName}</p>
+          {user.email && (
+            <p className="text-gray-500" style={{ fontSize: "10px" }}>
+              @{user.email}
+            </p>
+          )}
         </div>
       </div>
-      <div className="col-span-3 flex items-center">
+      <div className="col-span-2 flex items-center">
         <span className="truncate">{user.email}</span>
       </div>
       <div className="col-span-2 flex items-center">
         <span>{user.phone}</span>
       </div>
       <div className="col-span-2 flex items-center">
-        <span>{user.date}</span>
+        <span>
+          {new Date(user.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
       </div>
       <div className="col-span-1 flex items-center">
         <div className="flex items-center gap-2">

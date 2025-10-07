@@ -63,6 +63,41 @@ export interface UserProfile {
   account: boolean
   avatar: string
   coverPhoto: string
+  createdAt: string
+}
+
+export interface OtherUserProfile {
+  firstName: string
+  lastName: string
+  dob: string
+  gender: string
+  phone: string
+  email: string
+  avatar: string
+  address: string
+  isVerify: boolean
+  resetCode: string
+  resetTokenTime: string
+  role: Role
+  isNinVerify: boolean
+  isBvnVerify: boolean
+  kycVerify: boolean
+  rating: number
+  account: boolean
+  bio: string
+  preference: string
+  accountType: "personal" | "business"
+  businessName?: string
+  businessAddress?: string
+  cacNumber?: string
+  businessType?: string
+  status: "active" | "inactive"
+  createdAt: string
+  coverPhoto: string
+  feedbacks: []
+  message: string
+  country: string
+  _id: string
 }
 
 interface BusinessStaff {
@@ -89,7 +124,9 @@ interface Business {
 }
 
 export interface ProfileResponse {
-  data: UserProfile
+  data: {
+    user: UserProfile | OtherUserProfile
+  }
   business: Business
 } 
 
@@ -133,36 +170,10 @@ interface ResendEmailResponse {
   message: string
 }
 
-export interface OtherUserProfile {
-  firstName: string
-  lastName: string
-  dob: string
-  gender: string
-  phone: string
-  email: string
-  avatar: string
-  address: string
-  isVerify: boolean
-  resetCode: string
-  resetTokenTime: string
-  role: string
-  isNinVerify: boolean
-  isBvnVerify: boolean
-  kycVerify: boolean
-  rating: number
-  account: boolean
-  bio: string
-  preference: string
-  accountType: "personal" | "business"
-  businessName?: string
-  businessAddress?: string
-  cacNumber?: string
-  businessType?: string
-  status: "active" | "inactive"
-}
-
  interface userProfile {
-  data: OtherUserProfile
+  data: {
+    user: OtherUserProfile
+  }
  }
 
 export interface UpdatePhoneRequest {

@@ -1,172 +1,180 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 // import { Input } from "@/components/ui/input"
 import { ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight, Check } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
 import Image from "next/image"
-
-interface ReportedUser {
-  id: number
-  name: string
-  username: string
-  email: string
-  phone: string
-  verified: boolean
-  location: string
-  joinDate: string
-  address: string
-  bankAccount: string
-  bankName: string
-  bio: string
-  coverImage: string
-  profileImage: string
-}
-
-interface Report {
-  id: number
-  reporterName: string
-  reportedUserItem: string
-  reason: string
-  status: string
-  date: string
-  reportMessage: string
-  reportedUser: ReportedUser
-}
+import { Report, useGetReportByIdQuery, useGetReportsQuery, useSuspendUserMutation } from "@/lib/redux/api/adminApi"
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 
 // Mock reports data
-const reportsData = [
-  {
-    id: 1,
-    reporterName: "Thankgod ogbonna",
-    reportedUserItem: "Samson Freedom",
-    reason: "Item not as described",
-    status: "Pending",
-    date: "27, Apr, 2025",
-    reportMessage:
-      "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
-    reportedUser: {
-      id: 1,
-      name: "Thankgod ogbonna",
-      username: "thankimedia",
-      email: "Thankimedia@gmail.com",
-      phone: "09124639133",
-      verified: true,
-      location: "Nigeria",
-      joinDate: "June 2024",
-      address: "7 Woji Port harcourt",
-      bankAccount: "Bank account, 7077900016, FCMB",
-      bankName: "Thankgod ogbonna",
-      bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-      coverImage: "/report-coverImg.svg",
-      profileImage: "/report-profile.svg",
-    },
-  },
-  {
-    id: 2,
-    reporterName: "Thankgod ogbonna",
-    reportedUserItem: "Samson Freedom",
-    reason: "Item not as described",
-    status: "Pending",
-    date: "27, Apr, 2025",
-    reportMessage:
-      "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
-    reportedUser: {
-      id: 1,
-      name: "Thankgod ogbonna",
-      username: "thankimedia",
-      email: "Thankimedia@gmail.com",
-      phone: "09124639133",
-      verified: true,
-      location: "Nigeria",
-      joinDate: "June 2024",
-      address: "7 Woji Port harcourt",
-      bankAccount: "Bank account, 7077900016, FCMB",
-      bankName: "Thankgod ogbonna",
-      bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-      coverImage: "/report-coverImg.svg",
-      profileImage: "/report-profile.svg",
-    },
-  },
-  // Add more reports with the same structure...
-  ...Array.from({ length: 8 }, (_, i) => ({
-    id: i + 3,
-    reporterName: "Thankgod ogbonna",
-    reportedUserItem: "Samson Freedom",
-    reason: "Item not as described",
-    status: i % 3 === 0 ? "Resolved" : "Pending",
-    date: "27, Apr, 2025",
-    reportMessage:
-      "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
-    reportedUser: {
-      id: 1,
-      name: "Thankgod ogbonna",
-      username: "thankimedia",
-      email: "Thankimedia@gmail.com",
-      phone: "09124639133",
-      verified: true,
-      location: "Nigeria",
-      joinDate: "June 2024",
-      address: "7 Woji Port harcourt",
-      bankAccount: "Bank account, 7077900016, FCMB",
-      bankName: "Thankgod ogbonna",
-      bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-      coverImage: "/report-coverImg.svg",
-      profileImage: "/report-profile.svg",
-    },
-  })),
-]
+// const reportsData = [
+//   {
+//     id: 1,
+//     reporterName: "Thankgod ogbonna",
+//     reportedUserItem: "Samson Freedom",
+//     reason: "Item not as described",
+//     status: "Pending",
+//     date: "27, Apr, 2025",
+//     reportMessage:
+//       "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
+//     reportedUser: {
+//       id: 1,
+//       name: "Thankgod ogbonna",
+//       username: "thankimedia",
+//       email: "Thankimedia@gmail.com",
+//       phone: "09124639133",
+//       verified: true,
+//       location: "Nigeria",
+//       joinDate: "June 2024",
+//       address: "7 Woji Port harcourt",
+//       bankAccount: "Bank account, 7077900016, FCMB",
+//       bankName: "Thankgod ogbonna",
+//       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
+//       coverImage: "/report-coverImg.svg",
+//       profileImage: "/report-profile.svg",
+//     },
+//   },
+//   {
+//     id: 2,
+//     reporterName: "Thankgod ogbonna",
+//     reportedUserItem: "Samson Freedom",
+//     reason: "Item not as described",
+//     status: "Pending",
+//     date: "27, Apr, 2025",
+//     reportMessage:
+//       "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
+//     reportedUser: {
+//       id: 1,
+//       name: "Thankgod ogbonna",
+//       username: "thankimedia",
+//       email: "Thankimedia@gmail.com",
+//       phone: "09124639133",
+//       verified: true,
+//       location: "Nigeria",
+//       joinDate: "June 2024",
+//       address: "7 Woji Port harcourt",
+//       bankAccount: "Bank account, 7077900016, FCMB",
+//       bankName: "Thankgod ogbonna",
+//       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
+//       coverImage: "/report-coverImg.svg",
+//       profileImage: "/report-profile.svg",
+//     },
+//   },
+//   // Add more reports with the same structure...
+//   ...Array.from({ length: 8 }, (_, i) => ({
+//     id: i + 3,
+//     reporterName: "Thankgod ogbonna",
+//     reportedUserItem: "Samson Freedom",
+//     reason: "Item not as described",
+//     status: i % 3 === 0 ? "Resolved" : "Pending",
+//     date: "27, Apr, 2025",
+//     reportMessage:
+//       "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
+//     reportedUser: {
+//       id: 1,
+//       name: "Thankgod ogbonna",
+//       username: "thankimedia",
+//       email: "Thankimedia@gmail.com",
+//       phone: "09124639133",
+//       verified: true,
+//       location: "Nigeria",
+//       joinDate: "June 2024",
+//       address: "7 Woji Port harcourt",
+//       bankAccount: "Bank account, 7077900016, FCMB",
+//       bankName: "Thankgod ogbonna",
+//       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
+//       coverImage: "/report-coverImg.svg",
+//       profileImage: "/report-profile.svg",
+//     },
+//   })),
+// ]
 
 export default function ReportsPage() {
-  const [searchQuery] = useState("")
+  // const [searchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
+  const [reporterId, setReporterId] = useState<string | null>(null);
+  const [reportedId, setReportedId] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-  console.log(reportsData)
+  const { data: reportsData } = useGetReportsQuery({ page: 1, limit: 10 });
+  const reports = reportsData?.data?.reports ?? [];
+
+  const { data: reportDetails } = useGetReportByIdQuery(selectedReportId!, {
+    skip: !selectedReportId,
+  });
+
+  console.log(reportDetails)
+
+  const reportDetail = reportDetails?.data?.report ?? null;
+
+  useEffect(() => {
+    if (reportDetail) {
+      setReporterId(reportDetail.reporter?._id ?? null);
+      setReportedId(reportDetail.reported?._id ?? null);
+    } else {
+      setReporterId(null);
+      setReportedId(null);
+    }
+  }, [reportDetail]);
+
+  const { data: reporterProfile } = useGetOtherUserProfileQuery(reporterId!, {
+    skip: !reporterId,
+  });
+  const { data: reportedProfile } = useGetOtherUserProfileQuery(reportedId!, {
+    skip: !reportedId,
+  });
+
+
+  // const [resolveReport] = useResolveReportMutation()
+  const [suspendUser] = useSuspendUserMutation()
+  // const [deleteUser] = useDeleteUserMutation()
+
+  console.log("Reporter:", reporterProfile);
+  console.log("Reported:", reportedProfile);
+
 
   // Filter reports based on search and status
-  const filteredReports = reportsData.filter((report) => {
-    const matchesSearch =
-      report.reporterName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.reportedUserItem.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.reason.toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesStatus = statusFilter === "all" || report.status.toLowerCase() === statusFilter.toLowerCase()
-
-    return matchesSearch && matchesStatus
+  const filteredReports = reports?.filter((report: Report) => {
+    const matchesStatus =
+      statusFilter === "all" || report.status?.toLowerCase() === statusFilter.toLowerCase()
+    return matchesStatus
   })
 
-  const handleViewDetails = (report: Report) => {
-    setSelectedReport(report)
+  const handleViewDetails = (reportId: string) => {
+    console.log(reportId)
+    setSelectedReportId(reportId)
   }
 
   const handleCloseDetails = () => {
-    setSelectedReport(null)
+   setSelectedReportId(null)
   }
 
-  const handleSuspend = () => {
-    console.log("Suspend user")
+  // const handleResolve = async () => {
+  //   if (!selectedReportId) return
+  //   await resolveReport(selectedReportId).unwrap()
+  //   setShowSuccessModal(true)
+  // }
+
+  const handleSuspend = async (userId: string) => {
+    await suspendUser(userId).unwrap()
   }
+
+  // const handleDelete = async (userId: string) => {
+  //   await deleteUser(userId).unwrap()
+  //   setSelectedReportId(null)
+  // }
 
   const handleMessage = () => {
     console.log("Send message to user")
   }
 
-  const handleResolve = () => {
-    if (selectedReport) {
-      // Update the selected report
-      setSelectedReport((prev) => (prev ? { ...prev, status: "Resolved" } : null))
-
-      // Show success modal
-      setShowSuccessModal(true)
-    }
-  }
-
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false)
-    setSelectedReport(null)
+    setSelectedReportId(null)
   }
 
   return (
@@ -218,7 +226,7 @@ export default function ReportsPage() {
           {/* Table Rows */}
           {filteredReports.length > 0 ? (
             filteredReports.map((report) => (
-              <ReportRow key={report.id} report={report} onViewDetails={() => handleViewDetails(report)} />
+              <ReportRow key={report._id} report={report} onViewDetails={() => handleViewDetails(report._id)} />
             ))
           ) : (
             <div className="p-8 text-center text-gray-500">No reports found matching your criteria</div>
@@ -248,7 +256,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Slide-in Report Details Panel */}
-      {selectedReport && (
+      {reportDetails && (
         <>
           {/* Overlay - only covers the left side */}
           <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-40" style={{ right: "400px" }} />
@@ -270,8 +278,8 @@ export default function ReportsPage() {
                   <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-10">
                     <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-white">
                       <Image
-                        src={selectedReport.reportedUser.profileImage || "/placeholder.svg"}
-                        alt={selectedReport.reportedUser.name}
+                        src={reportedProfile?.data?.user?.avatar || "/placeholder.svg"}
+                        alt={reportedProfile?.data?.user?.firstName || "User"}
                         className="w-full h-full object-cover"
                         width={100} height={100}
                       />
@@ -281,33 +289,44 @@ export default function ReportsPage() {
 
                 {/* User Info */}
                 <div className="text-center mb-6 mt-8">
-                  <h3 className="text-xl font-bold">{selectedReport.reportedUser.name}</h3>
-                  {selectedReport.reportedUser.verified && (
+                  <h3 className="text-xl font-bold">{reportedProfile?.data?.user?.firstName} {reportedProfile?.data?.user?.lastName}</h3>
+                  {reportedProfile?.data?.user?.isVerify && (
                     <div className="inline-block bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded mt-1">
                       Verified
                     </div>
                   )}
-                  <p className="text-gray-600 mt-3 text-sm">{selectedReport.reportedUser.bio}</p>
+                  <p className="text-gray-600 mt-3 text-sm">{reportedProfile?.data?.user?.bio}</p>
 
                   <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
-                      <span>{selectedReport.reportedUser.location}</span>
+                      <span>{reportedProfile?.data?.user?.address}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span>Joined {selectedReport.reportedUser.joinDate}</span>
+                      <span>
+                        {reportedProfile?.data?.user?.createdAt
+                          ? new Date(reportedProfile.data.user.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "—"}
+                      </span>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex items-center justify-center gap-3 mt-6">
-                    <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={handleSuspend}>
+                    <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={() => {
+                        const userId = reportedProfile?.data?.user?._id;
+                        if (userId) handleSuspend(userId);
+                      }}>
                       Suspend
                     </Button>
                     <Button className="bg-[#17b266] hover:bg-[#149655] text-white" onClick={handleMessage}>
                       Message
                     </Button>
-                    {selectedReport.status !== "Resolved" && (
+                    {/* {reportDetails.status !== "Resolved" && (
                       <Button
                         variant="outline"
                         className="border-[#17b266] text-[#17b266] hover:bg-[#17b266] hover:text-white"
@@ -315,49 +334,53 @@ export default function ReportsPage() {
                       >
                         Resolve
                       </Button>
-                    )}
+                    )} */}
                   </div>
                 </div>
 
                 {/* Report Message - Only show if not resolved */}
-                {selectedReport.status !== "Resolved" && (
+                {/* {reportDetails.status !== "Resolved" && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                     <h4 className="text-red-600 font-medium mb-2">Report message</h4>
-                    <p className="text-red-600 text-sm">{selectedReport.reportMessage}</p>
+                    <p className="text-red-600 text-sm">{reportDetails?.data?.report?.reason}</p>
                   </div>
-                )}
+                )} */}
 
                 {/* Resolved Status Message */}
-                {selectedReport.status === "Resolved" && (
+                {/* {reportDetails.status === "Resolved" && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                     <h4 className="text-green-600 font-medium mb-2">Status</h4>
                     <p className="text-green-600 text-sm">
                       This report has been resolved and appropriate actions have been completed.
                     </p>
                   </div>
-                )}
+                )} */}
 
                 {/* Contact Information */}
                 <div className="space-y-4 pb-6">
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <MapPin className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-gray-700">{selectedReport.reportedUser.address}</span>
+                    <span className="text-gray-700">{reportedProfile?.data?.user?.address}</span>
                   </div>
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Phone className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-gray-700">{selectedReport.reportedUser.phone}</span>
+                    {reportedProfile?.data?.user?.address && <span className="text-gray-700">{reportedProfile?.data?.user?.phone}</span>}
                   </div>
-                  <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                    <CreditCard className="w-5 h-5 text-[#17b266]" />
-                    <div>
-                      <span className="text-gray-700">{selectedReport.reportedUser.bankAccount}</span>
-                      <br />
-                      <span className="text-gray-500 text-sm">{selectedReport.reportedUser.bankName}</span>
-                    </div>
-                  </div>
+                  {
+                    reportDetails?.data?.bank && (
+                      <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                        <CreditCard className="w-5 h-5 text-[#17b266]" />
+                        <div>
+                          <span className="text-gray-700">{ reportDetails?.data?.bank}</span>
+                          <br />
+                          <span className="text-gray-500 text-sm">{ reportDetails?.data?.bank}</span>
+                        </div>
+                      </div>
+                    )
+                  }
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Mail className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-gray-700">{selectedReport.reportedUser.email}</span>
+                    <span className="text-gray-700">{reportedProfile?.data?.user?.email}</span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-t hover:bg-gray-50 rounded cursor-pointer">
                     <div className="flex items-center gap-3">
@@ -406,35 +429,41 @@ export default function ReportsPage() {
 
 // Component for report rows
 function ReportRow({ report, onViewDetails }: { report: Report; onViewDetails: () => void }) {
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "text-orange-600 bg-orange-100"
-      case "resolved":
-        return "text-green-600 bg-green-100"
-      default:
-        return "text-gray-600 bg-gray-100"
-    }
-  }
+  // const getStatusColor = (status: string) => {
+  //   switch (status.toLowerCase()) {
+  //     case "pending":
+  //       return "text-orange-600 bg-orange-100"
+  //     case "resolved":
+  //       return "text-green-600 bg-green-100"
+  //     default:
+  //       return "text-gray-600 bg-gray-100"
+  //   }
+  // }
 
   return (
     <div className="grid grid-cols-12 gap-4 p-4 bg-white my-1 border border-[#ECECEC] hover:bg-gray-50 text-xs">
       <div className="col-span-2 flex items-center">
-        <span className="font-medium">{report.reporterName}</span>
+        <span className="font-medium">{report?.reporter?.firstName} {report?.reporter?.firstName}</span>
       </div>
       <div className="col-span-2 flex items-center">
-        <span>{report.reportedUserItem}</span>
+        <span>{report?.reported?.firstName} {report?.reported?.lastName}</span>
       </div>
       <div className="col-span-2 flex items-center">
-        <span>{report.reason}</span>
+        <span>{report?.reason}</span>
       </div>
-      <div className="col-span-2 flex items-center">
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+      {/* <div className="col-span-2 flex items-center">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report?.status)}`}>
           {report.status}
         </span>
-      </div>
+      </div> */}
       <div className="col-span-2 flex items-center">
-        <span>{report.date}</span>
+        <span>
+          {new Date(report.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
       </div>
       <div className="col-span-2 flex items-center">
         <Button className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1" onClick={onViewDetails}>

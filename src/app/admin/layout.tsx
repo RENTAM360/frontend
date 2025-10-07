@@ -17,6 +17,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [headerContent, setHeaderContent] = useState<React.ReactNode>(null)
+  const pathname = usePathname();
 
   // Effect to grab the header content from the page
   useEffect(() => {
@@ -31,6 +32,10 @@ export default function AdminLayout({
 
     return () => observer.disconnect()
   }, [])
+
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   return (
     <PageHeaderProvider>

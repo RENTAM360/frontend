@@ -1,11 +1,21 @@
 "use client"
 
+import { AnimatedLogo } from "@/components/loading-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { UsersOverviewChart } from "@/components/users-overview-chart"
 import { UsersReportChart } from "@/components/users-report-chart"
 import { PageHeader } from "@/context/page-header-context"
+import { useGetAdminDashboardQuery } from "@/lib/redux/api/adminApi"
+import { formatCurrency, formatNumber } from "../utils/formatters"
 
 export default function Dashboard() {
+  const { data, isLoading, isError } = useGetAdminDashboardQuery()
+  console.log(data)
+
+  if (isLoading) return <AnimatedLogo />
+  if (isError) return <p>Error loading dashboard</p>
+
+  const dashboardData = data?.data
   return (
     <>
       <PageHeader>
@@ -23,40 +33,40 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatsCard
           title="Total Money"
-          value="N20,000.00"
-          percentage="+23%"
+          value={formatCurrency(dashboardData?.totalMoney.thisMonth)}
+          percentage={`${formatNumber(dashboardData?.totalMoney.compare)}%`}
           lastMonth="Last Month"
-          lastMonthValue="N10,000.00"
+          lastMonthValue={formatCurrency(dashboardData?.totalMoney.lastMonth)}
         />
         <StatsCard
           title="Total Pending Payment"
-          value="N5,000.00"
-          percentage="+23%"
+          value={formatCurrency(dashboardData?.totalPending.thisMonth)}
+          percentage={`${formatNumber(dashboardData?.totalPending.compare)}%`}
           lastMonth="Last Month"
-          lastMonthValue="N10,000.00"
+          lastMonthValue={formatCurrency(dashboardData?.totalPending.lastMonth)}
         />
         <StatsCard
           title="Total Completed Payment"
-          value="N5,000.00"
-          percentage="+23%"
+          value={formatCurrency(dashboardData?.totalCompleted.thisMonth)}
+          percentage={`${formatNumber(dashboardData?.totalCompleted.compare)}%`}
           lastMonth="Last Month"
-          lastMonthValue="N10,000.00"
+          lastMonthValue={formatCurrency(dashboardData?.totalCompleted.lastMonth)}
         />
         <StatsCard
           title="Total listed items"
-          value="100"
-          percentage="+23%"
+          value={`${dashboardData?.totalItems.thisMonth}`}
+          percentage={`${formatNumber(dashboardData?.totalItems.compare)}%`}
           lastMonth="Last Month"
-          lastMonthValue="80"
+          lastMonthValue={`${dashboardData?.totalItems.lastMonth || 0}`}
         />
       </div>
 
       {/* Second row of stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <StatsCard title="Active items" value="200" percentage="+23%" lastMonth="Last Month" lastMonthValue="50" />
-        <StatsCard title="Completed rentals" value="800" percentage="+23%" lastMonth="Last Month" lastMonthValue="50" />
-        <StatsCard title="Total users" value="300" percentage="+23%" lastMonth="Last Month" lastMonthValue="50" />
-        <StatsCard title="Users report" value="1000" percentage="+23%" lastMonth="Last Month" lastMonthValue="80" />
+        <StatsCard title="Active items" value={dashboardData?.activeItems.thisMonth || 0} percentage={`${formatNumber(dashboardData?.activeItems.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.activeItems.lastMonth}`} />
+        <StatsCard title="Completed rentals" value={dashboardData?.completed.thisMonth || 0} percentage={`${formatNumber(dashboardData?.completed.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.completed.lastMonth}`} />
+        <StatsCard title="Total users" value={dashboardData?.users.thisMonth || 0} percentage={`${formatNumber(dashboardData?.users.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.users.lastMonth}`} />
+        <StatsCard title="Users report" value={dashboardData?.reports.thisMonth || 0} percentage={`${formatNumber(dashboardData?.reports.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.reports.lastMonth}`} />
       </div>
 
       {/* Charts */}
@@ -68,19 +78,20 @@ export default function Dashboard() {
               <p className="text-[12px] text-gray-500">Overview of last Months</p>
             </div>
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gray-700 rounded-sm"></div>
                 <span className="text-[9px]">New Users</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#17b266] rounded-sm"></div>
                 <span className="text-[9px]">Old Users</span>
-              </div>
-              <div className="ml-auto">
-                <select className="text-[9px] border rounded px-2 py-1">
+              </div> */}
+              <div className=" text-[9px] border rounded px-2 py-1">
+                Last 6 months
+                {/* <select className="text-[9px] border rounded px-2 py-1">
                   <option>Last 6 months</option>
                   <option>Last year</option>
-                </select>
+                </select> */}
               </div>
             </div>
             <div className="h-[300px] w-full">
@@ -100,16 +111,16 @@ export default function Dashboard() {
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gray-700 rounded-sm"></div>
-                <span className="text-sm">SignUp Users</span>
+                <span className="text-sm">Inactive Users</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#17b266] rounded-sm"></div>
                 <span className="text-sm">Active Users</span>
               </div>
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gray-200 rounded-sm"></div>
                 <span className="text-sm">Inactive Users</span>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
