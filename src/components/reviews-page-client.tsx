@@ -168,7 +168,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <h1 className="md:text-2xl font-bold">
-                Feedback about <span className="underline text-primary">{ownerProfile?.data.firstName} {ownerProfile?.data.lastName}</span>
+                Feedback about <span className="underline text-primary">{ownerProfile?.data.user.firstName} {ownerProfile?.data.user.lastName}</span>
               </h1>
             </div>
             <Button className="bg-primary hover:bg-green-600" onClick={() => setIsFeedbackModalOpen(true)}>
@@ -180,7 +180,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
           <div className="space-y-6 bg-white">
             {!feedbacks || feedbacks.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p>No feedback yet for {ownerProfile?.data.firstName} {ownerProfile?.data.lastName}</p>
+                <p>No feedback yet for {ownerProfile?.data.user.firstName} {ownerProfile?.data.user.lastName}</p>
               </div>
             ) : (
               feedbacks.map((feedback) => (
