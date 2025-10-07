@@ -109,8 +109,8 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
             </div>
             <div className="absolute -bottom-12 left-[37%] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
               <Image
-                src={ownerProfile?.data.avatar}
-                alt={`${ownerProfile?.data.firstName} ${ownerProfile?.data.lastName}`}
+                src={ownerProfile?.data.user.avatar}
+                alt={`${ownerProfile?.data.user.firstName} ${ownerProfile?.data.user.lastName}`}
                 width={96}
                 height={96}
                 className="object-cover"
@@ -120,8 +120,8 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
 
           <div className="mt-16 px-8">
             <div className="flex flex-col items-center gap-2">
-              <h1 className="text-base text-center font-bold">{ownerProfile?.data.firstName} {ownerProfile?.data.lastName}</h1>
-              {ownerProfile?.data.isVerify && (
+              <h1 className="text-base text-center font-bold">{ownerProfile?.data.user.firstName} {ownerProfile?.data.user.lastName}</h1>
+              {ownerProfile?.data.user.isVerify && (
                 <span className="text-xs text-primary bg-green-50 px-2 py-0.5 rounded">Verified</span>
               )}
             </div>
@@ -141,25 +141,25 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
               </Link>
             </div> */}
 
-            {ownerProfile?.data.bio ? (
-              <p className="mt-4 text-black text-[12px] leading-relaxed">{ownerProfile?.data.bio}</p>
+            {ownerProfile?.data.user.bio ? (
+              <p className="mt-4 text-black text-[12px] leading-relaxed">{ownerProfile?.data.user.bio}</p>
             ) : (
               <p className="mt-4 text-black text-[12px] leading-relaxed">No bio data yet.</p>
             )}
 
             <div className="mt-6 space-y-3">
-              {ownerProfile?.data.address ? (
+              {ownerProfile?.data.user.address ? (
                 <div className="flex items-center gap-3 text-sm">
                 <MapPin className="w-5 h-5 text-primary" />
-                <span>{ownerProfile?.data.address}</span>
+                <span>{ownerProfile?.data.user.address}</span>
               </div>
               ): (
                 null
               )}
-              {ownerProfile?.data.phone ? (
+              {ownerProfile?.data.user.phone ? (
                 <div className="flex items-center gap-3 text-sm">
                 <Phone className="w-5 h-5 text-primary" />
-                <span>{ownerProfile?.data.phone}</span>
+                <span>{ownerProfile?.data.user.phone}</span>
               </div>
               ) : (
                 null
