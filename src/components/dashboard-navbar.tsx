@@ -180,8 +180,8 @@ export function DashboardNavbar() {
 
             <div className="relative">
               <Link href="/dashboard/profile" className="relative rounded-full pr-2 flex justify-center items-center gap-3">
-                {profileData?.data?.avatar ? (<Image
-                  src={`${profileData?.data?.avatar}`}
+                {profileData?.data?.user?.avatar ? (<Image
+                  src={`${profileData?.data?.user?.avatar}`}
                   alt="User"
                   className="h-8 w-8 rounded-full"
                   width={100}
