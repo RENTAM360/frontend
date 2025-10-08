@@ -3,13 +3,48 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useUpdatePaymentSettingsMutation } from "@/lib/redux/api/adminApi"
+import { enqueueSnackbar } from "notistack"
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query"
 
-export function PaymentWalletSettings() {
-  const [commissionPercentage, setCommissionPercentage] = useState("")
+interface PaymentWalletSettingsProps {
+  commission?: number
+}
 
-  const handleSave = () => {
-    console.log("Saving commission percentage:", commissionPercentage)
-    // Handle save logic here
+export function PaymentWalletSettings({ commission }: PaymentWalletSettingsProps) {
+  console.log(commission)
+  const [commissionPercentage, setCommissionPercentage] = useState<number | undefined>(commission)
+  const [updatePaymentSettings, { isLoading }] = useUpdatePaymentSettingsMutation()
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value
+  setCommissionPercentage(value === "" ? undefined : Number(value))
+}
+
+
+  const handleSave = async () => {
+    if (!commissionPercentage || isNaN(Number(commissionPercentage))) {
+      enqueueSnackbar({variant: "error", message: "Please enter a valid number!"})
+      return
+    }
+
+    try {
+      const res = await updatePaymentSettings({
+        adminCommissionPercentage: Number(commissionPercentage),
+      }).unwrap()
+
+      enqueueSnackbar({ variant: "success", message: res.message || "Payment settings updated successfully." })
+      setCommissionPercentage(0)
+    } catch (error) {
+      const err = error as FetchBaseQueryError
+      enqueueSnackbar({
+        variant: "error",
+        message:
+        "status" in err && err.data && typeof err.data === "object" && "message" in err.data
+          ? (err.data.message as string)
+          : "Failed to update payment settings.",
+        })
+      }
   }
 
   return (
@@ -24,7 +59,7 @@ export function PaymentWalletSettings() {
             type="text"
             placeholder="set admin commission percentage"
             value={commissionPercentage}
-            onChange={(e) => setCommissionPercentage(e.target.value)}
+            onChange={handleChange}
             className="w-full text-xs outline-none py-6 rounded-lg border-none bg-[#F8F8FA]"
           />
         </div>
@@ -33,9 +68,10 @@ export function PaymentWalletSettings() {
         <div className="pt-4">
           <Button
             onClick={handleSave}
+            disabled={isLoading}
             className="w-full bg-[#17b266] hover:bg-[#149655] text-white py-6 text-lg rounded-full"
           >
-            Save
+           {isLoading ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>

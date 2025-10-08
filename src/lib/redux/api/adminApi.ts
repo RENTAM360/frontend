@@ -136,7 +136,75 @@ export interface ApiMessageResponse {
   message: string
 }
 
+export interface PlatformSettings {
+  _id: string
+  singletonKey: string
+  platformName: string
+  supportEmail: string
+  defaultCurrency: string
+  logoUrl: string
+  cardPaymentEnabled: boolean
+  transferEnabled: boolean
+  adminCommissionPercentage: number
+  lastUpdatedBy: string
+  createdAt: string
+  updatedAt: string
+}
 
+export interface GetPlatformSettingsResponse {
+  message: string
+  data: PlatformSettings
+}
+
+export interface UpdateGeneralSettingsPayload {
+  platformName?: string
+  supportEmail?: string
+  defaultCurrency?: string
+  logoUrl?: string
+  cardPaymentEnabled?: boolean
+  transferEnabled?: boolean
+}
+
+export interface UpdateGeneralSettingsResponse {
+  message: string
+  data: PlatformSettings
+}
+
+export interface UserTransaction {
+  _id: string;
+  type: "PAYMENT_INITIALIZATION" | "ESCROW_DEBIT" | string; 
+  totalPaid: number;
+  paidCustomer?: number;   
+  ref: string;
+  status: string;
+  source?: string;        
+  booking?: string;       
+  equipment?: string;     
+  isCompleted: boolean;
+  createdAt: string;       
+}
+
+export interface UserBank {
+  accountNumber: string;
+  accountName?: string; 
+  bank: string;
+  bankName: string
+}
+
+export interface AdminUser {
+  id: string
+  fullName: string
+  email: string
+  roleName: string
+  createdAt: string
+}
+
+export interface NewAdminRequest {
+  fullName: string
+  email: string
+  password: string
+  role: string
+}
 
 export const adminApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -198,6 +266,65 @@ export const adminApi = baseApi.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    getPlatformSettings: builder.query<GetPlatformSettingsResponse, void>({
+      query: () => "/admin/settings",
+    }),
+
+    updateGeneralSettings: builder.mutation<UpdateGeneralSettingsResponse, UpdateGeneralSettingsPayload>({
+      query: (payload) => ({
+        url: "/admin/settings/general",
+        method: "PATCH",
+        body: payload,
+      }),
+    }),
+    updatePaymentSettings: builder.mutation<
+      { message: string; data: { _id: string; adminCommissionPercentage: number; updatedAt: string } },
+      { adminCommissionPercentage: number }
+    >({
+      query: (body) => ({
+        url: "/admin/settings/payment",
+        method: "PATCH",
+        body,
+      }),
+    }),
+    unsuspendUser: builder.mutation<{ message: string; data: { _id: string; isSuspended: boolean } }, string>({
+      query: (userId) => ({
+        url: `/admin/user/unsuspend/${userId}`,
+        method: "GET",
+      }),
+    }),
+    getUserBanks: builder.query<{ message: string; data: UserBank[] }, string>({
+      query: (userId) => `/admin/user/banks/${userId}`,
+    }),
+    getUserTransactions: builder.query<{ message: string; data: { history: UserTransaction[]; total: number; page: number; limit: number } }, { userId: string; page?: number; limit?: number; type?: string; startDate?: string; endDate?: string }>({
+      query: ({ userId, page = 1, limit = 10, type, startDate, endDate }) => {
+        const params = new URLSearchParams();
+        params.append("page", page.toString());
+        params.append("limit", limit.toString());
+        if (type) params.append("type", type);
+        if (startDate) params.append("startDate", startDate);
+        if (endDate) params.append("endDate", endDate);
+
+        return `/admin/user/transactions/${userId}?${params.toString()}`;
+      },
+    }),
+    getAdmins: builder.query<{ message: string; data: { admins: AdminUser[]; total: number } }, { page?: number; limit?: number; search?: string }>({
+      query: ({ page = 1, limit = 10, search }) => {
+        const params = new URLSearchParams()
+        params.append("page", page.toString())
+        params.append("limit", limit.toString())
+        if (search) params.append("search", search)
+        return `/admin/user/admins?${params.toString()}`
+      },
+    }),
+    createAdmin: builder.mutation<{ message: string; data: object }, NewAdminRequest>({
+      query: (body) => ({
+        url: "/admin/user/admins",
+        method: "POST",
+        body,
+      }),
+    }),
+
   }),
 })
 
@@ -214,4 +341,12 @@ export const {
     useResolveReportMutation,
     useSuspendUserMutation,
     useDeleteUserMutation,
+    useGetPlatformSettingsQuery,
+    useUpdateGeneralSettingsMutation,
+    useUpdatePaymentSettingsMutation,
+    useUnsuspendUserMutation, 
+    useGetUserBanksQuery, 
+    useGetUserTransactionsQuery,
+    useGetAdminsQuery, 
+    useCreateAdminMutation
 } = adminApi

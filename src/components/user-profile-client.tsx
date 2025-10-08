@@ -9,210 +9,21 @@ import {
   Phone,
   CreditCard,
   Edit3,
-  FileText,
   Trash2,
   ChevronRight,
-  Star,
   ChevronDown,
-  ThumbsUp,
-  MessageCircle,
   Paperclip,
   Send,
 } from "lucide-react"
 import Image from "next/image"
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
+import { useGetUserBanksQuery, useGetUserTransactionsQuery } from "@/lib/redux/api/adminApi"
+// import { enqueueSnackbar } from "notistack"
 // import { getOwnerReviews } from "@/lib/data"
 // import { ReviewsPageClient } from "@/components/reviews-page-client"
 
-interface BankAccount {
-  id: number
-  bankName: string
-  accountNumber: string
-  accountName: string
-  logo: string
-}
 
-
-// Mock user data
-const userData = {
-  id: 1,
-  name: "Thankgod ogbonna",
-  username: "thankimedia",
-  email: "Thankimedia@gmail.com",
-  phone: "09124639133",
-  date: "June 2024",
-  status: "active",
-  verified: true,
-  location: "Nigeria",
-  address: "7 Woji Port harcourt",
-  bankAccount: "Bank account, 7077900016, FCMB",
-  bankName: "Thankgod ogbonna",
-  nin: "NIN, 76968368993970",
-  bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-}
-
-// Mock wallet data
-const walletData = {
-  availableBalance: 100000,
-  totalBalance: 100000,
-  transactions: [
-    {
-      id: 1,
-      type: "withdraw",
-      amount: 100000,
-      date: "06 march, 2025",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "withdraw",
-      amount: 100000,
-      date: "06 march, 2025",
-      status: "completed",
-    },
-  ],
-}
-
-// Mock bank accounts data
-const bankAccountsData = [
-  {
-    id: 1,
-    bankName: "Guaranty Trust Bank",
-    accountNumber: "7077900016",
-    accountName: "solomon Abuh",
-    logo: "/gtb.svg",
-  },
-  {
-    id: 2,
-    bankName: "Guaranty Trust Bank",
-    accountNumber: "7077900016",
-    accountName: "solomon Abuh",
-    logo: "/gtb.svg",
-  },
-]
-
-// Mock reviews data
-// Owner data
-// const ownerData = {
-//   id: 1,
-//   name: "Thankgod Ogbonna",
-//   profileImage: "/diverse-group-profile.png",
-// }
-
-// Reviews data 
-const reviewsData = [
-  {
-    id: "1",
-    user: {
-      id: "user1",
-      name: "David ugo",
-      profileImage: "/du.svg",
-    },
-    text: "Good rent and great customer service",
-    date: "28/05/25",
-    likes: 0,
-    replies: [],
-  },
-  {
-    id: "2",
-    user: {
-      id: "user2",
-      name: "victor john",
-      profileImage: "/vj.svg",
-    },
-    text: "Good rent and great customer service",
-    date: "28/05/25",
-    likes: 0,
-    replies: [
-      {
-        id: "reply1",
-        user: {
-          id: 1,
-          name: "Thankgod ogbonna",
-          profileImage: "/tg2.svg",
-        },
-        text: "OOh cool that sound great",
-        date: "28/05/25",
-        isOwner: true,
-      },
-      {
-        id: "reply2",
-        user: {
-          id: "user3",
-          name: "Wow cool",
-          profileImage: "/tg.svg",
-        },
-        text: "Wow cool",
-        date: "28/05/25",
-        isOwner: false,
-      },
-    ],
-  },
-  {
-    id: "3",
-    user: {
-      id: "user4",
-      name: "Femi abu",
-      profileImage: "/fa.svg",
-    },
-    text: "Got a Monitor Mount from him, it came really quickly and was as seen. Fits my monitor",
-    date: "28/05/25",
-    likes: 0,
-    image: "/monitor-mount.svg",
-    replies: [],
-  },
-]
-
-// Mock rentals data
-const itemsData = [
-  {
-    id: 1,
-    title: "Excavator",
-    category: "Construction tools",
-    price: 50000,
-    rating: 4.5,
-    image: "/excavator.svg",
-  },
-  {
-    id: 2,
-    title: "Excavator",
-    category: "Construction tools",
-    price: 50000,
-    rating: 4.5,
-    image: "/excavator.svg",
-  },
-  {
-    id: 3,
-    title: "Excavator",
-    category: "Construction tools",
-    price: 50000,
-    rating: 4.5,
-    image: "/excavator.svg",
-  },
-  {
-    id: 4,
-    title: "Excavator",
-    category: "Construction tools",
-    price: 50000,
-    rating: 4.5,
-    image: "/excavator.svg",
-  },
-  {
-    id: 5,
-    title: "Excavator",
-    category: "Construction tools",
-    price: 50000,
-    rating: 4.5,
-    image: "/excavator.svg",
-  },
-  {
-    id: 6,
-    title: "Excavator",
-    category: "Construction tools",
-    price: 50000,
-    rating: 4.5,
-    image: "/excavator.svg",
-  },
-]
 
 interface UserProfileClientProps {
   userId: string
@@ -220,23 +31,43 @@ interface UserProfileClientProps {
 
 export default function UserProfileClient({ userId }: UserProfileClientProps) {
   const [activeTab, setActiveTab] = useState("Items")
+  const { data: userProfile } = useGetOtherUserProfileQuery(userId!, {
+      skip: !userId,
+    });
 
-  console.log(userId)
+  const user = userProfile?.data?.user
+
+  // const [suspendUser] = useSuspendUserMutation();
+  // const [unsuspendUser] = useUnsuspendUserMutation();
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "Wallet":
-        return <WalletContent />
+        return <WalletContent userId={userId} />
       case "Items":
-        return <ItemsContent />
+        return <ItemsContent userId={userId} />
         case "Bank":
-        return <BankContent />
+        return <BankContent userId={userId} />
       case "Reviews":
         return <ReviewsContent />
       default:
-        return <ItemsContent />
+        return <ItemsContent userId={userId} />
     }
   }
+
+  // const handleSuspendToggle = async () => {
+  //   try {
+  //     if (user?.isSuspended) {
+  //       await unsuspendUser(user._id).unwrap();
+  //       enqueueSnackbar({ variant: "success", message: "User unsuspended" });
+  //     } else {
+  //       await suspendUser(user?._id).unwrap();
+  //       enqueueSnackbar({ variant: "success", message: "User suspended" });
+  //     }
+  //   } catch (err: any) {
+  //     enqueueSnackbar({ variant: "error", message: err?.data?.message || "Operation failed" });
+  //   }
+  // };
 
   return (
     <>
@@ -252,38 +83,47 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
           <div className="relative">
             {/* Cover Image */}
             <div className="h-40">
-              <Image src="/profile-bg.svg" alt="Cover" width={100} height={100} className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover" />
+              <Image src={user?.coverPhoto || "/profile-bg.svg"} alt="Cover" width={100} height={100} className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover" />
             </div>
 
             {/* Profile Picture */}
             <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-12">
               <Avatar className="w-[79px] h-[79px] border-2 border-white">
-                <AvatarImage src="/tg.svg" alt={userData.name} />
-                <AvatarFallback>{userData.name.substring(0, 2)}</AvatarFallback>
+                <AvatarImage src={user?.avatar || "/tg.svg"} alt={user?.firstName} />
+                <AvatarFallback>{`${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`.toUpperCase() || "NA"}</AvatarFallback>
               </Avatar>
             </div>
           </div>
 
           {/* Profile Info */}
           <div className="pt-20 pb-6 px-6 text-center">
-            <h2 className="text-base font-bold">{userData.name}</h2>
-            {userData.verified && (
+            <h2 className="text-base font-bold">{user?.firstName} {user?.lastName}</h2>
+            {user?.isVerify && (
               <div className="inline-block bg-[#E8F8F1] font-light text-primary text-[9px] px-2 py-0.5 rounded mt-1">Verified</div>
             )}
-            <p className="text-[#979797] mt-4 max-w-2xl text-xs mx-auto">{userData.bio}</p>
+            <p className="text-[#979797] mt-4 max-w-2xl text-xs mx-auto">{user?.bio}</p>
 
             <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
               <div className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                <span className="text-xs">{userData.location}</span>
+                <span className="text-xs">{user?.address}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs">Joined {userData.date}</span>
+                <span className="text-xs">Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  }) : "N/A"}
+                </span>
               </div>
             </div>
 
             <div className="flex items-center justify-center gap-3 mt-6">
-              <Button className="bg-red-500 hover:bg-red-600 text-xs text-white">Suspend</Button>
+              {/* <Button 
+                onClick={handleSuspendToggle}
+                className="bg-red-500 hover:bg-red-600 text-xs text-white">
+                  {user?.isSuspended ? "Unsuspend" : "Suspend"}
+                </Button> */}
               <Button className="bg-[#17b266] hover:bg-[#149655] text-xs text-white">message</Button>
             </div>
           </div>
@@ -293,25 +133,25 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
             <div className="max-w-2xl mx-auto">
               <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><MapPin className="w-4 h-4 text-[#17b266]" /></div>
-                <span className="text-black text-xs">{userData.address}</span>
+                <span className="text-black text-xs">{user?.address}</span>
               </div>
-              <div className="flex gap-2 items-center py-3 border-b">
+              {user?.phone && <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Phone className="w-4 h-4 text-[#17b266]" /></div>
-                <span className="text-black text-xs">{userData.phone}</span>
-              </div>
-              <div className="flex gap-2 items-center py-3 border-b">
+                <span className="text-black text-xs">{user?.phone}</span>
+              </div>}
+              {userProfile?.data?.account && <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><CreditCard className="w-4 h-4 text-[#17b266]" /></div>
-                <span className="text-black text-xs">{userData.bankAccount}, {userData.bankName}</span>
-                {/* <span className="text-gray-400 ml-1">{userData.bankName}</span> */}
-              </div>
+                <span className="text-black text-xs">{userProfile?.data?.account?.accountNumber}, {userProfile?.data?.account?.bankName}</span>
+                {/* <span className="text-gray-400 ml-1">{user.bankName}</span> */}
+              </div>}
               <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Edit3 className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-[#17b266] text-xs">Edit profile details</span>
               </div>
-              <div className="flex gap-2 items-center py-3 border-b">
+              {/* <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><FileText className="w-4 h-4 text-[#17b266]" /></div>
-                <span className="text-black text-xs">{userData.nin}</span>
-              </div>
+                <span className="text-black text-xs">{user.nin}</span>
+              </div> */}
               <div className="flex items-center justify-between py-3">
                 <div className="flex gap-2 items-center">
                   <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Trash2 className="w-4 h-4 text-[#17b266]" /></div>
@@ -351,14 +191,15 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
 }
 
 // Bank Content Component
-function BankContent() {
+function BankContent({ userId }: UserProfileClientProps) {
+  const { data } = useGetUserBanksQuery(userId);
   return (
     <div className="p-6">
       <h3 className="text-2xl font-bold mb-6">Bank account</h3>
 
       <div className="space-y-4">
-        {bankAccountsData.map((account) => (
-          <BankAccountItem key={account.id} account={account} />
+        {data?.data?.map((account) => (
+          <BankAccountItem key={account.accountNumber} account={account} />
         ))}
       </div>
     </div>
@@ -371,13 +212,13 @@ function ReviewsContent() {
     <div className="p-6">
       <h3 className="text-2xl font-bold mb-6">Review</h3>
 
-      {reviewsData.length > 0 ? (
+      {/* {reviewsData.length > 0 ? (
         <div className="space-y-6">
           {reviewsData.map((review) => (
             <div key={review.id} className="bg-white rounded-lg p-6">
               <div className="bg-[#F8F8F8] p-3 mb-3 rounded-xl">
                 {/* Review Header */}
-                <div className="flex items-center gap-3 mb-3">
+                {/* <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden">
                     <Image
                       src={review.user.profileImage || "/placeholder.svg"}
@@ -390,14 +231,14 @@ function ReviewsContent() {
                   <div>
                     <h3 className="font-semibold">{review.user.name}</h3>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Review Content */}
-                <p className="text-gray-700 mb-3">{review.text}</p>
-              </div>
+                {/* <p className="text-gray-700 mb-3">{review.text}</p>
+              </div> */}
 
               {/* Review Image (if any) */}
-              {review.image && (
+              {/* {review.image && (
                 <div className="mb-3">
                   <Image
                     src={review.image || "/placeholder.svg"}
@@ -407,10 +248,10 @@ function ReviewsContent() {
                     height={300}
                   />
                 </div>
-              )}
+              )} */}
 
               {/* Review Actions */}
-              <div className="flex items-center text-sm text-gray-500 gap-4">
+              {/* <div className="flex items-center text-sm text-gray-500 gap-4">
                 <span>{review.date}</span>
                 <button className="flex items-center gap-1 hover:text-gray-700">
                   <ThumbsUp className="w-4 h-4" />
@@ -426,10 +267,10 @@ function ReviewsContent() {
                     {review.likes}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Replies */}
-              {review.replies && review.replies.length > 0 && (
+              {/* {review.replies && review.replies.length > 0 && (
                 <div className="mt-4 pl-10 space-y-4">
                   {review.replies.map((reply) => (
                     <div key={reply.id} className="bg-gray-50 rounded-lg p-4">
@@ -460,7 +301,7 @@ function ReviewsContent() {
                     </div>
                   ))}
                 </div>
-              )}
+              )} */}
 
               {/* Reply Input */}
               <div className="mt-4 pl-10">
@@ -479,22 +320,23 @@ function ReviewsContent() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 text-gray-500">No reviews yet</div>
-      )}
-    </div>
+      //     ))}
+      //   </div>
+      // ) : (
+      //   <div className="text-center py-12 text-gray-500">No reviews yet</div>
+      // )} */}
+    // </div>
   )
 }
 
-function ItemsContent() {
+function ItemsContent({ userId }: UserProfileClientProps) {
+  const { data: userEquipments } = useGetEquipmentsQuery({ userId })
   return (
     <div className="p-6">
       <h3 className="text-xl font-bold mb-6">Items</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {itemsData.map((item) => (
+        {userEquipments?.equipments.map((item) => (
           <ItemsCard key={item.id} item={item} />
         ))}
       </div>
@@ -503,7 +345,8 @@ function ItemsContent() {
 }
 
 // Wallet Content Component
-function WalletContent() {
+function WalletContent({ userId }: UserProfileClientProps) {
+  const { data } = useGetUserTransactionsQuery({ userId, page: 1, limit: 10 });
   return (
     <div className="p-6">
       <h3 className="text-lg font-bold mb-6">Wallet</h3>
@@ -531,12 +374,21 @@ function WalletContent() {
 
       {/* Transaction List */}
       <div className="space-y-4">
-        {walletData.transactions.map((transaction) => (
-          <TransactionItem key={transaction.id} transaction={transaction} />
+        {data?.data?.history.map((transaction) => (
+          <TransactionItem key={transaction._id} transaction={{
+            type: transaction.type,
+            date: new Date(transaction.createdAt).toLocaleDateString(),
+            amount: transaction.totalPaid,
+          }} />
         ))}
       </div>
     </div>
   )
+}
+
+interface BankAccount {
+  bankName: string
+  accountNumber: string
 }
 
 // Component for bank account items
@@ -545,14 +397,14 @@ function BankAccountItem({ account }: {account: BankAccount}) {
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
       <div className="flex items-center gap-3">
         <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white overflow-hidden">
-          <Image src={account.logo || "/placeholder.svg"} alt={account.bankName} className="w-full h-full object-cover" width={100} height={100} />
+          <Image src={"/placeholder.svg"} alt={account.bankName} className="w-full h-full object-cover" width={100} height={100} />
         </div>
         <div>
           <p className="font-bold text-sm">{account.bankName}</p>
         </div>
       </div>
       <div className="text-gray-600 text-xs">
-        {account.accountNumber}, {account.accountName}
+        {account.accountNumber}, {account.accountNumber}
       </div>
     </div>
   )
@@ -599,23 +451,33 @@ function TransactionItem({ transaction }: { transaction: { type: string; date: s
     </div>
   )
 }
-
+interface EquipmentCardProps {
+  item: {
+    id: string
+    title: string
+    category: string
+    pricePerDay: number
+    rating: number
+    imageUrl: string
+    variant?: "default" | "profile" | "saved"
+  }
+}
 // Component for rental cards
-function ItemsCard({ item }: { item: { image?: string; title: string; category: string; price: number; rating: number } }) {
+function ItemsCard({ item }: EquipmentCardProps ) {
   return (
     <div className="rounded-lg overflow-hidden">
       <div className="h-32">
-        <img src={item.image || "/placeholder.svg"} alt={item.title} className="w-full h-full rounded-b-lg object-cover" />
+        <Image src={item.imageUrl || "/placeholder.svg"} alt={item.title} className="w-full h-full rounded-b-lg object-cover" />
       </div>
       <div className="p-4">
         <h4 className="font-medium text-base">{item.title}</h4>
         <p className="text-sm text-[#979797]">{item.category}</p>
         <div className="flex justify-between items-center mt-2">
-          <div className="font-medium text-sm">₦{item.price.toLocaleString()}</div>
-          <div className="flex items-center">
+          <div className="font-medium text-sm">₦{item.pricePerDay.toLocaleString()}</div>
+          {/* <div className="flex items-center">
             <Star className="w-4 h-4 text-yellow-400 fill-current" />
             <span className="ml-1 font-medium text-sm">{item.rating}</span>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

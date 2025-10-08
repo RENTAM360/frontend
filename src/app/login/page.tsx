@@ -49,10 +49,35 @@ export default function LoginPage() {
     };
 
     const res = await login(payload).unwrap();
+    const token = res.data
 
     dispatch(setCredentials(res))
 
-    if (res.data) router.push('/dashboard')
+    const profileRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/profile/me`, {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: `Bearer ${res.data}`,
+      },
+    });
+
+    if (!profileRes.ok) {
+      throw new Error("Failed to fetch profile");
+    }
+
+    const profile = await profileRes.json();
+    const role = profile.data.user.role.name;
+    // console.log(profile)
+
+    await fetch("/api/set-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, role }),
+    });
+
+    if (["user"].includes(role)) {
+      router.replace("/dashboard");
+    } 
 
    } catch (err: unknown) {
     if (typeof err === "object" && err !== null) {

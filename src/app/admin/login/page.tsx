@@ -68,7 +68,7 @@ export default function LoginPage() {
 
     const profile = await profileRes.json();
     const role = profile.data.user.role.name;
-    console.log(profile)
+    // console.log(profile)
 
     await fetch("/api/set-session", {
       method: "POST",

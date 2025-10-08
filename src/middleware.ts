@@ -10,11 +10,23 @@ export default function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   const isUserProtected = userProtectedRoutes.some((route) => path.startsWith(route));
-  const isAdminProtected = adminProtectedRoutes.some((route) => path.startsWith(route));
+  const isAdminProtected =
+    adminProtectedRoutes.some((route) => path.startsWith(route)) && !path.startsWith("/admin/login");
   const isPublic = publicRoutes.includes(path);
 
+  if (isPublic) {
+    if (path === "/admin/login" && token && ["admin", "super-admin"].includes(role || "")) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+    if (path === "/login" && token && role === "user") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    return NextResponse.next();
+  }
+
   if ((isUserProtected || isAdminProtected) && !token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const redirectTo = isAdminProtected ? "/admin/login" : "/login";
+    return NextResponse.redirect(new URL(redirectTo, req.url));
   }
 
   if (isAdminProtected && token && !["admin", "super-admin"].includes(role || "")) {
@@ -23,15 +35,6 @@ export default function middleware(req: NextRequest) {
 
   if (isUserProtected && ["admin", "super-admin"].includes(role || "")) {
     return NextResponse.redirect(new URL("/admin", req.url));
-  }
-
-  if (isPublic && token) {
-    if (path.startsWith("/admin/login") && ["admin", "super-admin"].includes(role || "")) {
-      return NextResponse.redirect(new URL("/admin", req.url));
-    }
-    if (path.startsWith("/login") && role === "user") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
   }
 
   return NextResponse.next();

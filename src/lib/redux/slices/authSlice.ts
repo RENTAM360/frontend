@@ -52,7 +52,9 @@ const authSlice = createSlice({
       state.successMessage = null
     },
     setCredentials: (state, action: PayloadAction<AuthResponse>) => {
-      state.user = action.payload.user
+      if (action.payload.user) {
+        state.user = action.payload.user;
+      }
       state.data = action.payload.data
       if (isBrowser) {
         document.cookie =  `auth_token=${encodeURIComponent(

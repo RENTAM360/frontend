@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { X } from "lucide-react"
 
-type AdminRole = "Super Admin" | "Content Admin" | "Finance Admin" | "Support Admin"
+type AdminRole = "super-admin" | "admin" | "staff"
 
 interface AddAdminModalProps {
   isOpen: boolean
@@ -16,16 +16,17 @@ interface AddAdminModalProps {
     password: string
     role: AdminRole | ""
   }) => void
+   isLoading?: boolean
 }
 
-export function AddAdminModal({ isOpen, onClose, onSave }: AddAdminModalProps) {
+export function AddAdminModal({ isOpen, onClose, onSave, isLoading }: AddAdminModalProps) {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<AdminRole | "">("")
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
 
-  const roles: AdminRole[] = ["Super Admin", "Content Admin", "Finance Admin", "Support Admin"]
+  const roles: AdminRole[] = ["super-admin", "admin", "staff",]
 
   const handleSave = () => {
     onSave({
@@ -150,9 +151,10 @@ export function AddAdminModal({ isOpen, onClose, onSave }: AddAdminModalProps) {
           <div className="pt-2">
             <Button
               onClick={handleSave}
+              disabled={isLoading}
               className="w-full bg-[#17b266] hover:bg-[#149655] text-white py-3 text-lg rounded-full"
             >
-              Save
+              {isLoading ? "Saving..." : "Save"}
             </Button>
           </div>
         </div>

@@ -31,7 +31,7 @@ export interface AuthResponse {
     first_name: string
     last_name: string
     email: string
-  }
+  } | null
   data: string
 }
 
@@ -100,34 +100,37 @@ export interface OtherUserProfile {
   _id: string
 }
 
-interface BusinessStaff {
-  firstName: string
-  lastName: string
-  gender: string
-  email: string
-}
+// interface BusinessStaff {
+//   firstName: string
+//   lastName: string
+//   gender: string
+//   email: string
+// }
 
-interface BusinessOwner {
-  firstName: string
-  lastName: string
-  gender: string
-  email: string
-}
+// interface BusinessOwner {
+//   firstName: string
+//   lastName: string
+//   gender: string
+//   email: string
+// }
 
-interface Business {
-  email: string
-  phone: string
-  name: string
-  address: string
-  staff: BusinessStaff[]
-  owner: BusinessOwner
-}
+// interface Business {
+//   email: string
+//   phone: string
+//   name: string
+//   address: string
+//   staff: BusinessStaff[]
+//   owner: BusinessOwner
+// }
 
 export interface ProfileResponse {
   data: {
     user: UserProfile | OtherUserProfile
   }
-  business: Business
+  account: {
+    bankName: string
+    accountNumber: string
+  }
 } 
 
 // Request type for updating user profile
@@ -173,6 +176,10 @@ interface ResendEmailResponse {
  interface userProfile {
   data: {
     user: OtherUserProfile
+    account: {
+      bankName: string
+      accountNumber: string
+    }
   }
  }
 
