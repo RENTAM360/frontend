@@ -111,19 +111,20 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
         ) : (
           <div 
             ref={containerRef}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 items-stretch gap-2"
             style={{ scrollBehavior: "smooth" }}
           >
             {filteredEquipments.map((equipment) => (
-              <EquipmentCard
-                key={equipment.id}
-                id={equipment.id}
-                title={equipment.title}
-                category={equipment.category}
-                pricePerDay={equipment.pricePerDay}
-                rating={equipment.rating}
-                imageUrl={equipment.imageUrl}
-              />
+              <div key={equipment.id} className="h-full">
+                <EquipmentCard
+                  id={equipment.id}
+                  title={equipment.title}
+                  category={equipment.category}
+                  pricePerDay={equipment.pricePerDay}
+                  rating={equipment.rating}
+                  imageUrl={equipment.imageUrl}
+                />
+              </div>
             ))}
           </div>
         )}

@@ -65,7 +65,7 @@ export function EquipmentCard({
   }
 
   return (
-    <section>
+    <section className="h-full flex">
         <Link 
         href={
           variant === "profile"
