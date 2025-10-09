@@ -1,18 +1,67 @@
 "use client"
 
-// import { useForm } from 'react-hook-form';
-// import { yupResolver } from '@hookform/resolvers/yup';
-// import * as yup from 'yup';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import Image from 'next/image';
 import Link from 'next/link';
-// import { useState } from 'react';
+import { useState } from 'react';
+import { useResetPasswordMutation } from '@/lib/redux/api/authApi';
+import { useRouter } from 'next/navigation';
 
-// const schema = yup.object().shape({
-//   email: yup.string().email('Invalid email address').required('Email is required'),
-//   password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
-// });
+interface ResetPasswordForm {
+  email: string;
+  code: string;
+  password: string;
+}
+
+const schema = yup.object().shape({
+  email: yup.string().email("Invalid email").required("Email is required"),
+  code: yup.string().required("Reset code is required"),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+});
+
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<ResetPasswordForm>({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  });
+
+  const onSubmit: SubmitHandler<ResetPasswordForm> = async (data) => {
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      await resetPassword({
+        email: data.email,
+        code: data.code,
+        password: data.password,
+      }).unwrap();
+
+      setSuccessMessage("Password reset successful! Redirecting...");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "data" in err) {
+        const apiError = err as { data?: { message?: string } };
+        setErrorMessage(apiError.data?.message || "Failed to reset password.");
+      } else {
+        setErrorMessage("An unexpected error occurred.");
+      }
+    }
+  };
  
   return (
     <main className="flex min-h-screen font-sans flex-col md:flex-row">
@@ -54,27 +103,60 @@ export default function ResetPasswordPage() {
           <h2 className="text-2xl font-semibold mb-4 text-center">Reset Password</h2>
           <p className="text-[14px] text-[#898A8D] mb-8 text-center">Please enter a new password to complete the reset process.</p>
 
-          <form className="space-y-4 text-right">
+          <form className="space-y-4 text-right" onSubmit={handleSubmit(onSubmit)}>
             <div>
                 <input
-                type="password"
-                placeholder="Password"
-                className="w-full px-4 py-2 focus:outline-none rounded border"
+                  type="email"
+                  placeholder="Email Address"
+                  {...register("email")}
+                  className={`w-full px-4 py-2 rounded border focus:outline-none ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                )}
             </div>
            
             <div>
                 <input
-                type="password"
-                placeholder="Confirm Password"
-                className="w-full px-4 py-2 focus:outline-none rounded border"
+                  type="text"
+                  placeholder="Reset Code"
+                  {...register("code")}
+                  className={`w-full px-4 py-2 rounded border focus:outline-none ${
+                    errors.code ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                {errors.code && (
+                  <p className="text-red-500 text-sm mt-1">{errors.code.message}</p>
+                )}
             </div>
+            <div>
+              <input
+                type="password"
+                placeholder="New Password"
+                {...register("password")}
+                className={`w-full px-4 py-2 rounded border focus:outline-none ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+              )}
+            </div>
+
+            {errorMessage && (
+              <p className="text-red-500 text-center text-sm mt-2">{errorMessage}</p>
+            )}
+            {successMessage && (
+              <p className="text-green-600 text-center text-sm mt-2">{successMessage}</p>
+            )}
             <button
               type="submit"
+              disabled={!isValid || isLoading}
               className="w-full bg-primary mt-8 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"
             >
-              Continue
+              {isLoading ? "Resetting..." : "Continue"}
             </button>
           </form>
         </div>
