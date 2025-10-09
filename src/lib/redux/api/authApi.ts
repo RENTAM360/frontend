@@ -91,7 +91,7 @@ export interface OtherUserProfile {
   businessAddress?: string
   cacNumber?: string
   businessType?: string
-  status: "active" | "inactive"
+  status: "active" | "inactive" | "suspended"
   createdAt: string
   coverPhoto: string
   feedbacks: []

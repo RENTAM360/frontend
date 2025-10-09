@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight, Check } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
 import Image from "next/image"
-import { Report, useGetReportByIdQuery, useGetReportsQuery, useSuspendUserMutation } from "@/lib/redux/api/adminApi"
+import { Report, useDeleteUserMutation, useGetReportByIdQuery, useGetReportsQuery, useResolveReportMutation, useSuspendUserMutation, useUnsuspendUserMutation } from "@/lib/redux/api/adminApi"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
+import { enqueueSnackbar } from "notistack"
 
 // Mock reports data
 // const reportsData = [
@@ -99,6 +100,8 @@ export default function ReportsPage() {
   const [reporterId, setReporterId] = useState<string | null>(null);
   const [reportedId, setReportedId] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [isClosing, setIsClosing] = useState(false);
+
 
   const { data: reportsData } = useGetReportsQuery({ page: 1, limit: 10 });
   const reports = reportsData?.data?.reports ?? [];
@@ -106,8 +109,6 @@ export default function ReportsPage() {
   const { data: reportDetails } = useGetReportByIdQuery(selectedReportId!, {
     skip: !selectedReportId,
   });
-
-  console.log(reportDetails)
 
   const reportDetail = reportDetails?.data?.report ?? null;
 
@@ -124,14 +125,15 @@ export default function ReportsPage() {
   const { data: reporterProfile } = useGetOtherUserProfileQuery(reporterId!, {
     skip: !reporterId,
   });
-  const { data: reportedProfile } = useGetOtherUserProfileQuery(reportedId!, {
+  const { data: reportedProfile, refetch } = useGetOtherUserProfileQuery(reportedId!, {
     skip: !reportedId,
   });
 
 
-  // const [resolveReport] = useResolveReportMutation()
-  const [suspendUser] = useSuspendUserMutation()
-  // const [deleteUser] = useDeleteUserMutation()
+  const [resolveReport] = useResolveReportMutation()
+  const [suspendUser, { isLoading: isSuspending }] = useSuspendUserMutation()
+  const [unSuspendUser, { isLoading: isUnsuspending }] = useUnsuspendUserMutation();
+  const [deleteUser] = useDeleteUserMutation()
 
   console.log("Reporter:", reporterProfile);
   console.log("Reported:", reportedProfile);
@@ -145,28 +147,59 @@ export default function ReportsPage() {
   })
 
   const handleViewDetails = (reportId: string) => {
-    console.log(reportId)
     setSelectedReportId(reportId)
   }
 
   const handleCloseDetails = () => {
-   setSelectedReportId(null)
+    setIsClosing(true);
+    setTimeout(() => {
+      setSelectedReportId(null);
+      setIsClosing(false);
+    }, 300);
   }
 
-  // const handleResolve = async () => {
-  //   if (!selectedReportId) return
-  //   await resolveReport(selectedReportId).unwrap()
-  //   setShowSuccessModal(true)
-  // }
+  const handleResolve = async () => {
+    if (!selectedReportId) return
+    await resolveReport(selectedReportId).unwrap()
+    setShowSuccessModal(true)
+  }
 
   const handleSuspend = async (userId: string) => {
-    await suspendUser(userId).unwrap()
-  }
+    try {
+      await suspendUser(userId).unwrap();
+      enqueueSnackbar("User suspended successfully", { variant: "success" });
+      refetch()
+    } catch {
+      enqueueSnackbar("Failed to suspend user", { variant: "error" });
+    }
+  };
 
-  // const handleDelete = async (userId: string) => {
-  //   await deleteUser(userId).unwrap()
-  //   setSelectedReportId(null)
-  // }
+  const handleUnsuspend = async (userId: string) => {
+    try {
+      await unSuspendUser(userId).unwrap();
+      enqueueSnackbar("User unsuspended successfully", { variant: "success" });
+      refetch()
+    } catch {
+      enqueueSnackbar("Failed to unsuspend user", { variant: "error" });
+    }
+  };
+
+  // const isSuspended = status === "suspended";
+  // const isLoading = isSuspending || isUnsuspending;
+
+  const handleDelete = async (userId: string) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    try {
+      await deleteUser(userId).unwrap();
+      enqueueSnackbar("User deleted successfully", { variant: "success" });
+      setSelectedReportId(null);
+      refetch();
+    } catch (error) {
+      enqueueSnackbar("Failed to delete user", { variant: "error" });
+    }
+  };
+
 
   const handleMessage = () => {
     console.log("Send message to user")
@@ -256,13 +289,16 @@ export default function ReportsPage() {
       </div>
 
       {/* Slide-in Report Details Panel */}
-      {reportDetails && (
+      {selectedReportId && (
         <>
           {/* Overlay - only covers the left side */}
-          <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-40" style={{ right: "400px" }} />
+          <div onClick={handleCloseDetails} className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`} style={{ right: "400px" }} />
 
           {/* Slide-in Panel */}
-          <div className="fixed top-0 right-0 w-[400px] h-full bg-white shadow-xl z-50 animate-in slide-in-from-right duration-300 flex flex-col">
+          <div
+            className={`fixed top-0 right-0 w-[400px] h-full bg-white shadow-xl z-50 transform transition-transform duration-300 flex flex-col
+              ${isClosing ? "translate-x-full" : "translate-x-0"}`}
+          >
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
                 {/* Back Button */}
@@ -317,16 +353,37 @@ export default function ReportsPage() {
 
                   {/* Action Buttons */}
                   <div className="flex items-center justify-center gap-3 mt-6">
-                    <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={() => {
-                        const userId = reportedProfile?.data?.user?._id;
-                        if (userId) handleSuspend(userId);
-                      }}>
-                      Suspend
-                    </Button>
+                    {reportedProfile?.data?.user && (
+                      <Button
+                        disabled={isSuspending || isUnsuspending}
+                        className={`${
+                          reportedProfile.data.user.status === "suspended"
+                            ? "bg-green-500 hover:bg-green-600"
+                            : "bg-red-500 hover:bg-red-600"
+                        } text-white`}
+                        onClick={() => {
+                          const userId = reportedProfile.data.user._id;
+                          if (!userId) return;
+
+                          if (reportedProfile.data.user.status === "suspended") {
+                            handleUnsuspend(userId);
+                          } else {
+                            handleSuspend(userId);
+                          }
+                        }}
+                      >
+                        {isSuspending || isUnsuspending
+                          ? "Processing..."
+                          : reportedProfile.data.user.status === "suspended"
+                          ? "Unsuspend"
+                          : "Suspend"}
+                      </Button>
+                    )}
+
                     <Button className="bg-[#17b266] hover:bg-[#149655] text-white" onClick={handleMessage}>
                       Message
                     </Button>
-                    {/* {reportDetails.status !== "Resolved" && (
+                    {reportDetails?.data?.report?.status !== "resolved" && (
                       <Button
                         variant="outline"
                         className="border-[#17b266] text-[#17b266] hover:bg-[#17b266] hover:text-white"
@@ -334,27 +391,27 @@ export default function ReportsPage() {
                       >
                         Resolve
                       </Button>
-                    )} */}
+                    )}
                   </div>
                 </div>
 
                 {/* Report Message - Only show if not resolved */}
-                {/* {reportDetails.status !== "Resolved" && (
+                {reportDetails?.data?.report?.status !== "resolved" && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                     <h4 className="text-red-600 font-medium mb-2">Report message</h4>
                     <p className="text-red-600 text-sm">{reportDetails?.data?.report?.reason}</p>
                   </div>
-                )} */}
+                )}
 
                 {/* Resolved Status Message */}
-                {/* {reportDetails.status === "Resolved" && (
+                {reportDetails?.data?.report?.status === "resolved" && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                     <h4 className="text-green-600 font-medium mb-2">Status</h4>
                     <p className="text-green-600 text-sm">
                       This report has been resolved and appropriate actions have been completed.
                     </p>
                   </div>
-                )} */}
+                )}
 
                 {/* Contact Information */}
                 <div className="space-y-4 pb-6">
@@ -367,7 +424,7 @@ export default function ReportsPage() {
                     {reportedProfile?.data?.user?.address && <span className="text-gray-700">{reportedProfile?.data?.user?.phone}</span>}
                   </div>
                   {
-                    reportDetails?.data?.bank && (
+                    reportDetails?.data?.bank?.length && reportDetails.data.bank.length > 0 && (
                       <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                         <CreditCard className="w-5 h-5 text-[#17b266]" />
                         <div>
@@ -382,13 +439,24 @@ export default function ReportsPage() {
                     <Mail className="w-5 h-5 text-[#17b266]" />
                     <span className="text-gray-700">{reportedProfile?.data?.user?.email}</span>
                   </div>
-                  <div className="flex items-center justify-between py-3 border-t hover:bg-gray-50 rounded cursor-pointer">
+                  <div
+                    className="flex items-center justify-between py-3 border-t hover:bg-gray-50 rounded cursor-pointer"
+                    onClick={() => {
+                      const userId = reportedProfile?.data?.user?._id;
+                      if (!userId) return;
+
+                      if (window.confirm("Are you sure you want to permanently delete this account? This action cannot be undone.")) {
+                        handleDelete(userId);
+                      }
+                    }}
+                  >
                     <div className="flex items-center gap-3">
                       <Trash2 className="w-5 h-5 text-[#17b266]" />
                       <span className="text-gray-700">Delete account permanently</span>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                   </div>
+
                 </div>
               </div>
             </div>
@@ -429,16 +497,16 @@ export default function ReportsPage() {
 
 // Component for report rows
 function ReportRow({ report, onViewDetails }: { report: Report; onViewDetails: () => void }) {
-  // const getStatusColor = (status: string) => {
-  //   switch (status.toLowerCase()) {
-  //     case "pending":
-  //       return "text-orange-600 bg-orange-100"
-  //     case "resolved":
-  //       return "text-green-600 bg-green-100"
-  //     default:
-  //       return "text-gray-600 bg-gray-100"
-  //   }
-  // }
+  const getStatusColor = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "text-orange-600 bg-orange-100"
+      case "resolved":
+        return "text-green-600 bg-green-100"
+      default:
+        return "text-gray-600 bg-gray-100"
+    }
+  }
 
   return (
     <div className="grid grid-cols-12 gap-4 p-4 bg-white my-1 border border-[#ECECEC] hover:bg-gray-50 text-xs">
@@ -451,11 +519,11 @@ function ReportRow({ report, onViewDetails }: { report: Report; onViewDetails: (
       <div className="col-span-2 flex items-center">
         <span>{report?.reason}</span>
       </div>
-      {/* <div className="col-span-2 flex items-center">
+      <div className="col-span-2 flex items-center">
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report?.status)}`}>
           {report.status}
         </span>
-      </div> */}
+      </div>
       <div className="col-span-2 flex items-center">
         <span>
           {new Date(report.createdAt).toLocaleDateString("en-US", {
