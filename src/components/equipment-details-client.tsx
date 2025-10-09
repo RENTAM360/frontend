@@ -10,6 +10,10 @@ import Map from "./map"
 import { socketService } from "@/lib/socket"
 import { useMessagingContext } from "@/context/messaging-context"
 import { AnimatedLogo } from "./loading-logo"
+import { motion, AnimatePresence } from "motion/react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+
+
 
 const mockEquipmentData = {
   id: "1",
@@ -93,8 +97,23 @@ interface EquipmentIdProps {
 
 export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps) {
   const [selectedImage, setSelectedImage] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const router = useRouter()
   const [address, setAddress] = useState("");
+
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isFullscreen]);
+
 
   const {
       joinConversation,
@@ -214,6 +233,61 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
 
   return (
     <div className="space-y-8 font-sans pt-4 md:mt-10">
+        {isFullscreen && (
+          <div className="fixed inset-0 h-screen w-screen bg-black/95 flex items-center justify-center touch-none z-[9999] transition-opacity duration-300 opacity-100">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-gray-300"
+            >
+              <X size={32} />
+            </button>
+
+            {/* Previous Button */}
+            <button
+              onClick={() =>
+                setSelectedImage((prev) =>
+                  prev === 0 ? equipmentData.media.length - 1 : prev - 1
+                )
+              }
+              className="absolute left-4 text-white text-4xl hover:text-gray-300"
+            >
+             <ChevronLeft size={40} />
+            </button>
+
+            {/* Image */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedImage}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="relative w-full max-w-5xl h-[80vh]"
+              >
+                <Image
+                  src={equipmentData.media[selectedImage] || "/placeholder.svg"}
+                  alt={equipmentData.title}
+                  fill
+                  className="object-contain object-center"
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Next Button */}
+            <button
+              onClick={() =>
+                setSelectedImage((prev) =>
+                  prev === equipmentData.media.length - 1 ? 0 : prev + 1
+                )
+              }
+              className="absolute right-4 text-white text-4xl hover:text-gray-300"
+            >
+              <ChevronRight size={40} />
+            </button>
+          </div>
+        )}
+
         <header className="text-[23px] flex items-center gap-3 font-[700]">
           <svg className="cursor-pointer" onClick={() => router.back()} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9.57141 18.8201C9.38141 18.8201 9.19141 18.7501 9.04141 18.6001L2.97141 12.5301C2.68141 12.2401 2.68141 11.7601 2.97141 11.4701L9.04141 5.40012C9.33141 5.11012 9.81141 5.11012 10.1014 5.40012C10.3914 5.69012 10.3914 6.17012 10.1014 6.46012L4.56141 12.0001L10.1014 17.5401C10.3914 17.8301 10.3914 18.3101 10.1014 18.6001C9.96141 18.7501 9.76141 18.8201 9.57141 18.8201Z" fill="#292D32"/>
@@ -224,12 +298,15 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left side - Image Gallery */}
         <div className="w-full bg-white p-4 rounded-lg lg:flex-2">
-          <div className="relative aspect-[4/3] md:h-[370px] w-full overflow-hidden rounded-lg mb-4">
+          <div 
+            className="relative aspect-[4/3] sm:aspect-[16/9] w-full overflow-hidden rounded-lg mb-4"
+            onClick={() => setIsFullscreen(true)}
+            >
             <Image
               src={equipmentData.media[selectedImage] || "/placeholder.svg"}
               alt={equipmentData.title}
               fill
-              className="object-cover"
+              className="object-cover cursor-pointer object-center"
               priority
             />
           </div>
@@ -242,7 +319,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                   selectedImage === index ? "border-primary" : "border-transparent"
                 }`}
               >
-                <Image src={image || "/placeholder.svg"} alt={`View ${index + 1}`} fill className="object-cover" />
+                <Image src={image || "/placeholder.svg"} alt={`View ${index + 1}`} fill className="object-cover cursor-pointer" />
               </button>
             ))}
           </div>
@@ -250,7 +327,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
           <div className="mt-8 text-[12px]">
             <h2 className="text-2xl font-bold">Description</h2>
             <p className="mt-2 font-medium text-lg text-[#979797]">{equipmentData.title}</p>
-            <p className="mt-2 text-[#979797]">{equipmentData.description}</p>
+            <p className="mt-2 text-[#979797] whitespace-pre-line">{equipmentData.description}</p>
             <ol className="mt-4 space-y-2 list-decimal pl-5">
               {/* <li>
                 <ul className="space-y-2 text-[#979797]">

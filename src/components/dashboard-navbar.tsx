@@ -183,7 +183,7 @@ export function DashboardNavbar() {
                 {profileData?.data?.user?.avatar ? (<Image
                   src={`${profileData?.data?.user?.avatar}`}
                   alt="User"
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 object-cover rounded-full"
                   width={100}
                   height={100}
                 />) : (
