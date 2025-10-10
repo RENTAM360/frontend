@@ -111,12 +111,12 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
         ) : (
           <div 
             ref={containerRef}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 items-stretch gap-2"
-            style={{ scrollBehavior: "smooth" }}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2"
           >
             {filteredEquipments.map((equipment) => (
-              <div key={equipment.id} className="h-full">
+             
                 <EquipmentCard
+                  key={equipment.id}
                   id={equipment.id}
                   title={equipment.title}
                   category={equipment.category}
@@ -124,7 +124,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
                   rating={equipment.rating}
                   imageUrl={equipment.imageUrl}
                 />
-              </div>
+    
             ))}
           </div>
         )}

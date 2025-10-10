@@ -72,7 +72,7 @@ export function EquipmentCard({
             ? `/dashboard/profile/equipment/${id}`   
             : `/dashboard/equipment/${id}` 
         } 
-        className="relative p-2 rounded-[15.37px] bg-white flex flex-col w-full md:w-[300px] flex-shrink-0">
+        className="relative p-2 rounded-[15.37px] bg-white flex flex-col h-full w-full">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[15.37px]">
             <Image src={getValidImageUrl(imageUrl)} alt={title} fill className="object-cover" />
             
