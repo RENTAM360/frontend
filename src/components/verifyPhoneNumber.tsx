@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import { useUpdatePhoneMutation, useVerifyPhoneMutation } from "@/lib/redux/api/authApi"
 import { SuccessModal } from "@/components/success-modal"
+import { enqueueSnackbar } from "notistack"
 
 interface VerifyPhoneModalProps {
   isOpen: boolean
@@ -32,6 +33,18 @@ export function VerifyPhoneModal({ isOpen, onClose }: VerifyPhoneModalProps) {
       await updatePhone({ phone: formattedPhone }).unwrap()
       setStep("otp")
     } catch (err) {
+      const getErrorMessage = (err: unknown): string => {
+        if (typeof err === "string") return err;
+        if (err instanceof Error) return err.message;
+
+        if (typeof err === "object" && err !== null) {
+          const maybeError = err as { data?: { message?: string } };
+          if (maybeError.data?.message) return maybeError.data.message;
+        }
+
+        return "Phone update failed";
+      };
+      enqueueSnackbar(getErrorMessage(err), {variant: "error"})
       console.error("Phone update failed", err)
     }
   }
@@ -60,6 +73,19 @@ export function VerifyPhoneModal({ isOpen, onClose }: VerifyPhoneModalProps) {
       await verifyPhone({ code }).unwrap()
       setStep("success")
     } catch (err) {
+      const getErrorMessage = (err: unknown): string => {
+        if (typeof err === "string") return err;
+        if (err instanceof Error) return err.message;
+
+        if (typeof err === "object" && err !== null) {
+          const maybeError = err as { data?: { message?: string } };
+          if (maybeError.data?.message) return maybeError.data.message;
+        }
+
+        return "OTP verification failed";
+      };
+
+      enqueueSnackbar(getErrorMessage(err), {variant: "error"})
       console.error("OTP verification failed", err)
     }
   }

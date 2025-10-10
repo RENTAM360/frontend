@@ -25,16 +25,19 @@ export function SuccessModal({
   icon = "success",
   amount,
   onConfirm,
+  onAction,
   actionLabel = "Done",
   cancelLabel,
 }: SuccessModalProps) {
   const handleAction = () => {
-    if (onConfirm) {
-      onConfirm()
+    if (onAction) {
+      onAction(); 
+    } else if (onConfirm) {
+      onConfirm(); 
     } else {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

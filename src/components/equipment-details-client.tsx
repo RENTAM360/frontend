@@ -323,11 +323,26 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
               </button>
             ))}
           </div>
+          <div className="md:flex mt-3 gap-4 items-center">
+            <p className="font-bold text-2xl text-[#000000]">{equipmentData.title}</p>
+            <div className="">
+              <span className="text-lg font-medium text-primary">₦{equipmentData.pricePerDay.toLocaleString()}</span>
+              <span className="text-xs text-[#979797] ml-2">Per day</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 text-[#979797] mb-4">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.7142 9.34384C6.34503 9.34384 5.22656 8.2318 5.22656 6.85621C5.22656 5.48061 6.34503 4.375 7.7142 4.375C9.08336 4.375 10.2018 5.48704 10.2018 6.86263C10.2018 8.23822 9.08336 9.34384 7.7142 9.34384ZM7.7142 5.3392C6.87856 5.3392 6.19076 6.02057 6.19076 6.86263C6.19076 7.7047 6.87213 8.38607 7.7142 8.38607C8.55626 8.38607 9.23763 7.7047 9.23763 6.86263C9.23763 6.02057 8.54983 5.3392 7.7142 5.3392Z" fill="#979797"/>
+                <path d="M7.7148 14.8654C6.76346 14.8654 5.80568 14.5055 5.06004 13.792C3.16378 11.9664 1.06825 9.05453 1.8589 5.58984C2.5724 2.44655 5.31716 1.03882 7.7148 1.03882C7.7148 1.03882 7.7148 1.03882 7.72123 1.03882C10.1189 1.03882 12.8636 2.44655 13.5771 5.59627C14.3613 9.06095 12.2658 11.9664 10.3696 13.792C9.62391 14.5055 8.66614 14.8654 7.7148 14.8654ZM7.7148 2.00302C5.84425 2.00302 3.44018 2.99936 2.80381 5.80196C2.10959 8.82955 4.01227 11.4393 5.73498 13.0913C6.84702 14.1648 8.58901 14.1648 9.70105 13.0913C11.4173 11.4393 13.32 8.82955 12.6386 5.80196C11.9958 2.99936 9.58535 2.00302 7.7148 2.00302Z" fill="#979797"/>
+            </svg>
 
-          <div className="mt-8 text-[12px]">
-            <h2 className="text-2xl font-bold">Description</h2>
-            <p className="mt-2 font-medium text-lg text-[#979797]">{equipmentData.title}</p>
-            <p className="mt-2 text-[#979797] whitespace-pre-line">{equipmentData.description}</p>
+              <span className="text-lg text-[13.22px]">
+                {address || "Loading address..."}
+              </span>
+          </div>
+          <div className="mt-4 text-[12px]">
+            <h2 className="text-xl font-medium">Description</h2>
+            <p className="mt-2 text-xs text-[#979797] whitespace-pre-line">{equipmentData.description}</p>
             <ol className="mt-4 space-y-2 list-decimal pl-5">
               {/* <li>
                 <ul className="space-y-2 text-[#979797]">

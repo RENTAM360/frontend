@@ -49,7 +49,7 @@ export function DashboardNavbar() {
       <header className="fixed top-0 z-40 px-2 md:px-10 w-full font-sans md:py-4 border-b bg-primary text-white">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex transition-transform duration-300 ease-in-out hover:-translate-y-1 items-center gap-2">
               <svg width="144" height="29" viewBox="0 0 144 29" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M16.1625 0V8.08095L10.7745 13.1428L11.0063 5.29171L1.27734 5.38796L6.73405 0H16.1625Z" fill="white"/>
                   <path d="M0 6.73535H9.42843V28.2852C4.22119 28.2852 0 24.064 0 18.8568V6.73535Z" fill="white"/>
@@ -62,7 +62,7 @@ export function DashboardNavbar() {
             <nav className="hidden md:flex items-center gap-6">
               <Link
                 href="/dashboard"
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:-translate-y-1 ${
                   pathname === "/dashboard" ? "bg-white text-primary" : "hover:bg-green-600"
                 }`}
               >
@@ -76,7 +76,7 @@ export function DashboardNavbar() {
               <NavLink
                 href="/dashboard/saved"
                 badge={savedItemsCount > 0 ? savedItemsCount : undefined}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:-translate-y-1 ${
                   pathname === "/dashboard/saved" ? "bg-white text-primary" : "hover:bg-green-600"
                 }`}
               >
@@ -90,7 +90,7 @@ export function DashboardNavbar() {
               </NavLink>
               <Link
                 href="/dashboard/rent"
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:-translate-y-1 ${
                   pathname === "/dashboard/rent" ? "bg-white text-primary" : "hover:bg-green-600"
                 }`}
               >
@@ -104,7 +104,7 @@ export function DashboardNavbar() {
               </Link>
               <Link
                 href="/dashboard/messages"
-                className={`flex items-center relative gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center relative gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:-translate-y-1 ${
                   pathname === "/dashboard/messages" ? "bg-white text-primary" : "hover:bg-green-600"
                 }`}
               >
@@ -148,7 +148,7 @@ export function DashboardNavbar() {
             )}
 
             <div className="relative" ref={dropdownRef}>
-              <button onClick={() => setOpen((prev) => !prev)} className="relative md:ml-6 rounded-full p-2 hover:bg-green-600">
+              <button onClick={() => setOpen((prev) => !prev)} className="relative md:ml-6 rounded-full transition-transform duration-300 ease-in-out hover:-translate-y-1 p-2 hover:bg-green-600">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 8.7667C9.65833 8.7667 9.375 8.48337 9.375 8.1417V5.3667C9.375 5.02503 9.65833 4.7417 10 4.7417C10.3417 4.7417 10.625 5.02503 10.625 5.3667V8.1417C10.625 8.4917 10.3417 8.7667 10 8.7667Z" fill="white"/>
                     <path d="M10.0148 16.9584C7.86477 16.9584 5.7231 16.6168 3.68143 15.9334C2.9231 15.6834 2.3481 15.1418 2.0981 14.4584C1.8481 13.7751 1.93143 12.9918 2.33977 12.3084L3.3981 10.5418C3.63143 10.1501 3.83977 9.41678 3.83977 8.95845V7.20845C3.83977 3.80011 6.60643 1.03345 10.0148 1.03345C13.4231 1.03345 16.1898 3.80011 16.1898 7.20845V8.95845C16.1898 9.40845 16.3981 10.1501 16.6314 10.5418L17.6898 12.3084C18.0814 12.9584 18.1481 13.7334 17.8898 14.4418C17.6314 15.1501 17.0648 15.6918 16.3481 15.9334C14.3064 16.6251 12.1648 16.9584 10.0148 16.9584ZM10.0148 2.29178C7.2981 2.29178 5.08977 4.50011 5.08977 7.21678V8.96678C5.08977 9.64178 4.8231 10.6168 4.4731 11.1918L3.41477 12.9668C3.1981 13.3251 3.1481 13.7084 3.2731 14.0418C3.3981 14.3751 3.68143 14.6251 4.08143 14.7584C7.91477 16.0334 12.1314 16.0334 15.9648 14.7584C16.3231 14.6418 16.5981 14.3751 16.7231 14.0251C16.8564 13.6751 16.8148 13.2918 16.6231 12.9668L15.5648 11.2001C15.2148 10.6251 14.9481 9.65012 14.9481 8.97511V7.22511C14.9398 4.50011 12.7314 2.29178 10.0148 2.29178Z" fill="white"/>
@@ -183,11 +183,11 @@ export function DashboardNavbar() {
                 {profileData?.data?.user?.avatar ? (<Image
                   src={`${profileData?.data?.user?.avatar}`}
                   alt="User"
-                  className="h-8 w-8 object-cover rounded-full"
+                  className="h-8 w-8 object-cover rounded-full transition-transform duration-300 ease-in-out hover:-translate-y-1"
                   width={100}
                   height={100}
                 />) : (
-                  <User className="w-5 h-5" />
+                  <User className="w-5 h-5 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:bg-green-600" />
                 )}
                 {/* <div>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">

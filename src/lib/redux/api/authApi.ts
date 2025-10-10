@@ -277,7 +277,13 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
-
+    deleteAccount: builder.mutation<{ status: number; message: string }, string>({
+      query: (userId) => ({
+        url: `/profile/user/me?userId=${userId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["User"],
+    }),
     logout: builder.mutation<void, void>({
       query: () => ({
         url: "/logout",
@@ -333,4 +339,5 @@ export const {
   useVerifyPhoneMutation, 
   useGoogleLoginQuery,
   useLazyGoogleLoginQuery,
+  useDeleteAccountMutation,
 } = authApi

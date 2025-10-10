@@ -10,7 +10,7 @@ import { useMemo, useRef, useState } from "react"
 import { ProfileEditForm } from "@/components/profile-edit-form"
 import { WalletView } from "@/components/wallet-view"
 import { SuccessModal } from "@/components/success-modal"
-import { OtherUserProfile, useGetProfileQuery, useUpdateProfileMutation } from "@/lib/redux/api/authApi"
+import { OtherUserProfile, useDeleteAccountMutation, useGetProfileQuery, useUpdateProfileMutation } from "@/lib/redux/api/authApi"
 import { VerifyNinModal } from "@/components/verify-nin-modal"
 import { useGetEquipmentsQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import { VerifyPhoneModal } from "@/components/verifyPhoneNumber"
@@ -33,6 +33,7 @@ export default function ProfilePage() {
     const [showVerifyPhone, setShowVerifyPhone] = useState(false)
     const [uploadEquipmentImages] = useUploadEquipmentImagesMutation()
     const [updateProfile] = useUpdateProfileMutation()
+    const [deleteAccount, { isLoading }] = useDeleteAccountMutation();
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [uploadTarget, setUploadTarget] = useState<"cover" | "avatar" | null>(null)
     const [uploadingTarget, setUploadingTarget] = useState<"cover" | "avatar" | null>(null)
@@ -118,11 +119,25 @@ export default function ProfilePage() {
     },
   ]
 
-   const handleDeleteAccount = () => {
-    console.log("Deleting account...")
-    // Here you would typically call an API to delete the account
-    // Then redirect to logout or home page
-  }
+   const handleDeleteAccount = async (userId: string) => {
+    try {
+      const response = await deleteAccount(userId).unwrap();
+      enqueueSnackbar(response.message || "Account deleted successfully", { variant: "success" });
+
+      handleLogout()
+      console.log("Account deleted:", response);
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" &&
+        err !== null &&
+        "data" in err &&
+        typeof (err as { data?: { message?: string } }).data?.message === "string"
+          ? (err as { data: { message: string } }).data.message
+          : "Failed to delete account";
+
+      enqueueSnackbar(message, { variant: "error" });
+    }
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length || !uploadTarget) return
@@ -248,6 +263,13 @@ export default function ProfilePage() {
     router.push("/login")
   }
 
+  const feedbackCount = profile?.feedbacks?.length ?? 0;
+
+  let reviewText: string;
+  if (feedbackCount === 0) reviewText = "No reviews yet";
+  else if (feedbackCount === 1) reviewText = "View the review";
+  else reviewText = `View all ${feedbackCount} reviews`;
+
   return (
     <div className="container font-sans mx-auto px-4 py-8">
       <input
@@ -349,7 +371,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="flex items-center mt-2">
+            <div className="flex justify-between items-center mt-2">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -357,10 +379,21 @@ export default function ProfilePage() {
                     className={`w-5 h-5 ${i < Math.floor(user.rating) ? "fill-primary text-primary" : "fill-muted text-muted-foreground"}`}
                   />
                 ))}
-              </div>
               <span className="ml-2 font-semibold">{user.rating}</span>
-              <Link href={`/dashboard/user/user/${user.id}/reviews`} className="ml-4 flex items-center gap-2 text-primary text-sm">
-                All {user.totalReviews} reviews <ChevronRight />
+              </div>
+              <Link
+                href={feedbackCount > 0 ? `/dashboard/user/owner/${user.id}/reviews` : "#"}
+                className={`ml-4 flex items-center gap-2 text-sm ${
+                  feedbackCount === 0
+                    ? "text-gray-400 cursor-not-allowed pointer-events-none"
+                    : "text-primary hover:underline"
+                }`}
+                aria-disabled={feedbackCount === 0}
+              >
+                {reviewText}
+                <ChevronRight
+                  className={feedbackCount === 0 ? "opacity-40" : "opacity-100"}
+                />
               </Link>
             </div>
 
@@ -403,7 +436,7 @@ export default function ProfilePage() {
                   </div>
                   {viewMode === "edit" ? "View listed items" : "Edit profile details"}
               </button>
-              <button
+              {!profile?.isVerify && <button
                   onClick={() => setVerifyType("NIN")}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
                 >
@@ -414,8 +447,8 @@ export default function ProfilePage() {
                     </svg>
                   </div>
                   NIN Verification
-              </button>
-              <button
+              </button>}
+              { !profile?.isVerify && <button
                   onClick={() => setVerifyType("BVN")}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
                 >
@@ -426,7 +459,7 @@ export default function ProfilePage() {
                     </svg>
                   </div>
                   BVN Verification
-              </button>
+              </button>}
               <button
                   onClick={() => setShowVerifyPhone(true)}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
@@ -625,9 +658,9 @@ export default function ProfilePage() {
         title="Confirm Account Deletion"
         description="Are you sure you want to delete your account? This action is permanent and cannot be undone. All your data, listings, and rental history will be permanently removed."
         icon="warning"
-        actionLabel="Delete"
+        actionLabel={isLoading ? "Deleting..." : "Delete"}
         cancelLabel="Cancel"
-        onAction={handleDeleteAccount}
+        onAction={() => handleDeleteAccount(userId!)}
       />
 
       <VerifyNinModal
