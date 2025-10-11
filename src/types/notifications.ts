@@ -6,5 +6,6 @@ export interface Notification {
   details: string;
   type: string;
   createdAt?: string; 
+  updatedAt?: string; 
   image?: string;
 }

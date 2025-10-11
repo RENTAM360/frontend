@@ -29,7 +29,7 @@ export const notificationsApi = baseApi.injectEndpoints({
       query: (notificationId) => `/notifications/${notificationId}`,
     }),
 
-    markAsRead: builder.mutation<{ message: string }, string>({
+    markAsRead: builder.mutation<{ message: string, status: number }, string>({
       query: (notificationId) => ({
         url: `/notifications/${notificationId}`,
         method: "PUT",

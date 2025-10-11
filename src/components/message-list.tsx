@@ -19,7 +19,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ conversations, activeId, onSelect }: MessageListProps) {
-  console.log(conversations)
+  // console.log(conversations)
   return (
     <div className="divide-y bg-white overflow-y-auto">
       {conversations.map((conversation) => (

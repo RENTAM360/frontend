@@ -101,49 +101,39 @@ export default function MessagesPage() {
 
 
   return (
-    <div className="flex h-screen -mx-6 font-sans overflow-hidden">
-      <div className="flex bg-[#F9F9F9] flex-1 overflow-hidden">
+    <div className="flex h-[calc(100vh-6rem)] -mx-4 md:-mx-6 font-sans relative overflow-hidden">
         {/* Messages list */}
-        <div className={`w-full bg-white md:w-1/3 lg:w-1/3 ${
-            activeConversation ? "hidden md:flex" : "flex"
-          } flex-col`}>
+        <div 
+          className={`
+          flex flex-col md:border-r bg-white
+          transition-transform duration-300 ease-in-out
+          w-full md:w-[30%]
+          ${activeConversation && !isLoadingMessages ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"}
+        `}
+        >
           {/* Header */}
-          <div className="flex h-16 items-center justify-between px-4 border-b">
-            <h1 className="text-xl font-bold">Messages</h1>
-            {/* {connectionError ? (
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-xs">Connection Error</span>
-              </div>
-            ) : !isConnected ? (
-              <div className="flex items-center gap-2 text-amber-600">
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                <span className="text-xs">Connecting...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-emerald-600">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                <span className="text-xs">Online</span>
-              </div>
-            )} */}
-          </div>
+          <div className="sticky top-0 z-20 bg-white border-b">
+            <div className="flex h-16 items-center justify-between px-4 border-b">
+              <h1 className="text-xl font-bold">Messages</h1>
+            </div>
 
-          {/* Search */}
-          <div className="p-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="I am looking for..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              />
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            {/* Search */}
+            <div className="p-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="I am looking for..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              </div>
             </div>
           </div>
 
           {/* Conversations List */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {isLoadingConversations ? (
               <div className="flex items-center justify-center h-32">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
@@ -164,13 +154,18 @@ export default function MessagesPage() {
         </div>
 
         {/* Active conversation */}
-        <div className={`${
-            activeConversation ? "flex" : "hidden"
-          } flex-1 flex-col md:flex m d:overflow-hidden`}>
+        <div 
+          className={`
+          absolute top-0 left-0 w-full h-full bg-white flex flex-col
+          transition-transform duration-300 ease-in-out
+          md:static md:flex-1 pt-12 md:pt-0
+          ${activeConversation ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+        `}
+        >
           {activeConversation ? (
             <>
               {/* Conversation Header */}
-              <div className="flex bg-white h-16 items-center justify-between p-4 border-b">
+              <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
                 <div className="flex items-center space-x-3">
                   {/* Back button (mobile only) */}
                   <button
@@ -256,13 +251,13 @@ export default function MessagesPage() {
         </div>
 
         {/* Mobile empty state */}
-        <div className="flex flex-1 items-center justify-center md:hidden">
+        {/* <div className="flex flex-1 items-center justify-center md:hidden">
           <div className="text-center">
             <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
             <p className="text-gray-500 text-sm">Select a conversation to start messaging</p>
           </div>
-        </div>
-      </div>
+        </div> */}
+       
 
       {activeConversation && activeConversation.product && (
         <ReportModal

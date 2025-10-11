@@ -48,7 +48,7 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
 
 
   return (
-    <div className="flex h-screen overflow-hidden flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-4">
         {/* Product card */}
         {showProductCard && conversation.product && (
@@ -100,7 +100,7 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
       </div>
 
       {/* Message input */}
-      <div className="border-t p-4">
+      <div className="sticky bottom-0 z-20 border-t bg-white p-3">
         <form onSubmit={handleSubmit} className="flex items-center space-x-2">
           <button type="button" className="flex-shrink-0 rounded-full p-2 text-gray-500 hover:bg-gray-100">
             <Paperclip className="h-5 w-5" />

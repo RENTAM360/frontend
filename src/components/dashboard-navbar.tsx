@@ -32,6 +32,8 @@ export function DashboardNavbar() {
   const { data } = useGetNotificationsQuery({ page: 1, limit: 10, isRead: false });
   const unreadCount = data?.data?.length ?? 0;
 
+  console.log(data)
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -155,8 +157,8 @@ export function DashboardNavbar() {
                     <path d="M10.0016 19.0833C9.1099 19.0833 8.2349 18.7167 7.60156 18.0833C6.96823 17.45 6.60156 16.575 6.60156 15.6833H7.85156C7.85156 16.25 8.0849 16.8 8.4849 17.2C8.8849 17.6 9.4349 17.8333 10.0016 17.8333C11.1849 17.8333 12.1516 16.8667 12.1516 15.6833H13.4016C13.4016 17.5583 11.8766 19.0833 10.0016 19.0833Z" fill="white"/>
                 </svg>
                 {unreadCount > 0 && ( 
-                  <span className="absolute right-1 top-1 h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="absolute right-2 -top-1 h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                   </span>
                 )}
@@ -171,8 +173,13 @@ export function DashboardNavbar() {
                   />
 
                   {/* dropdown anchored top-right */}
-                  <div className="absolute right-10 top-24 w-96 bg-white py-4 z-50">
-                    <NotificationsDropdown />
+                  <div 
+                    className="absolute right-4 md:right-10 top-16 md:top-24 w-80 md:w-96 bg-white py-4 z-50"
+                    style={{ maxHeight: "80vh" }}
+                  >
+                    <div className="overflow-y-auto max-h-[70vh] hide-scrollbar">
+                      <NotificationsDropdown />
+                    </div>
                   </div>
                 </div>
               )}
