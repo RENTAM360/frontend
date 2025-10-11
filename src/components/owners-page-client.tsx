@@ -2,11 +2,12 @@
 
 import Image from "next/image"
 // import Link from "next/link"
-import { MapPin, Phone } from "lucide-react"
+import { ChevronRight, MapPin, Phone } from "lucide-react"
 import { EquipmentCard } from "@/components/equipment-card"
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { AnimatedLogo } from "./loading-logo"
+import Link from "next/link"
 
 // async function getOwnerData(id: string) {
 //   // This would be replaced with your actual data fetching logic
@@ -98,18 +99,26 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
     return <p>Owner not found.</p>
   }
 
+  const feedbackCount = ownerProfile?.data?.user.feedbacks?.length ?? 0;
+
+  let reviewText: string;
+  if (feedbackCount === 0) reviewText = "No reviews yet";
+  else if (feedbackCount === 1) reviewText = "View the review";
+  else reviewText = `View all ${feedbackCount} reviews`;
+
+
   return (
-    <div className="container font-sans mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
+    <div className="container relative font-sans mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row">
         {/* Owner Profile Section */}
-        <div className="w-full bg-white rounded-t-3xl pb-6 md:pb-4 rounded-b-3xl md:rounded-b-none md:mt-14 md:w-1/3">
+        <div className="w-full max-h-screen bg-white sticky rounded-t-3xl pb-6 md:pb-4 rounded-b-3xl md:rounded-b-none md:mt-14 md:w-1/3">
           <div className="relative mb-6">
             <div className="relative w-full h-44 rounded-t-3xl rounded-b-[30px] overflow-hidden">
-              <Image src="/profile-bg.svg" alt="Profile background" fill className="object-cover" />
+              <Image src={ownerProfile?.data.user.coverPhoto || "/cover1.jpg"} alt="Profile background" fill className="object-cover" />
             </div>
             <div className="absolute -bottom-12 left-[37%] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
               <Image
-                src={ownerProfile?.data.user.avatar}
+                src={ownerProfile?.data.user.avatar || "/user.svg"}
                 alt={`${ownerProfile?.data.user.firstName} ${ownerProfile?.data.user.lastName}`}
                 width={96}
                 height={96}
@@ -126,8 +135,8 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
               )}
             </div>
 
-            {/* <div className="flex items-center mt-2">
-              <div className="flex">
+            <div className="flex justify-center items-center mt-2">
+              {/* <div className="flex">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
@@ -135,11 +144,22 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
                   />
                 ))}
               </div>
-              <span className="ml-2 font-semibold">{owner.rating}</span>
-              <Link href={`/dashboard/user/owner/${owner.id}/reviews`} className="ml-4 flex items-center gap-2 text-primary text-sm">
-                All {owner.totalReviews} reviews <ChevronRight />
+              <span className="ml-2 font-semibold">{owner.rating}</span> */}
+              <Link
+                href={feedbackCount > 0 ? `/dashboard/user/owner/${ownerProfile?.data.user._id}/reviews` : "#"}
+                className={`ml-4 flex items-center gap-2 text-sm ${
+                  feedbackCount === 0
+                    ? "text-gray-400 cursor-not-allowed pointer-events-none"
+                    : "text-primary hover:underline"
+                }`}
+                aria-disabled={feedbackCount === 0}
+              >
+                {reviewText}
+                <ChevronRight
+                  className={feedbackCount === 0 ? "opacity-40" : "opacity-100"}
+                />
               </Link>
-            </div> */}
+            </div>
 
             {ownerProfile?.data.user.bio ? (
               <p className="mt-4 text-black text-[12px] leading-relaxed">{ownerProfile?.data.user.bio}</p>
@@ -169,9 +189,9 @@ export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
         </div>
 
         {/* Listed Items Section */}
-        <div className="w-full md:w-2/3">
+        <div className="w-full md:w-2/3 mx-4">
           <h2 className="text-2xl font-bold mb-6">Listed items</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 overflow-auto hide-scrollbar md:-mr-10 lg:grid-cols-3 gap-x-16 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 overflow-auto hide-scrollbar md:-mr-10 mx-auto max-w-[1600px] justify-center place-items-stretch scroll-smooth gap-2">
             {userEquipments?.equipments?.map((item) => (
               <EquipmentCard key={item.id} {...item} variant="default"/>
             ))}

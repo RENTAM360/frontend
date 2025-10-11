@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Star, Phone, ChevronRight, Info } from "lucide-react"
+import {Phone, ChevronRight, Info } from "lucide-react"
 import { EquipmentCard } from "@/components/equipment-card"
 import { getUserProfile } from "@/lib/data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -280,19 +280,19 @@ export default function ProfilePage() {
         onChange={handleImageChange}
       />
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row">
         {/* Owner Profile Section */}
         <div className="w-full bg-white rounded-t-3xl md:w-1/3">
           <div className="relative mb-6">
             <div className="relative w-full h-44 rounded-t-3xl rounded-b-[30px] overflow-hidden">
               <Image
-                src={profile?.coverPhoto || "/profile-bg.svg"}
+                src={profile?.coverPhoto || "/cover1.jpg"}
                 alt="Profile background"
                 fill
                 className="object-cover"
               />
               {uploadingTarget === "cover" && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 hover:bg-black/70 cursor-pointer flex items-center justify-center">
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
@@ -301,7 +301,7 @@ export default function ProfilePage() {
                   setUploadTarget("cover")
                   fileInputRef.current?.click()
                 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 cursor-pointer text-white p-2 rounded-full"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -321,7 +321,7 @@ export default function ProfilePage() {
             </div>
             <div className="absolute -bottom-12 left-[37%] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
               <Image
-                src={profile?.avatar || user.profileImage}
+                src={profile?.avatar || "/user.svg"}
                 alt={profile?.firstName || user.name || "User Avatar"}
                 width={96}
                 height={96}
@@ -371,8 +371,8 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="flex justify-between items-center mt-2">
-              <div className="flex">
+            <div className="flex justify-center items-center mt-4">
+              {/* <div className="flex">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
@@ -380,7 +380,7 @@ export default function ProfilePage() {
                   />
                 ))}
               <span className="ml-2 font-semibold">{user.rating}</span>
-              </div>
+              </div> */}
               <Link
                 href={feedbackCount > 0 ? `/dashboard/user/owner/${user.id}/reviews` : "#"}
                 className={`ml-4 flex items-center gap-2 text-sm ${
@@ -400,7 +400,7 @@ export default function ProfilePage() {
             {profile?.bio && <p className="mt-4 text-muted-foreground text-[12px] leading-relaxed">{profile?.bio}</p>}
 
             <div className="mt-6 space-y-6">
-              <div className="flex items-center gap-3 text-sm">
+              {profile?.address && <div className="flex items-center gap-3 text-sm">
                 <div className="rounded-full bg-[#F6FEF9] p-2">
                   <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8.00016 10.1964C6.40266 10.1964 5.09766 8.89893 5.09766 7.29393C5.09766 5.68893 6.40266 4.39893 8.00016 4.39893C9.59766 4.39893 10.9027 5.69643 10.9027 7.30143C10.9027 8.90643 9.59766 10.1964 8.00016 10.1964ZM8.00016 5.52393C7.02516 5.52393 6.22266 6.31893 6.22266 7.30143C6.22266 8.28393 7.01766 9.07893 8.00016 9.07893C8.98266 9.07893 9.77766 8.28393 9.77766 7.30143C9.77766 6.31893 8.97516 5.52393 8.00016 5.52393Z" fill="#12B76A"/>
@@ -409,15 +409,15 @@ export default function ProfilePage() {
 
                 </div>
                 <span>{profile?.address}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
+              </div>}
+              {profile?.email && <div className="flex items-center gap-3 text-sm">
                 <div className="rounded-full bg-[#F6FEF9] p-2">
                   <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" clipRule="evenodd" d="M14.95 4.184L8.637 9.412C8.45761 9.56063 8.23196 9.64196 7.999 9.64196C7.76604 9.64196 7.54039 9.56063 7.361 9.412L1.051 4.184C1.01714 4.28591 0.999922 4.39261 1 4.5V12.5C1 12.7652 1.10536 13.0196 1.29289 13.2071C1.48043 13.3946 1.73478 13.5 2 13.5H14C14.2652 13.5 14.5196 13.3946 14.7071 13.2071C14.8946 13.0196 15 12.7652 15 12.5V4.5C15.0004 4.39267 14.9835 4.28597 14.95 4.184ZM2 2.5H14C14.5304 2.5 15.0391 2.71071 15.4142 3.08579C15.7893 3.46086 16 3.96957 16 4.5V12.5C16 13.0304 15.7893 13.5391 15.4142 13.9142C15.0391 14.2893 14.5304 14.5 14 14.5H2C1.46957 14.5 0.960859 14.2893 0.585786 13.9142C0.210714 13.5391 0 13.0304 0 12.5V4.5C0 3.96957 0.210714 3.46086 0.585786 3.08579C0.960859 2.71071 1.46957 2.5 2 2.5ZM1.79 3.5L7.366 8.103C7.54459 8.2505 7.76884 8.33144 8.00046 8.33199C8.23209 8.33254 8.45672 8.25266 8.636 8.106L14.268 3.5H1.79Z" fill="#12B76A"/>
                   </svg>
                 </div>
                 <span>{profile?.email}</span>
-              </div>
+              </div>}
               {profile?.phone && <div className="flex items-center gap-3 text-sm">
                 <div className="rounded-full bg-[#F6FEF9] p-2"><Phone className="w-4 h-4 text-primary" /></div>
                 <span>{profile?.phone}</span>
@@ -480,12 +480,12 @@ export default function ProfilePage() {
               <h2 className="text-lg font-semibold">Payout account</h2>
               <Info className="w-5 h-5 text-primary" />
             </div>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 mb-8">
               Provide your data and link bank account to receive payments for your items
             </p>
 
             <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid grid-cols-3 place-content-center mb-6">
+              <TabsList className="grid grid-cols-3 place-content-center mb-8">
                 <TabsTrigger
                   value="details"
                   className=""
@@ -633,7 +633,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Listed Items or Edit Section */}
-        <div className="w-full md:w-2/3">
+        <div className="w-full md:w-2/3 mx-4">
 
             {viewMode === "edit" && <ProfileEditForm profile={profile} onCancel={() => setViewMode("items")} />}
 
@@ -641,7 +641,7 @@ export default function ProfilePage() {
             {viewMode === "items" &&
             <>
                 <h2 className="text-2xl font-bold mb-6">Listed items</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-2 overflow-auto hide-scrollbar md:-mr-10 lg:grid-cols-3 md:gap-x-16 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 overflow-auto hide-scrollbar md:-mr-10 mx-auto max-w-[1600px] justify-center place-items-stretch scroll-smooth gap-2">
                     {userEquipments?.equipments?.map((item) => (
                     <EquipmentCard key={item.id} {...item} variant="profile" />
                     ))}

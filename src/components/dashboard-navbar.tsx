@@ -187,7 +187,9 @@ export function DashboardNavbar() {
                   width={100}
                   height={100}
                 />) : (
-                  <User className="w-5 h-5 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:bg-green-600" />
+                  <div className="transition-transform duration-300 ease-in-out hover:-translate-y-1 rounded-full p-2 hover:bg-green-600"> 
+                    <User className="w-5 h-5 " />
+                  </div>
                 )}
                 {/* <div>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">

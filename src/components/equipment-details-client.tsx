@@ -418,7 +418,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
               <div className="flex items-center gap-4">
                 <div className="relative h-10 w-10 overflow-hidden rounded-full">
                   <Image
-                    src={mockEquipmentData.owner.image || "/placeholder.svg?height=64&width=64&query=person"}
+                    src={equipmentData.owner.avatarUrl || "/user.svg?height=64&width=64&query=person"}
                     alt={equipmentData.owner.name}
                     fill
                     className="object-cover"
@@ -483,8 +483,8 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                       <Image
                         src={
                           mockEquipmentData.feedback[0].user.image ||
-                          "/placeholder.svg?height=48&width=48&query=person" ||
-                          "/placeholder.svg"
+                          "/user.svg?height=48&width=48&query=person" ||
+                          "/user.svg"
                         }
                         alt={mockEquipmentData.feedback[0].user.name}
                         fill
