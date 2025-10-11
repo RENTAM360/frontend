@@ -48,7 +48,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
       : equipmentResponse?.equipments ?? []
   }, [selectedCategoryId, allEquipments.data, equipmentResponse])
 
-  console.log(equipments)
+  // console.log(equipments)
 
   const isLoading = selectedCategoryId === "all" ? allEquipments.isLoading : isLoadingEquipments
 
@@ -67,7 +67,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
   }, [equipments, searchTerm])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-8">
       <h2 className="text-2xl font-bold">Browse Equipments by Category</h2>
       <div className="flex flex-wrap gap-2">
         <Button

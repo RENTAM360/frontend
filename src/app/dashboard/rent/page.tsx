@@ -165,7 +165,7 @@ export default function RentPage() {
   const suggestions = addressData?.data ?? [];
 
   return (
-    <div className="container font-sans mx-auto px-4 py-8 max-w-3xl">
+    <div className="container font-sans mx-auto py-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-8">Add new item</h1>
 
       <div className="bg-white rounded-lg p-6">
