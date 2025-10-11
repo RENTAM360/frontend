@@ -72,10 +72,14 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
                   </div>
               </div>
             </div>
-            {conversation.product.availability && <a
+            {conversation.product.availability ? ( <a
                 className="w-fit h-[35px] flex justify-center items-center rounded-md bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600"
               >
                 Available
+              </a>) : <a
+                className="w-fit h-[35px] flex justify-center items-center rounded-md bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600"
+              >
+                Unavailable
               </a>}
           </div>
         )}
