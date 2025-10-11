@@ -24,7 +24,7 @@ export default function MessagesPage() {
     isLoadingMessages,
     isConnected,
     connectionError,
-    setActiveConversation,
+    setActiveConversationId,
   } = useMessagingContext()
 
   // console.log(isConnected, activeConversation, conversations)
@@ -101,7 +101,7 @@ export default function MessagesPage() {
 
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] -mx-4 md:-mx-6 font-sans relative overflow-hidden">
+    <div className="flex h-[calc(100vh-8rem)] -mx-4 md:-mx-6 font-sans relative overflow-hidden">
         {/* Messages list */}
         <div 
           className={`
@@ -158,7 +158,7 @@ export default function MessagesPage() {
           className={`
           absolute top-0 left-0 w-full h-full bg-white flex flex-col
           transition-transform duration-300 ease-in-out
-          md:static md:flex-1 pt-12 md:pt-0
+          md:static md:flex-1
           ${activeConversation ? "translate-x-0" : "translate-x-full md:translate-x-0"}
         `}
         >
@@ -169,7 +169,7 @@ export default function MessagesPage() {
                 <div className="flex items-center space-x-3">
                   {/* Back button (mobile only) */}
                   <button
-                    onClick={() => setActiveConversation(null)}
+                    onClick={() => setActiveConversationId(null)}
                     className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
                   >
                     <ArrowLeft className="h-5 w-5 text-gray-600" />
@@ -192,7 +192,7 @@ export default function MessagesPage() {
                     )}
                   </div>
                   <div>
-                    <h2 className="font-semibold text-[#5A5555]">{activeConversation.name}</h2>
+                    <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
                     <p className="text-xs text-[#B3B3B3]">{isConnected ? activeConversation.status : "Offline"}</p>
                   </div>
                 </div>

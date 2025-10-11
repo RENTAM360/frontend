@@ -112,6 +112,7 @@ class SocketService {
     receiver: string,
     content: string,
     media: string | null = null,
+    equipment?: string,
     callback?: (response: SocketResponse) => void,
   ) {
     if (!this.socket?.connected) {
@@ -126,6 +127,7 @@ class SocketService {
         receiver,
         content,
         media,
+        equipment,
       },
       (response: SocketResponse) => {
         if (response.ok) {

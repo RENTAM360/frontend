@@ -29,6 +29,9 @@ export interface Product {
   image: string
   period: string
   phone: string
+  pricePerDay?: string
+  imageUrl?: string
+  availability?: boolean
 }
 
 // Conversation interface for UI

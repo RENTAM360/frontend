@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react"
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from "react"
 // import { socketService, type SocketMessage, type SocketResponse } from "@/lib/socket-service"
 import {
   useGetConversationsQuery,
@@ -17,9 +17,10 @@ import { useAppDispatch } from "@/lib/redux/hooks"
 interface MessagingContextType extends MessagingState {
   // Actions
   joinConversation: (conversationId: string, conv?: Conversation) => void
-  sendMessage: (conversationId: string, content: string, media?: string) => Promise<void>
+  sendMessage: (conversationId: string, content: string, media?: string, equipment?: string) => Promise<void>
   markAsRead: (conversationId: string) => void
-  setActiveConversation: React.Dispatch<React.SetStateAction<Conversation | null>>
+  // setActiveConversation: React.Dispatch<React.SetStateAction<Conversation | null>>
+  setActiveConversationId: React.Dispatch<React.SetStateAction<string | null>>
 
   // Connection management
   connect: (authToken: string) => Promise<void>
@@ -44,7 +45,7 @@ interface MessagingProviderProps {
 export function MessagingProvider({ children, currentUserId, authToken }: MessagingProviderProps) {
   // Local state
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null)
+  // const [activeConversation, setActiveConversation] = useState<Conversation | null>(null)
 
   const [isConnected, setIsConnected] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
@@ -245,22 +246,39 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     setIsConnected(false)
   }, [])
 
-  useEffect(() => {
-  if (!activeConversationId) {
-    setActiveConversation(null)
-    return
+//   useEffect(() => {
+//   if (!activeConversationId) {
+//     setActiveConversation(null)
+//     return
+//   }
+
+//   const conv = conversations.find(c => c.id === activeConversationId)
+
+//   if (conv) {
+//     setActiveConversation({ ...conv, messages: messages || [], product: tempConversationRef.current?.product ?? conv.product, })
+//   } else if (tempConversationRef.current?.id === activeConversationId) {
+//     setActiveConversation(tempConversationRef.current)
+//   } else {
+//     setActiveConversation(null)
+//   }
+// }, [activeConversationId, conversations, messages])
+const activeConversation = useMemo(() => {
+  if (!activeConversationId) return null
+
+  const conv = conversations.find((c) => c.id === activeConversationId)
+  if (!conv && tempConversationRef.current?.id === activeConversationId) {
+    return tempConversationRef.current
   }
 
-  const conv = conversations.find(c => c.id === activeConversationId)
-
-  if (conv) {
-    setActiveConversation({ ...conv, messages: messages || [], product: tempConversationRef.current?.product ?? conv.product, })
-  } else if (tempConversationRef.current?.id === activeConversationId) {
-    setActiveConversation(tempConversationRef.current)
-  } else {
-    setActiveConversation(null)
-  }
+  return conv
+    ? {
+        ...conv,
+        messages: messages || [],
+        product: tempConversationRef.current?.product ?? conv.product,
+      }
+    : null
 }, [activeConversationId, conversations, messages])
+
 
   // Join a conversation
   const joinConversation = useCallback(
@@ -333,7 +351,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
           message: optimisticMessage,
         })
 
-        socketService.sendMessage(conversationId, content.trim(), media || null, (response: SocketResponse) => {
+        socketService.sendMessage(conversationId, content.trim(), media || null, activeConversation?.product?.id, (response: SocketResponse) => {
           if (response.ok) {
             console.log("[Messaging] Message sent successfully")
             resolve()
@@ -344,7 +362,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
         })
       })
     },
-    [isConnected, addMessage],
+    [isConnected, addMessage, activeConversation?.product?.id],
   )
 
 
@@ -400,7 +418,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     connect,
     disconnect,
     isLoadingConversations,
-    setActiveConversation,
+    setActiveConversationId,
     isLoadingMessages,
   }
 

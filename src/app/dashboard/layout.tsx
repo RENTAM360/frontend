@@ -22,13 +22,7 @@ export default function DashboardLayout({
       )}
     >
       <DashboardNavbar />
-      <main 
-        className={clsx(
-          "flex-1 px-4 pt-16 bg-[#F9F9F9] md:p-6 mb-16 md:mb-0 md:pt-24",
-          isMessagesPage && "overflow-hidden"
-        )}
-      >{children}
-      </main>
+      <main className="flex-1 px-4 pt-16 bg-[#F9F9F9] md:p-6 mb-16 md:mb-0 md:pt-24">{children}</main>
       <MobileNav />
     </div>
   )
