@@ -28,11 +28,11 @@ export function DashboardNavbar() {
   const {data: conversations = []} = useGetConversationsQuery()
   const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
 
-  console.log(conversations)
+  // console.log(conversations)
   const { data } = useGetNotificationsQuery({ page: 1, limit: 10, isRead: false });
   const unreadCount = data?.data?.length ?? 0;
 
-  console.log(data)
+  // console.log(data)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -210,7 +210,7 @@ export function DashboardNavbar() {
         </div>
       </header> 
       {pathname === "/dashboard" && (
-        <div className="relative ml-4 py-1 mt-[100px] font-sans rounded-full border bg-white w-[350px] md:w-[300px] md:hidden">
+        <div className="relative ml-4 py-1 mt-[100px] font-sans rounded-full border bg-white w-[300px] md:hidden">
           <div className="absolute left-3 top-1/2 -translate-y-1/2">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M9.58464 18.1251C4.8763 18.1251 1.04297 14.2917 1.04297 9.58342C1.04297 4.87508 4.8763 1.04175 9.58464 1.04175C14.293 1.04175 18.1263 4.87508 18.1263 9.58342C18.1263 14.2917 14.293 18.1251 9.58464 18.1251ZM9.58464 2.29175C5.55964 2.29175 2.29297 5.56675 2.29297 9.58342C2.29297 13.6001 5.55964 16.8751 9.58464 16.8751C13.6096 16.8751 16.8763 13.6001 16.8763 9.58342C16.8763 5.56675 13.6096 2.29175 9.58464 2.29175Z" fill="#979797"/>
