@@ -30,7 +30,7 @@ export default function Dashboard() {
       <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
 
       {/* First row of stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-6">
         <StatsCard
           title="Total Money"
           value={formatCurrency(dashboardData?.totalMoney.thisMonth)}
@@ -62,7 +62,7 @@ export default function Dashboard() {
       </div>
 
       {/* Second row of stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-6">
         <StatsCard title="Active items" value={dashboardData?.activeItems.thisMonth || 0} percentage={`${formatNumber(dashboardData?.activeItems.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.activeItems.lastMonth}`} />
         <StatsCard title="Completed rentals" value={dashboardData?.completed.thisMonth || 0} percentage={`${formatNumber(dashboardData?.completed.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.completed.lastMonth}`} />
         <StatsCard title="Total users" value={dashboardData?.users.thisMonth || 0} percentage={`${formatNumber(dashboardData?.users.compare)}%`} lastMonth="Last Month" lastMonthValue={`${dashboardData?.users.lastMonth}`} />
@@ -70,7 +70,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="flex gap-6">
+      <div className="md:flex gap-6">
         <Card className="flex-1 shadow-none">
           <CardContent className="p-6">
             <div className="mb-4">
@@ -100,7 +100,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none">
+        <Card className="shadow-none mt-2 md:mt-0">
           <CardContent className="p-6">
             <div className="mb-4">
               <h3 className="text-lg font-medium">Users Reports</h3>

@@ -231,8 +231,8 @@ export default function UsersPage() {
           {activeTab === "all" ? `All Users (${total})` : `${activeTab} (${users.length})`}
         </h2>
 
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex space-x-2 rounded-lg bg-[#F6F6F6]">
+        <div className="md:flex justify-between items-center mb-4">
+          <div className="flex space-x-2 rounded-lg w-fit bg-[#F6F6F6]">
             <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>
               View all
             </TabButton>
@@ -246,7 +246,7 @@ export default function UsersPage() {
               Suspend
             </TabButton>
           </div>
-          <div className="relative">
+          <div className="relative mt-4 md:mt-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
@@ -258,7 +258,7 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-md border">
+        <div className="bg-white rounded-md border overflow-x-auto">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-6 p-4 border-b font-medium text-gray-500" style={{ fontSize: "14px" }}>
             <div className="col-span-3">Full Name</div>
@@ -314,6 +314,7 @@ export default function UsersPage() {
               </div>
             </div>
           )}
+          
         </div>
       </div>
     </>
@@ -359,7 +360,7 @@ interface TabButtonProps {
 function TabButton({ children, active, onClick }: TabButtonProps) {
   return (
     <button
-      className={`px-4 m-1 rounded-lg py-2 text-sm ${
+      className={`px-2 md:px-4 m-1 text-xs rounded-lg py-2 md:text-sm ${
         active ? "bg-white text-[#000000] font-medium" : "text-[#97A2AC]"
       }`}
       onClick={onClick}

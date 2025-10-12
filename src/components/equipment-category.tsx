@@ -18,10 +18,10 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
     data: categoryResponse,
   } = useGetCategoriesQuery()
 
-  console.log(categoryResponse)
+  // console.log(categoryResponse)
 
   const categories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse])
-  console.log(categories)
+  // console.log(categories)
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 

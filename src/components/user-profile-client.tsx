@@ -83,13 +83,13 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
           <div className="relative">
             {/* Cover Image */}
             <div className="h-40">
-              <Image src={user?.coverPhoto || "/profile-bg.svg"} alt="Cover" width={100} height={100} className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover" />
+              <Image src={user?.coverPhoto || "/cover1.jpg"} alt="Cover" width={100} height={100} className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover" />
             </div>
 
             {/* Profile Picture */}
             <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-12">
               <Avatar className="w-[79px] h-[79px] border-2 border-white">
-                <AvatarImage src={user?.avatar || "/tg.svg"} alt={user?.firstName} />
+                <AvatarImage src={user?.avatar || "/user.svg"} alt={user?.firstName} />
                 <AvatarFallback>{`${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`.toUpperCase() || "NA"}</AvatarFallback>
               </Avatar>
             </div>
@@ -104,10 +104,10 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
             <p className="text-[#979797] mt-4 max-w-2xl text-xs mx-auto">{user?.bio}</p>
 
             <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
-              <div className="flex items-center gap-1">
+              {user?.address &&<div className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
                 <span className="text-xs">{user?.address}</span>
-              </div>
+              </div>}
               <div className="flex items-center gap-1">
                 <span className="text-xs">Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -131,10 +131,10 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
           {/* User Details */}
           <div className="border-t px-6 py-4">
             <div className="max-w-2xl mx-auto">
-              <div className="flex gap-2 items-center py-3 border-b">
+             {user?.address && <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><MapPin className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-black text-xs">{user?.address}</span>
-              </div>
+              </div>}
               {user?.phone && <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Phone className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-black text-xs">{user?.phone}</span>
@@ -335,7 +335,7 @@ function ItemsContent({ userId }: UserProfileClientProps) {
     <div className="p-6">
       <h3 className="text-xl font-bold mb-6">Items</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2">
         {userEquipments?.equipments.map((item) => (
           <ItemsCard key={item.id} item={item} />
         ))}
@@ -465,9 +465,9 @@ interface EquipmentCardProps {
 // Component for rental cards
 function ItemsCard({ item }: EquipmentCardProps ) {
   return (
-    <div className="rounded-lg overflow-hidden">
-      <div className="h-32">
-        <Image src={item.imageUrl || "/placeholder.svg"} alt={item.title} className="w-full h-full rounded-b-lg object-cover" />
+    <div className="rounded-lg h-full overflow-hidden">
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <Image src={item.imageUrl || "/placeholder.svg"} priority fill alt={item.title} className="w-full h-full rounded-b-lg object-cover" />
       </div>
       <div className="p-4">
         <h4 className="font-medium text-base">{item.title}</h4>

@@ -1,15 +1,11 @@
 "use client";
 import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/lib/redux/api/notificationsApi";
 import { useAppSelector } from "@/lib/redux/hooks";
+import { socketService } from "@/lib/socket";
 import { Notification } from "@/types/notifications";
 import { Bell } from "lucide-react";
 import { enqueueSnackbar } from "notistack";
 import { useEffect } from "react";
-import io from "socket.io-client";
-
-
-
-let socket: ReturnType<typeof io> | null = null;
 
 export default function NotificationsDropdown() {
   const user = useAppSelector((state) => state.auth);
@@ -51,34 +47,22 @@ const notifications = data?.data
   console.log(notifications)
 
   useEffect(() => {
-    if (!socket) {
-      socket = io(process.env.NEXT_PUBLIC_AUTH_API_URL as string, {
-        auth: {token: user?.data},
-        transports: ["websocket"],
-      });
+    if (!user?.data) return
+
+    socketService.connect(user.data)
+
+    const handleNotification = (newNotif: Notification) => {
+      console.log("New notification received:", newNotif)
+      refetch()
     }
 
-    socket.on("connect", () => {
-    console.log("✅ Socket connected:", socket?.id);
-  });
-
-  socket.on("disconnect", (reason) => {
-    console.log("❌ Socket disconnected:", reason);
-  });
-
-  socket.on("connect_error", (err) => {
-    console.error("⚠️ Socket connection error:", err.message);
-  });
-
-    socket.on("notification", (newNotif: Notification) => {
-      console.log("New notification received:", newNotif);
-      refetch();
-    });
+    // Listen for notification events
+    socketService.on("notification", handleNotification)
 
     return () => {
-      socket?.off("notification");
-    };
-  }, [refetch, user.data]);
+      socketService.off("notification", handleNotification)
+    }
+  }, [user?.data, refetch])
 
 function formatTimeAgo(timestamp: string) {
   const date = new Date(timestamp);

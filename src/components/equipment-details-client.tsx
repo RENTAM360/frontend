@@ -119,18 +119,18 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
       joinConversation,
     } = useMessagingContext()
 
-  console.log("🔍 Component rendered with equipmentId:", equipmentId)
+  // console.log("🔍 Component rendered with equipmentId:", equipmentId)
 
   const { data: equipmentData, isLoading, error, isError } = useGetEquipmentByIdQuery(equipmentId)
-  console.log(equipmentData)
+  // console.log(equipmentData)
 
-  console.log("📊 Query state:", {
-    data: equipmentData,
-    isLoading,
-    error,
-    isError,
-    equipmentId,
-  })
+  // console.log("📊 Query state:", {
+  //   data: equipmentData,
+  //   isLoading,
+  //   error,
+  //   isError,
+  //   equipmentId,
+  // })
 
   const handleBookNow = () => {
      window.location.href = `/dashboard/checkout?id=${equipmentId}`

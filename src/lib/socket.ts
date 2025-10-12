@@ -189,6 +189,18 @@ class SocketService {
     }
   }
 
+  on<T = unknown>(event: string, callback: (payload: T) => void): void {
+    this.socket?.on(event, callback);
+  }
+
+  off<T = unknown>(event: string, callback?: (payload: T) => void): void {
+    if (callback) {
+      this.socket?.off(event, callback);
+    } else {
+      this.socket?.off(event);
+    }
+  }
+
   disconnect() {
     if (this.socket) {
       this.socket.disconnect()
