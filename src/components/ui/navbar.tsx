@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,14 @@ const MotionButton = motion(Button)
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [isMenuOpen]);
 
   return (
     <motion.header 
@@ -44,7 +52,13 @@ export default function Navbar() {
           aria-controls="mobile-menu"
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
         >
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+         <motion.div
+            initial={false}
+            animate={{ rotate: isMenuOpen ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </motion.div>
         </button>
 
         {/* Desktop navigation */}
@@ -75,51 +89,64 @@ export default function Navbar() {
         </div>
 
         {/* Mobile menu */}
-        <div
+        <motion.div
           id="mobile-menu"
+          initial={{ x: "100%" }}
+          animate={{ x: isMenuOpen ? 0 : "100%" }}
+          transition={{type: "spring", stiffness: 300, damping: 25}}
           className={cn(
-            "absolute left-0 right-0 top-16 z-50 flex flex-col gap-4 border-b bg-white p-4 shadow-lg md:hidden",
-            isMenuOpen ? "block" : "hidden",
+            "fixed inset-0 z-50 flex flex-col bg-white/70 backdrop-blur-lg md:hidden transition-all duration-100",
+            isMenuOpen ? "pointer-events-auto" : "pointer-events-none"
           )}
         >
-          <nav className="flex flex-col gap-4">
+          <div className="flex justify-end p-6">
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <nav className="flex flex-col items-center justify-center flex-1 gap-8 text-lg font-medium">
             <Link
               href="/explore"
-              className="text-sm font-medium transition-colors hover:text-primary"
+              className="transition-colors hover:text-emerald-600"
               onClick={() => setIsMenuOpen(false)}
             >
               Explore
             </Link>
             <Link
               href="/faq"
-              className="text-sm font-medium transition-colors hover:text-primary"
+              className="transition-colors hover:text-emerald-600"
               onClick={() => setIsMenuOpen(false)}
             >
               FAQ
             </Link>
             <Link
               href="/contact"
-              className="text-sm font-medium transition-colors hover:text-primary"
+              className="transition-colors hover:text-emerald-600"
               onClick={() => setIsMenuOpen(false)}
             >
-              Contact us
+              Contact Us
             </Link>
-            <div className="flex flex-col gap-2 pt-4">
+
+            <div className="flex flex-col items-center gap-4 mt-6">
               <Link
                 href="/signup"
-                className="text-sm font-medium transition-colors hover:text-primary"
+                className="transition-colors hover:text-emerald-600"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Sign up
+                Sign Up
               </Link>
-              <Button className="bg-emerald-500 hover:bg-emerald-600">
-                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                <Button className="bg-emerald-500 hover:bg-emerald-600 px-6 w-full">
                   Login
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
           </nav>
-        </div>
+        </motion.div>
       </div>
     </motion.header>
   )
