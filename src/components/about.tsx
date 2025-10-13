@@ -1,4 +1,5 @@
 import Image from "next/image";
+import FadeInWhenVisible from "./ui/FadeInWhenVisible";
 
 export default function AboutSection() {
     return (
@@ -17,11 +18,13 @@ export default function AboutSection() {
   
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <p className="text-xl md:text-3xl text-[#0A0A0A] md:leading-10 max-w-2xl">
-            With Rentam360, renting items is fast, easy, and affordable. 
-            Skip the hassle of buying—explore how it works, browse available 
-            items, and find nearby locations
-          </p>
+          <FadeInWhenVisible y={40}>
+            <p className="text-xl md:text-3xl text-[#0A0A0A] md:leading-10 max-w-2xl">
+              With Rentam360, renting items is fast, easy, and affordable. 
+              Skip the hassle of buying—explore how it works, browse available 
+              items, and find nearby locations
+            </p>
+          </FadeInWhenVisible>
         </div>
       </section>
     );

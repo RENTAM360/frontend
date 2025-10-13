@@ -2,6 +2,8 @@
 
 // import Image from "next/image";
 import GalleryCard from "./gallery-card";
+import FadeInWhenVisible from "./ui/FadeInWhenVisible";
+import { motion } from "motion/react"
 
 type CardDetail = {
     id: number;
@@ -68,29 +70,53 @@ export default function GallerySection() {
       <section className="relative px-4 md:px-16 font-sans py-10 md:py-20 w-full bg-[#F5F5F5]">
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-            <h1 className="text-2xl md:text-3xl font-bold text-[#292D32] mb-2">
-                Renting made easy
-            </h1>
-          <p className="text-sm md:text-base text-[#4E4E4E] max-w-sm">
-            Easily find the perfect Equipment that fits your style, budget and location
-          </p>
+            <FadeInWhenVisible>
+                <h1 className="text-2xl md:text-3xl font-bold text-[#292D32] mb-2">
+                    Renting made easy
+                </h1>
+            </FadeInWhenVisible>
+            <FadeInWhenVisible>
+                <p className="text-sm md:text-base text-[#4E4E4E] max-w-sm">
+                    Easily find the perfect Equipment that fits your style, budget and location
+                </p>
+            </FadeInWhenVisible>
         </div>
 
         {/* Background Image */}
-        <div className="grid grid-cols-1 mt-12 gap-5 md:grid-cols-3">
+        <motion.div 
+            className="grid grid-cols-1 mt-12 gap-5 md:grid-cols-3"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={{
+            hidden: {},
+            visible: {
+                transition: { staggerChildren: 0.15 },
+            },
+            }}
+        >
             {
                 cardDetails.map((cardDetail) =>(
-                    <GalleryCard 
-                    key={cardDetail.id}
-                    category={cardDetail.category} 
-                    price={cardDetail.price}
-                    rating={cardDetail.rating}
-                    imgUrl={cardDetail.imgUrl}
-                    name={cardDetail.name}
-                    />
+                    <motion.div
+                        key={cardDetail.id}
+                        variants={{
+                        hidden: { opacity: 0, y: 30 },
+                        visible: { opacity: 1, y: 0 },
+                        }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                    >
+                        <GalleryCard 
+                        key={cardDetail.id}
+                        category={cardDetail.category} 
+                        price={cardDetail.price}
+                        rating={cardDetail.rating}
+                        imgUrl={cardDetail.imgUrl}
+                        name={cardDetail.name}
+                        />
+                    </motion.div>
                 ))
             }
-        </div>
+        </motion.div>
   
         {/* Content */}
         
