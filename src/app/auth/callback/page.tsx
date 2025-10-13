@@ -13,7 +13,16 @@ export default function AuthCallback() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("token")
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get("token")
+    const errorParam = params.get("error")
+
+    if (errorParam) {
+      setError("Google sign-in failed. Please try again later.")
+      setLoading(false)
+      return
+    }
+
     if (!token) {
       setError("No token found")
       setLoading(false)
@@ -29,7 +38,19 @@ export default function AuthCallback() {
   return (
     <main className="flex items-center justify-center min-h-screen font-sans">
       <div className="text-center">
-        {loading ? <AnimatedLogo /> : <p className="text-red-600">{error}</p>}
+        {loading ? (
+          <AnimatedLogo />
+        ) : (
+          <div className="p-4 bg-red-100 text-red-700 rounded-xl shadow-sm">
+            <p className="font-medium">{error}</p>
+            <button
+              onClick={() => router.push("/login")}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              Go Back to Login
+            </button>
+          </div>
+        )}
       </div>
     </main>
   )

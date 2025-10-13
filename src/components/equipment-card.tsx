@@ -4,7 +4,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { addSavedItem, removeSavedItem, selectIsSaved } from "@/lib/redux/slices/savedItemsSlice"
-import { useToast } from "@/components/ui/use-toast"
+import { useBookmarkEquipmentMutation, useRemoveBookmarkEquipmentMutation } from "@/lib/redux/api/equipmentApi"
+import { enqueueSnackbar } from "notistack"
 
 interface EquipmentCardProps {
   id: string
@@ -28,7 +29,9 @@ export function EquipmentCard({
 
   const dispatch = useAppDispatch()
   const isSaved = useAppSelector((state) => selectIsSaved(state, id))
-  const { toast } = useToast()
+
+  const [bookmarkEquipment] = useBookmarkEquipmentMutation()
+  const [removeBookmarkEquipment] = useRemoveBookmarkEquipmentMutation()
 
   const getValidImageUrl = (url?: string) => {
   if (!url) return "/placeholder.svg";
@@ -36,16 +39,16 @@ export function EquipmentCard({
   return `/${url}`; 
 };
     
-  const handleToggleSave = (e: React.MouseEvent) => {
+  const handleToggleSave = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (variant === "saved" || isSaved) {
+    try {
+      if (variant === "saved" || isSaved) {
+      await removeBookmarkEquipment(id).unwrap()
       dispatch(removeSavedItem(id))
-      toast({
-        title: "Item removed",
-        description: "The item has been removed from your saved items.",
-      })
+      enqueueSnackbar("The item has been removed from your saved items.", {variant: "success"})
     } else {
+      await bookmarkEquipment(id).unwrap()
        dispatch(
         addSavedItem({
         id,
@@ -56,12 +59,12 @@ export function EquipmentCard({
         imageUrl,
        }),
       )
-      toast({
-        title: "Item saved",
-        description: `${title} has been added to your saved items.`,
-        variant: "success"
-      })
+      enqueueSnackbar(`${title} has been added to your saved items.`, {variant: "success"})
     }
+    } catch (err) {
+       enqueueSnackbar("Could not update bookmark. Please try again.", {variant: "error"})
+    }
+    
   }
 
   return (

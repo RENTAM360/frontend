@@ -605,6 +605,56 @@ export const equipmentApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, id) => [{ type: "Equipment", id }, "Equipment"],
     }),
 
+    bookmarkEquipment: builder.mutation<
+      { status: number; message: string; data: { equipmentId: string; bookmarked: boolean } },
+      string
+    >({
+      query: (equipmentId) => ({
+        url: `equipment/${equipmentId}/bookmark`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Bookmarks"],
+    }),
+
+    removeBookmarkEquipment: builder.mutation<
+      { status: number; message: string; data: { equipmentId: string; bookmarked: boolean } },
+      string
+    >({
+      query: (equipmentId) => ({
+        url: `equipment/${equipmentId}/bookmark`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Bookmarks"],
+    }),
+
+    getBookmarkedEquipments: builder.query<
+      {
+        status: string
+        message: string
+        data: {
+          bookmarks: Equipment[]
+          pagination: {
+            currentPage: number
+            totalPages: number
+            totalItems: number
+            itemsPerPage: number
+            hasNextPage: boolean
+            hasPrevPage: boolean
+          }
+        }
+      },
+      { page?: number; limit?: number } | void
+    >({
+      query: (params = {}) => {
+        const query = new URLSearchParams()
+        const p = params ?? {}
+        if (p.page) query.append("page", p.page.toString())
+        if (p.limit) query.append("limit", p.limit.toString())
+        return `equipment/bookmarks${query.toString() ? `?${query.toString()}` : ""}`
+      },
+      providesTags: ["Bookmarks"],
+    }),
+
     reportUser: builder.mutation<
       ReportUserResponse,
       { equipmentId: string; reportedId: string; report: ReportUserRequest }
@@ -647,4 +697,7 @@ export const {
   useBookEquipmentMutation,
   useReportUserMutation,
   useGetAddressSuggestionsQuery,
+  useBookmarkEquipmentMutation,
+  useRemoveBookmarkEquipmentMutation,
+  useGetBookmarkedEquipmentsQuery,
 } = equipmentApi

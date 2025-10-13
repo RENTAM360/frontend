@@ -2,7 +2,9 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Check, AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import successAnimation from "@/assets/animations/Success.json"
+import Lottie from "lottie-react"
 
 interface SuccessModalProps {
   isOpen: boolean
@@ -51,7 +53,7 @@ export function SuccessModal({
             }`}
           >
             {icon === "success" ? (
-              <Check className="w-12 h-12 text-white" />
+              <Lottie animationData={successAnimation} loop={false} autoplay={true} />
             ) : (
               <AlertTriangle className="w-12 h-12" />
             )}
