@@ -232,59 +232,54 @@ export default function ReportsPage() {
               <option value="resolved">Resolved</option>
             </select>
           </div>
-          {/* <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search reports..."
-              className="w-[300px] pl-9 rounded-lg border-gray-200"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div> */}
         </div>
 
         {/* Reports Table */}
         <div className="bg-[#FBFBFB] rounded-md border">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 p-4 border-b font-medium text-[#97A2AC] text-xs">
-            <div className="col-span-2">Reporter name</div>
-            <div className="col-span-2">Reported User/Item</div>
-            <div className="col-span-2">Reason</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-2">Date</div>
-            <div className="col-span-2">Action</div>
-          </div>
-
-          {/* Table Rows */}
-          {filteredReports.length > 0 ? (
-            filteredReports.map((report) => (
-              <ReportRow key={report._id} report={report} onViewDetails={() => handleViewDetails(report._id)} />
-            ))
-          ) : (
-            <div className="p-8 text-center text-gray-500">No reports found matching your criteria</div>
-          )}
-
-          {/* Pagination */}
-          {filteredReports.length > 0 && (
-            <div className="flex justify-end items-center p-4 border-t">
-              <div className="text-sm text-gray-500 mr-4">Page 1 of {Math.ceil(filteredReports.length / 10)}</div>
-              <div className="flex space-x-1">
-                <Button variant="outline" size="sm" className="px-2">
-                  &lt; Prev
-                </Button>
-                <Button variant="outline" size="sm" className="px-2 bg-gray-100">
-                  1
-                </Button>
-                <Button variant="outline" size="sm" className="px-2">
-                  2
-                </Button>
-                <Button variant="outline" size="sm" className="px-2">
-                  Next &gt;
-                </Button>
+          <div className="block overflow-x-auto w-full">
+            <div className="min-w-[700px] w-full">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 p-4 border-b font-medium text-[#97A2AC] text-xs">
+                <div className="col-span-2">Reporter name</div>
+                <div className="col-span-2">Reported User/Item</div>
+                <div className="col-span-2">Reason</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-2">Date</div>
+                <div className="col-span-2">Action</div>
               </div>
-            </div>
-          )}
+
+              {/* Table Rows */}
+              {filteredReports.length > 0 ? (
+                filteredReports.map((report) => (
+                  <ReportRow key={report._id} report={report} onViewDetails={() => handleViewDetails(report._id)} />
+                ))
+              ) : (
+                <div className="p-8 text-center text-gray-500">No reports found matching your criteria</div>
+              )}
+
+              {/* Pagination */}
+              {filteredReports.length > 0 && (
+                <div className="flex justify-end items-center p-4 border-t">
+                  <div className="text-sm text-gray-500 mr-4">Page 1 of {Math.ceil(filteredReports.length / 10)}</div>
+                  <div className="flex space-x-1">
+                    <Button variant="outline" size="sm" className="px-2">
+                      &lt; Prev
+                    </Button>
+                    <Button variant="outline" size="sm" className="px-2 bg-gray-100">
+                      1
+                    </Button>
+                    <Button variant="outline" size="sm" className="px-2">
+                      2
+                    </Button>
+                    <Button variant="outline" size="sm" className="px-2">
+                      Next &gt;
+                    </Button>
+                  </div>
+                </div>
+              )}
+                </div>
+              </div>
+              
         </div>
       </div>
 

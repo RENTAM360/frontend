@@ -53,8 +53,8 @@ export default function SettingsPage() {
   const { data: platformSettings} = useGetPlatformSettingsQuery()
   const [updateGeneralSettings, { isLoading: isUpdating }] = useUpdateGeneralSettingsMutation()
 
-  const [platformName, setPlatformName] = useState("Rentam360")
-  const [supportEmail, setSupportEmail] = useState("Contactrentam360.com")
+  const [platformName, setPlatformName] = useState("")
+  const [supportEmail, setSupportEmail] = useState("")
   const [cardMethodEnabled, setCardMethodEnabled] = useState(true)
   const [transferMethodEnabled, setTransferMethodEnabled] = useState(true)
   const [logoUrl, setLogoUrl] = useState("")
@@ -79,10 +79,9 @@ export default function SettingsPage() {
         transferEnabled: transferMethodEnabled,
         logoUrl,
       }).unwrap()
-     enqueueSnackbar({variant: "success", message: "Updated successfully!"})
+     enqueueSnackbar("Updated successfully!", {variant: "success"})
     } catch (err) {
-      console.error(err)
-     enqueueSnackbar({variant: "error", message: "Failed to update setting!"})
+     enqueueSnackbar("Failed to update setting!", {variant: "error"})
     }
   }
 
@@ -115,23 +114,8 @@ export default function SettingsPage() {
         return <SecurityAccessSettings />
       case "platform-policies":
         return <PlatformPoliciesSettings />
-      default:
-        return (
-          <GeneralSettings
-            platformName={platformName}
-            setPlatformName={setPlatformName}
-            supportEmail={supportEmail}
-            setSupportEmail={setSupportEmail}
-            cardMethodEnabled={cardMethodEnabled}
-            setCardMethodEnabled={setCardMethodEnabled}
-            transferMethodEnabled={transferMethodEnabled}
-            setTransferMethodEnabled={setTransferMethodEnabled}
-            logoUrl={logoUrl}
-            setLogoUrl={setLogoUrl}
-            onSave={handleSave}
-            isSaving={isUpdating}
-          />
-        )
+      default: 
+        return null
     }
   }
 
@@ -143,9 +127,17 @@ export default function SettingsPage() {
         </div>
       </PageHeader>
 
-      <div className="flex gap-6">
-        {/* Settings Menu */}
-        <div className="w-80 bg-white border rounded-lg border-[#EBEBEB]">
+      <div className="relative flex flex-col md:flex-row gap-6">
+        {/* Menu Panel */}
+        <div
+          className={`absolute inset-0 bg-white z-20 transition-transform duration-300 md:relative md:z-auto md:w-80 md:translate-x-0 border rounded-lg border-[#EBEBEB] ${
+            activeSection !== "menu" ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"
+          }`}
+        >
+          <div className="md:hidden border-b px-4 py-3 flex items-center justify-between">
+            <h2 className="font-semibold text-lg">Settings</h2>
+          </div>
+
           {settingsMenuItems.map((item) => (
             <SettingsMenuItem
               key={item.id}
@@ -156,9 +148,29 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* Settings Content */}
-        <div className="flex-1 bg-white rounded-lg py-4">{renderContent()}</div>
+        {/* Content Panel */}
+        <div
+          className={`fixed inset-0 bg-white z-30 transition-transform duration-300 md:relative md:z-auto md:flex-1 md:translate-x-0 rounded-lg ${
+            activeSection === "menu" ? "translate-x-full md:translate-x-0" : "translate-x-0"
+          }`}
+        >
+          {/* Back button for mobile */}
+          <div className="md:hidden border-b px-4 py-3 flex items-center gap-2">
+            <button
+              onClick={() => setActiveSection("menu")}
+              className="p-2 rounded-full hover:bg-gray-100"
+            >
+              <ChevronRight className="rotate-180 h-5 w-5 text-gray-700" />
+            </button>
+            <h2 className="font-semibold text-lg">
+              {settingsMenuItems.find((item) => item.id === activeSection)?.title}
+            </h2>
+          </div>
+
+          <div className="p-4 md:p-0">{renderContent()}</div>
+        </div>
       </div>
+
     </>
   )
 }

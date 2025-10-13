@@ -88,7 +88,7 @@ export default function AdminLayout({
         )}
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col md:ml-[232px]">
+        <div className="flex-1 flex flex-col overflow-x-hidden md:ml-[232px]">
           {/* Header */}
           <header className="border-b border-gray-100 bg-white sticky top-0 z-20">
             <div className="flex items-center justify-between px-4 md:px-8 py-4">
@@ -125,7 +125,7 @@ export default function AdminLayout({
           </header>
 
           {/* Page Content */}
-          <main className="p-4 md:p-6 flex-1 overflow-auto">{children}</main>
+          <main className="p-4 md:p-6 flex-1">{children}</main>
         </div>
       </div>
     </PageHeaderProvider>

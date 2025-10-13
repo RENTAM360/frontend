@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
 import { useRouter } from "next/navigation"
-import { useGetAdminActiveStatusQuery, useGetAdminSuspendedUsersQuery, useGetAdminTotalUsersQuery, useGetAdminUsersQuery, User } from "@/lib/redux/api/adminApi"
+import { useGetAdminActiveStatusQuery, useGetAdminSuspendedUsersQuery, useGetAdminTotalUsersQuery, useGetAdminUsersQuery } from "@/lib/redux/api/adminApi"
 import { AnimatedLogo } from "@/components/loading-logo"
 
 // Mock user data
@@ -133,47 +133,14 @@ export default function UsersPage() {
     }
   }, [totalUsers, activeStatus, suspendedStatus])
 
-  // Filter users based on active tab and search query
-  // const filteredUsers = useMemo(() => {
-  //   let filtered = [...mockUsers]
-
-  //   // Filter by tab
-  //   if (activeTab !== "all") {
-  //     filtered = filtered.filter((user) => user.status === activeTab.toLowerCase().replace(" users", ""))
-  //   }
-
-  //   // Filter by search query
-  //   if (searchQuery) {
-  //     const query = searchQuery.toLowerCase()
-  //     filtered = filtered.filter(
-  //       (user) =>
-  //         user.name.toLowerCase().includes(query) ||
-  //         user.email.toLowerCase().includes(query) ||
-  //         user.username.toLowerCase().includes(query) ||
-  //         user.phone.includes(query),
-  //     )
-  //   }
-
-  //   return filtered
-  // }, [activeTab, searchQuery])
-
-  // Count users by status for the stats cards
-  // const userCounts = useMemo(() => {
-  //   const total = mockUsers.length
-  //   const active = mockUsers.filter((user) => user.status === "active").length
-  //   const inactive = mockUsers.filter((user) => user.status === "inactive").length
-  //   const suspended = mockUsers.filter((user) => user.status === "suspended").length
-
-  //   return { total, active, inactive, suspended }
-  // }, [])
-
+ 
   // Handle row click to navigate to user profile
   const handleRowClick = (userId: string | number) => {
     router.push(`/admin/users/${userId}`)
   }
 
   return (
-    <>
+    <section className="">
       <PageHeader>
         <div>
           <h1 className="text-2xl font-bold uppercase">USERS</h1>
@@ -258,29 +225,116 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-md border overflow-x-auto">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-6 p-4 border-b font-medium text-gray-500" style={{ fontSize: "14px" }}>
-            <div className="col-span-3">Full Name</div>
-            <div className="col-span-2">Email</div>
-            <div className="col-span-2">Phone Number</div>
-            <div className="col-span-2">Date Joined</div>
-            <div className="col-span-1">Activity</div>
-            <div className="col-span-2 text-right">Suspend</div>
+       <div className="w-full">
+        <div className="bg-white rounded-md border">
+          <div className="w-full overflow-x-auto max-w-full">
+            <table className="min-w-[900px] text-sm text-gray-700">
+              {/* Table Header */}
+              <thead className="bg-gray-50 border-b text-gray-500 font-medium" style={{ fontSize: "14px" }}>
+                <tr>
+                  <th className="text-left p-4 w-[25%]">Full Name</th>
+                  <th className="text-left p-4 w-[16.6%]">Email</th>
+                  <th className="text-left p-4 w-[16.6%]">Phone Number</th>
+                  <th className="text-left p-4 w-[16.6%]">Date Joined</th>
+                  <th className="text-left p-4 w-[8.3%]">Activity</th>
+                  <th className="text-right p-4 w-[16.6%]">Suspend</th>
+                </tr>
+              </thead>
+
+              {/* Table Body */}
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="p-10 text-center">
+                      <AnimatedLogo />
+                    </td>
+                  </tr>
+                ) : users.length > 0 ? (
+                  users.map((user) => (
+                    <tr
+                      key={user._id}
+                      onClick={() => handleRowClick(user._id)}
+                      className="border-b hover:bg-gray-50 cursor-pointer text-[12px]"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src="/user-avatar.png" alt={user.firstName} />
+                            <AvatarFallback>
+                              {`${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "NA"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{user.firstName} {user.lastName}</p>
+                            {user.email && (
+                              <p className="text-gray-500 text-[10px]">@{user.email}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">{user.email}</td>
+                      <td className="p-4">{user.phone}</td>
+                      <td className="p-4">
+                        {new Date(user.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              user.status === "active"
+                                ? "bg-[#17b266]"
+                                : user.status === "inactive"
+                                ? "bg-yellow-400"
+                                : user.status === "suspended"
+                                ? "bg-red-500"
+                                : "bg-gray-400"
+                            }`}
+                          ></div>
+                          <span>
+                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        {user.status === "suspended" ? (
+                          <Button
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              console.log(`Resume user ${user._id}`)
+                            }}
+                          >
+                            Resume
+                          </Button>
+                        ) : (
+                          <Button
+                            className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              console.log(`Suspend user ${user._id}`)
+                            }}
+                          >
+                            Suspend
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-gray-500">
+                      No users found matching your criteria
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
-          {/* Table Rows */}
-          {isLoading ? (
-            <div className="p-10 flex justify-center items-center">
-              <AnimatedLogo />
-            </div>
-          ) : users.length > 0 ? (
-            users.map((user) => (
-              <UserRow key={user._id} user={user} onClick={() => handleRowClick(user._id)} />
-            ))
-          ) : (
-            <div className="p-8 text-center text-gray-500">No users found matching your criteria</div>
-          )}
           {/* Pagination */}
           {users.length > 0 && (
             <div className="flex justify-end items-center p-4 border-t">
@@ -288,7 +342,13 @@ export default function UsersPage() {
                 Page {page} of {totalPages}
               </div>
               <div className="flex space-x-1">
-                <Button variant="outline" size="sm" className="px-2" onClick={() => setPage(page - 1)} disabled={page === 1}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-2"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                >
                   &lt; Prev
                 </Button>
                 {[...Array(totalPages)].map((_, i) => (
@@ -314,10 +374,13 @@ export default function UsersPage() {
               </div>
             </div>
           )}
-          
         </div>
       </div>
-    </>
+
+
+
+      </div>
+    </section>
   )
 }
 
@@ -380,88 +443,88 @@ function TabButton({ children, active, onClick }: TabButtonProps) {
 //   status: "active" | "inactive" | "suspended" | string
 // }
 
-interface UserRowProps {
-  user: User
-  onClick: MouseEventHandler<HTMLDivElement>
-}
+// interface UserRowProps {
+//   user: User
+//   onClick: MouseEventHandler<HTMLDivElement>
+// }
 
 // Component for user rows
-function UserRow({ user, onClick }: UserRowProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-[#17b266]"
-      case "inactive":
-        return "bg-yellow-400"
-      case "suspended":
-        return "bg-red-500"
-      default:
-        return "bg-gray-400"
-    }
-  }
+// function UserRow({ user, onClick }: UserRowProps) {
+//   const getStatusColor = (status: string) => {
+//     switch (status) {
+//       case "active":
+//         return "bg-[#17b266]"
+//       case "inactive":
+//         return "bg-yellow-400"
+//       case "suspended":
+//         return "bg-red-500"
+//       default:
+//         return "bg-gray-400"
+//     }
+//   }
 
-  const getStatusText = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1)
-  }
+//   const getStatusText = (status: string) => {
+//     return status.charAt(0).toUpperCase() + status.slice(1)
+//   }
 
-  const handleSuspendClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation() // Prevent row click when clicking the button
-    // Handle suspend action
-    console.log(`Suspend user ${user._id}`)
-  }
+//   const handleSuspendClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+//     e.stopPropagation() // Prevent row click when clicking the button
+//     // Handle suspend action
+//     console.log(`Suspend user ${user._id}`)
+//   }
 
-  return (
-    <div
-      className="grid grid-cols-12 gap-6 p-4 border-b hover:bg-gray-50 cursor-pointer"
-      style={{ fontSize: "12px" }}
-      onClick={onClick}
-    >
-      <div className="col-span-3 flex items-center gap-3">
-        <Avatar>
-          <AvatarImage src="/user-avatar.png" alt={user.firstName} />
-          <AvatarFallback>{`${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "NA"}</AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="font-medium">{user.firstName} {user.lastName}</p>
-          {user.email && (
-            <p className="text-gray-500" style={{ fontSize: "10px" }}>
-              @{user.email}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="col-span-2 flex items-center">
-        <span className="truncate">{user.email}</span>
-      </div>
-      <div className="col-span-2 flex items-center">
-        <span>{user.phone}</span>
-      </div>
-      <div className="col-span-2 flex items-center">
-        <span>
-          {new Date(user.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      </div>
-      <div className="col-span-1 flex items-center">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${getStatusColor(user.status)}`}></div>
-          <span>{getStatusText(user.status)}</span>
-        </div>
-      </div>
-      <div className="col-span-2 flex items-center justify-end">
-        {user.status === "suspended" ? (
-          <Button className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1" onClick={handleSuspendClick}>
-            Resume
-          </Button>
-        ) : (
-          <Button className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1" onClick={handleSuspendClick}>
-            Suspend
-          </Button>
-        )}
-      </div>
-    </div>
-  )
-}
+//   return (
+//     <div
+//       className="grid grid-cols-12 gap-6 p-4 border-b hover:bg-gray-50 cursor-pointer"
+//       style={{ fontSize: "12px" }}
+//       onClick={onClick}
+//     >
+//       <div className="col-span-3 flex items-center gap-3">
+//         <Avatar>
+//           <AvatarImage src="/user-avatar.png" alt={user.firstName} />
+//           <AvatarFallback>{`${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "NA"}</AvatarFallback>
+//         </Avatar>
+//         <div>
+//           <p className="font-medium">{user.firstName} {user.lastName}</p>
+//           {user.email && (
+//             <p className="text-gray-500" style={{ fontSize: "10px" }}>
+//               @{user.email}
+//             </p>
+//           )}
+//         </div>
+//       </div>
+//       <div className="col-span-2 flex items-center">
+//         <span className="truncate">{user.email}</span>
+//       </div>
+//       <div className="col-span-2 flex items-center">
+//         <span>{user.phone}</span>
+//       </div>
+//       <div className="col-span-2 flex items-center">
+//         <span>
+//           {new Date(user.createdAt).toLocaleDateString("en-US", {
+//             year: "numeric",
+//             month: "short",
+//             day: "numeric",
+//           })}
+//         </span>
+//       </div>
+//       <div className="col-span-1 flex items-center">
+//         <div className="flex items-center gap-2">
+//           <div className={`w-2 h-2 rounded-full ${getStatusColor(user.status)}`}></div>
+//           <span>{getStatusText(user.status)}</span>
+//         </div>
+//       </div>
+//       <div className="col-span-2 flex items-center justify-end">
+//         {user.status === "suspended" ? (
+//           <Button className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1" onClick={handleSuspendClick}>
+//             Resume
+//           </Button>
+//         ) : (
+//           <Button className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1" onClick={handleSuspendClick}>
+//             Suspend
+//           </Button>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }
