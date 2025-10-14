@@ -401,10 +401,10 @@ const isVerified = ownerProfile?.data.user.isVerify
 
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href={`tel:${mockEquipmentData.phoneNumber}`}
+                href={`tel:${equipmentData.owner.phone}`}
                 className="flex-1 text-base flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-white font-medium hover:bg-green-600"
               >
-                {mockEquipmentData.phoneNumber}
+                {equipmentData.owner.phone}
               </a>
               <button onClick={handleMessage} className="flex-1 whitespace-nowrap text-base flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-primary font-medium hover:bg-green-50">
                 <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
