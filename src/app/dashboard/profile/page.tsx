@@ -264,7 +264,7 @@ export default function ProfilePage() {
   else reviewText = `View all ${feedbackCount} reviews`;
 
   return (
-    <div className="container font-sans mx-auto px-4 py-8">
+    <div className="container font-sans mx-auto px-2 md:px-4 py-8">
       <input
         type="file"
         accept="image/*"
@@ -633,7 +633,7 @@ export default function ProfilePage() {
             {viewMode === "wallet" && <WalletView balance={100000} transactions={transactions} />}
             {viewMode === "items" &&
             <>
-                <h2 className="text-2xl font-bold mb-6">Listed items</h2>
+                <h2 className="text-2xl font-bold mt-3 md:mt-0 mb-6">Listed items</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 overflow-auto hide-scrollbar md:-mr-10 mx-auto max-w-[1600px] justify-center place-items-stretch scroll-smooth gap-2">
                     {userEquipments?.equipments?.map((item) => (
                     <EquipmentCard key={item.id} {...item} variant="profile" />
