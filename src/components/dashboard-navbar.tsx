@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
 import clsx from "clsx"
@@ -11,8 +11,9 @@ import NotificationsDropdown from "./notifications-dropdown"
 import { useGetNotificationsQuery } from "@/lib/redux/api/notificationsApi"
 import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
 import { useGetProfileQuery } from "@/lib/redux/api/authApi"
-import { User } from "lucide-react"
+import { LogOut, User } from "lucide-react"
 import { setSearchTerm } from "@/lib/redux/slices/searchSlice"
+import { clearCredentials } from "@/lib/redux/slices/authSlice"
 // import Image from "next/image"
 
 export function DashboardNavbar() {
@@ -22,8 +23,15 @@ export function DashboardNavbar() {
   const savedItems = useAppSelector(selectSavedItems)
   const savedItemsCount = savedItems.length
   const [open, setOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { data: profileData } = useGetProfileQuery()
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    dispatch(clearCredentials()); 
+    router.push("/login");   
+  };
 
   const {data: conversations = []} = useGetConversationsQuery()
   const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
@@ -186,7 +194,7 @@ export function DashboardNavbar() {
             </div>
 
             <div className="relative">
-              <Link href="/dashboard/profile" className="relative rounded-full pr-2 flex justify-center items-center gap-3">
+              <button onClick={() => setDropdownOpen((prev) => !prev)} className="relative rounded-full pr-2 flex justify-center items-center gap-3">
                 {profileData?.data?.user?.avatar ? (<Image
                   src={`${profileData?.data?.user?.avatar}`}
                   alt="User"
@@ -198,13 +206,32 @@ export function DashboardNavbar() {
                     <User className="w-5 h-5 " />
                   </div>
                 )}
-                {/* <div>
+                <div>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M7.49922 10.4999C7.06172 10.4999 6.62422 10.3312 6.29297 9.9999L2.21797 5.9249C2.03672 5.74365 2.03672 5.44365 2.21797 5.2624C2.39922 5.08115 2.69922 5.08115 2.88047 5.2624L6.95547 9.3374C7.25547 9.6374 7.74297 9.6374 8.04297 9.3374L12.118 5.2624C12.2992 5.08115 12.5992 5.08115 12.7805 5.2624C12.9617 5.44365 12.9617 5.74365 12.7805 5.9249L8.70547 9.9999C8.37422 10.3312 7.93672 10.4999 7.49922 10.4999Z" fill="white"/>
                   </svg>
-                </div> */}
-              </Link>
-              {/* Dropdown menu would go here */}
+                </div>
+              </button>
+              {dropdownOpen && (
+                <div className="absolute right-0 w-44 mt-2 bg-[#ffffff] rounded-2xl shadow-lg z-50">
+                  <Link
+                    href="/dashboard/profile"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-black hover:bg-green-600 hover:text-white rounded-xl transition-colors"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-black hover:bg-red-600 hover:text-white rounded-xl transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
