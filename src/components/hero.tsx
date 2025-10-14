@@ -42,7 +42,7 @@ export default function HeroSection() {
           {/* Phone Mockup */}
           <FadeInWhenVisible delay={0.6}>
             <Image
-              src="/iPhone-mockup.png"
+              src="/dashboard-mockup.png"
               alt="App Screenshot"
               className="w-72 md:w-96"
               width={286.99}

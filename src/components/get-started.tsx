@@ -55,11 +55,12 @@ export default function GetStartedSection() {
           <FadeInWhenVisible delay={0.5}>
             <div className="flex items-center justify-center flex-1">
               <Image
-                src="/iPhone-rent-mockup.png"
+                src="/rent-mockup.png"
                 alt="Phone Mockup"
                 className="w-52 md:w-60"
                 width={239.08}
                 height={483.86}
+                priority
               />
             </div>
           </FadeInWhenVisible>
