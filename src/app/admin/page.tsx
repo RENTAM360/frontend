@@ -20,10 +20,10 @@ export default function Dashboard() {
     <>
       <PageHeader>
         <div>
-          <h1 className="text-xl font-medium">Welcome Back, Agba</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-xl font-medium">Admin Dashboard</h1>
+          {/* <p className="text-sm text-gray-500">
             You have <span className="text-[#17b266]">3 unread</span> Notifications
-          </p>
+          </p> */}
         </div>
       </PageHeader>
 

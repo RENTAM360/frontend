@@ -18,7 +18,7 @@ import {
 import Image from "next/image"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
-import { useGetUserBanksQuery, useGetUserTransactionsQuery } from "@/lib/redux/api/adminApi"
+import { useGetUserBanksQuery, useGetUserTransactionsQuery,  } from "@/lib/redux/api/adminApi"
 // import { enqueueSnackbar } from "notistack"
 // import { getOwnerReviews } from "@/lib/data"
 // import { ReviewsPageClient } from "@/components/reviews-page-client"
@@ -68,6 +68,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
   //     enqueueSnackbar({ variant: "error", message: err?.data?.message || "Operation failed" });
   //   }
   // };
+  console.log(user)
 
   return (
     <>
@@ -77,7 +78,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
         </div>
       </PageHeader>
 
-      <div className="mt-4 gap-3 flex">
+      <div className="mt-4 gap-3 md:flex">
         {/* Profile Header */}
         <div className="bg-white rounded-t-[20px] flex-1 rounded-[20px] overflow-hidden border">
           <div className="relative">
@@ -119,11 +120,11 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
             </div>
 
             <div className="flex items-center justify-center gap-3 mt-6">
-              {/* <Button 
-                onClick={handleSuspendToggle}
+              <Button 
+                // onClick={handleSuspendToggle}
                 className="bg-red-500 hover:bg-red-600 text-xs text-white">
-                  {user?.isSuspended ? "Unsuspend" : "Suspend"}
-                </Button> */}
+                  {/* {user?.isSuspended ? "Unsuspend" : "Suspend"} */}Suspend
+                </Button>
               <Button className="bg-[#17b266] hover:bg-[#149655] text-xs text-white">message</Button>
             </div>
           </div>

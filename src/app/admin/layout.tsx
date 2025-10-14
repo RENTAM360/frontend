@@ -19,6 +19,7 @@ export default function AdminLayout({
   const [headerContent, setHeaderContent] = useState<React.ReactNode>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const pathname = usePathname();
+  const isMessagesPage = pathname === "/admin/messages";
 
   // Effect to grab the header content from the page
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function AdminLayout({
                 <AvatarFallback>AG</AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm text-gray-300">Agba Designer</p>
+                <p className="text-sm text-gray-300">Admin</p>
               </div>
             </div>
           </div>
@@ -125,7 +126,9 @@ export default function AdminLayout({
           </header>
 
           {/* Page Content */}
-          <main className="p-4 md:p-6 flex-1">{children}</main>
+          <main className={`flex-1 ${!isMessagesPage ? "md:p-6" : "px-4"}`}>
+            {children}
+          </main>
         </div>
       </div>
     </PageHeaderProvider>

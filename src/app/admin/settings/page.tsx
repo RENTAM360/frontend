@@ -14,6 +14,7 @@ import { useGetPlatformSettingsQuery, useUpdateGeneralSettingsMutation } from "@
 import { useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import Image from "next/image"
 import { enqueueSnackbar } from "notistack"
+import { CategorySettings } from "@/components/category-settings"
 
 type SettingsMenuItemType = {
   id: string;
@@ -45,6 +46,10 @@ const settingsMenuItems = [
   {
     id: "platform-policies",
     title: "Platform Policies Management",
+  },
+  {
+    id: "categories",
+    title: "Category Settings",
   },
 ]
 
@@ -114,6 +119,8 @@ export default function SettingsPage() {
         return <SecurityAccessSettings />
       case "platform-policies":
         return <PlatformPoliciesSettings />
+      case "categories":
+      return <CategorySettings />
       default: 
         return null
     }

@@ -132,7 +132,7 @@ export default function LoginPage() {
       {/* Right form section */}
       <div className="flex-1 flex items-center justify-center py-12 px-6 md:px-20">
         <div className="w-full max-w-md">
-          <h2 className="text-2xl font-semibold mb-8 text-center">Welcome back!</h2>
+          <h2 className="text-2xl font-semibold mb-8 text-center">Admin Login</h2>
 
           {loginError && (
             <div className="bg-[#F044380A] border border-[#F044383D] text-[#F04438] px-4 py-4 rounded mb-6 text-sm">

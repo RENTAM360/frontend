@@ -12,7 +12,6 @@ interface PaymentWalletSettingsProps {
 }
 
 export function PaymentWalletSettings({ commission }: PaymentWalletSettingsProps) {
-  console.log(commission)
   const [commissionPercentage, setCommissionPercentage] = useState<number | undefined>(commission)
   const [updatePaymentSettings, { isLoading }] = useUpdatePaymentSettingsMutation()
 

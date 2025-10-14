@@ -513,6 +513,23 @@ export const equipmentApi = baseApi.injectEndpoints({
       query: () => "equipment/category",
       providesTags: ["Equipment"],
     }),
+    createCategory: builder.mutation<{ status: number; message: string; data: Category }, { name: string }>({
+      query: (body) => ({
+        url: "equipment/category",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Equipment"],
+    }),
+
+    deleteCategory: builder.mutation<{ status: number; message: string }, string>({
+      query: (categoryId) => ({
+        url: `equipment/category/${categoryId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Equipment"],
+    }),
+
     addEquipment: builder.mutation<AddEquipmentResponse, AddEquipmentRequest>({
       query: (body) => ({
         url: "equipment",
@@ -704,4 +721,6 @@ export const {
   useBookmarkEquipmentMutation,
   useRemoveBookmarkEquipmentMutation,
   useGetBookmarkedEquipmentsQuery,
+  useCreateCategoryMutation,
+  useDeleteCategoryMutation,
 } = equipmentApi

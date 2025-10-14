@@ -1,124 +1,273 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import { MessageList } from "@/components/message-list"
-import type { Conversation } from "@/types/messaging"
 import { MessageView } from "@/components/message-view"
-import { Flag, MoreVertical } from "lucide-react"
+import { ArrowLeft, Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
+import { useMessagingContext } from "@/context/messaging-context"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ReportModal } from "@/components/report-modal"
 
 export default function MessagesPage() {
-  const [activeConversation] = useState<Conversation>({
-    id: "1",
-    name: "Thankgod ogbonna",
-    status: "Online",
-    avatar: "/tg.svg",
-    messages: [
-      {
-        id: "1",
-        content: "i'm looking for information about your car I want to rent it, can I call you?",
-        sender: "user",
-        timestamp: new Date().toISOString(),
-        read: true
-      },
-      {
-        id: "2",
-        content: "Thanks for reaching out about our Toyota Camry. Yes, you can absolutely call us",
-        sender: "other",
-        timestamp: new Date().toISOString(),
-        read: false
-      },
-    ],
-    product: {
-      id: "1",
-      name: "Toyota camry",
-      price: "50,000",
-      image: "/toyota-black.svg",
-      period: "Per a day",
-      phone: "08107355412",
-    },
-  })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
-  const handleSendMessage = async (message: string): Promise<void> => {
-    console.log("sending", message)
+  const {
+    conversations,
+    activeConversation,
+    activeConversationId,
+    joinConversation,
+    sendMessage,
+    isLoadingConversations,
+    isLoadingMessages,
+    isConnected,
+    connectionError,
+    setActiveConversationId,
+  } = useMessagingContext()
 
+  // console.log(isConnected, activeConversation, conversations)
+
+  const searchParams = useSearchParams()
+  const convId = searchParams.get("conversation")
+
+  // Handle URL conversation parameter
+  useEffect(() => {
+    if (!convId) return
+
+    const existing = conversations.find((c) => c.id === convId)
+
+    if (existing) {
+      joinConversation(existing.id, existing)
+    } else if (!isLoadingConversations) {
+      console.warn("[Messaging] Conversation not found:", convId)
+    }
+  }, [convId, joinConversation, conversations, isLoadingConversations])
+
+  // Format conversations for MessageList component
+  const formattedConversations = useMemo(() => {
+    const formatTime = (timestamp?: string) => {
+      if (!timestamp) return ""
+
+      const date = new Date(timestamp)
+      const now = new Date()
+      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
+      if (diffInHours < 1) {
+        return "now"
+      } else if (diffInHours < 24) {
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      } else if (diffInHours < 168) {
+        return date.toLocaleDateString([], { weekday: "short" })
+      } else {
+        return date.toLocaleDateString([], { month: "short", day: "numeric" })
+      }
+    }
+
+    return conversations.map((conv) => ({
+      id: conv.id,
+      name: conv.name,
+      lastMessage: conv.lastMessage || "No messages yet",
+      time: formatTime(conv.lastMessageTime),
+      avatar: conv.avatar,
+      isActive: conv.id === activeConversationId,
+      unreadCount: conv.unreadCount,
+    }))
+  }, [conversations, activeConversationId])
+
+  const handleSendMessage = async (message: string) => {
+    if (!activeConversation) {
+      throw new Error("No active conversation")
+    }
+
+    await sendMessage(activeConversation.id, message)
   }
 
+  // const handleOpenReportModal = () => {
+  //   setIsReportModalOpen(true)
+  // }
+
+  const handleCloseReportModal = () => {
+    setIsReportModalOpen(false)
+  }
+
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery) return formattedConversations
+    return formattedConversations.filter((conv) =>
+    (conv.name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [formattedConversations, searchQuery])
+
+
   return (
-      <div className="flex h-[calc(100vh)] font-sans flex-col">
-        <div className="flex bg-[#F9F9F9] flex-1 overflow-hidden">
-          {/* Messages list */}
-          <div className="w-full bg-white md:w-1/3 lg:w-1/4">
-            <div className="flex h-16 items-center justify-between px-4">
+    <div className="flex h-[calc(100vh-5rem)] -mx-4 md:-mx-6 font-sans relative overflow-hidden">
+        {/* Messages list */}
+        <div 
+          className={`
+          flex flex-col md:border-r bg-white
+          transition-transform duration-300 ease-in-out
+          w-full md:w-[30%]
+          ${activeConversation && !isLoadingMessages ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"}
+        `}
+        >
+          {/* Header */}
+          <div className="sticky top-0 z-20 bg-white border-b">
+            <div className="flex h-16 items-center justify-between px-4 border-b">
               <h1 className="text-xl font-bold">Messages</h1>
             </div>
+
+            {/* Search */}
             <div className="p-4">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="I am looking for..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
-                <svg width="22" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10.5404 19.9374C5.3612 19.9374 1.14453 15.7208 1.14453 10.5416C1.14453 5.36242 5.3612 1.14575 10.5404 1.14575C15.7195 1.14575 19.9362 5.36242 19.9362 10.5416C19.9362 15.7208 15.7195 19.9374 10.5404 19.9374ZM10.5404 2.52075C6.11286 2.52075 2.51953 6.12325 2.51953 10.5416C2.51953 14.9599 6.11286 18.5624 10.5404 18.5624C14.9679 18.5624 18.5612 14.9599 18.5612 10.5416C18.5612 6.12325 14.9679 2.52075 10.5404 2.52075Z" fill="#979797"/>
-                    <path d="M20.167 20.8542C19.9928 20.8542 19.8186 20.7901 19.6811 20.6526L17.8478 18.8192C17.582 18.5534 17.582 18.1134 17.8478 17.8476C18.1136 17.5817 18.5536 17.5817 18.8195 17.8476L20.6528 19.6809C20.9186 19.9467 20.9186 20.3867 20.6528 20.6526C20.5153 20.7901 20.3411 20.8542 20.167 20.8542Z" fill="#979797"/>
-                </svg>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
-            <MessageList
-              conversations={Array.from({ length: 5 }, (_, i) => ({
-                id: `${i + 1}`, 
-                name: "Thankgod Ogbonna",
-                lastMessage: "Hello, how is it going?",
-                time: "12:00pm",
-                avatar: "/tg.svg",
-                isActive: i === 0, 
-            }))}
-              activeId="1"
-              onSelect={() => {}}
-            />
           </div>
 
-          {/* Active conversation */}
-          <div className="hidden flex-1 flex-col md:flex">
-            <div className="flex bg-white h-16 items-center justify-between px-4">
-              <div className="flex items-center space-x-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-full">
-                  <Image
-                    src={activeConversation.avatar || "/placeholder.svg"}
-                    alt={activeConversation.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <h2 className="font-semibold">{activeConversation.name}</h2>
-                  <p className="text-xs text-emerald-500">{activeConversation.status}</p>
-                </div>
+          {/* Conversations List */}
+          <div className="flex-1 overflow-y-auto">
+            {isLoadingConversations ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="rounded-full p-2 text-emerald-500 hover:bg-gray-100">
-                  <Flag className="h-5 w-5" />
-                </button>
-                <button className="rounded-full p-2 text-gray-500 hover:bg-gray-100">
-                  <MoreVertical className="h-5 w-5" />
-                </button>
+            ) : filteredConversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-gray-300">
+                <MessageCircle className="w-8 h-8 mb-2" />
+                <p className="text-sm">{searchQuery ? "No conversations found" : "No conversations yet"}</p>
               </div>
-            </div>
-            <MessageView
-              conversation={activeConversation}
-              showProductCard={false}
-              onSendMessage={handleSendMessage}
-            />
-          </div>
-
-          {/* Empty state for mobile */}
-          <div className="flex flex-1 items-center justify-center md:hidden">
-            <div className="text-center">
-              <p className="text-gray-500">Select a conversation to start messaging</p>
-            </div>
+            ) : (
+              <MessageList
+                conversations={filteredConversations}
+                activeId={activeConversationId ?? ""}
+                onSelect={joinConversation}
+              />
+            )}
           </div>
         </div>
-      </div>
+
+        {/* Active conversation */}
+        <div 
+          className={`
+          absolute top-0 left-0 w-full h-full bg-white flex flex-col
+          transition-transform duration-300 ease-in-out
+          md:static md:flex-1
+          ${activeConversation ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+        `}
+        >
+          {activeConversation ? (
+            <>
+              {/* Conversation Header */}
+              <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
+                <div className="flex items-center space-x-3">
+                  {/* Back button (mobile only) */}
+                  <button
+                    onClick={() => setActiveConversationId(null)}
+                    className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                  </button>
+                  <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-100">
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                      <User className="h-5 w-5" />
+                    </div>
+                    {activeConversation.avatar && (
+                      <Image
+                        src={activeConversation.avatar || "/placeholder.svg"}
+                        alt={activeConversation.name}
+                        fill
+                        className="object-cover z-10"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = "none"
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
+                    <p className="text-xs text-[#B3B3B3]">{isConnected ? activeConversation.status : "Offline"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
+                    <Flag className="h-5 w-5" fill="#12B76A" />
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
+                        <MoreVertical className="h-5 w-5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setIsReportModalOpen(true);
+                        }}
+                      >
+                        <Flag className="h-4 w-4 mr-2" />
+                        Report User
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+
+              {/* Message View */}
+              {isLoadingMessages ? (
+                <div className="flex-1 flex items-center overflow-y-auto justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+                </div>
+              ) : (
+                <div className="flex-1 overflow-hidden">
+                  <MessageView
+                    conversation={activeConversation}
+                    showProductCard={true}
+                    onSendMessage={handleSendMessage}
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">
+                <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-2">Select a conversation to start messaging</p>
+                <p className="text-sm text-gray-400">
+                  {isConnected ? "Choose from your conversations on the left" : "Connecting to messaging service..."}
+                </p>
+                {connectionError && <p className="text-sm text-red-500 mt-2">Connection failed: {connectionError}</p>}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile empty state */}
+        {/* <div className="flex flex-1 items-center justify-center md:hidden">
+          <div className="text-center">
+            <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-500 text-sm">Select a conversation to start messaging</p>
+          </div>
+        </div> */}
+       
+
+      {activeConversation && activeConversation.product && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={handleCloseReportModal}
+          reportedUserId={activeConversation.id}
+          reportedUserName={activeConversation.name}
+          equipmentId={activeConversation.product.id}
+        />
+      )}
+    </div>
   )
 }
