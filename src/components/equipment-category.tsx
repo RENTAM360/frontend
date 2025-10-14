@@ -68,7 +68,7 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
 
   return (
     <div className="space-y-4 mb-8">
-      <h2 className="text-2xl font-bold">Browse Equipments by Category</h2>
+      <h2 className="text-2xl font-bold md:mt-8">Browse Equipments by Category</h2>
       <div className="flex flex-wrap gap-2">
         <Button
           variant={selectedCategoryId === "all" ? "default" : "outline"}
