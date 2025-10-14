@@ -18,7 +18,7 @@ export default function AuthCallback() {
     const errorParam = params.get("error")
 
     if (errorParam) {
-      setError("Google sign-in failed. Please try again later.")
+      setError(errorParam || "Google sign-in failed. Please try again later.")
       setLoading(false)
       return
     }
