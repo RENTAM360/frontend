@@ -128,7 +128,9 @@ export interface EquipmentDetail {
     firstName: string
     lastName: string
     kycVerify: boolean
-    avatarUrl: string
+    avatar: string
+    isVerify: boolean
+    phone: string
   }
   createdAt: string
   updatedAt: string
@@ -168,8 +170,9 @@ export interface TransformedEquipmentDetail {
     name: string
     firstName: string
     lastName: string
-    verified: boolean
+    verified: boolean | null
     avatarUrl: string
+    phone: string
   }
   availability: boolean
   reviews: Review[] | null
@@ -420,8 +423,9 @@ export const equipmentApi = baseApi.injectEndpoints({
             name: `${item.user.firstName} ${item.user.lastName}`,
             firstName: item.user.firstName,
             lastName: item.user.lastName,
-            verified: item.user.kycVerify,
-            avatarUrl: item.user.avatarUrl,
+            verified: item.user.isVerify || null,
+            avatarUrl: item.user.avatar,
+            phone: item.user.phone
           },
           availability: item.availability,
           reviews: response.data.review,

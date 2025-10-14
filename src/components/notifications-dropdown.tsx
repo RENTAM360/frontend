@@ -119,7 +119,7 @@ const handleMarkAsRead = async (id: string) => {
       {isLoading ? (
         <p>Loading...</p>
       ) : notifications?.length === 0 ? (
-        <p className="text-gray-500">No notification</p>
+        <p className="text-gray-500 ml-3">No notification</p>
       ) : (
         <ul className="">
           {notifications?.map((notif: Notification) => (
