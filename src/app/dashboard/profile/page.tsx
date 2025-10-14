@@ -15,9 +15,7 @@ import { VerifyNinModal } from "@/components/verify-nin-modal"
 import { useGetEquipmentsQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import { VerifyPhoneModal } from "@/components/verifyPhoneNumber"
 import { enqueueSnackbar } from "notistack"
-import { clearCredentials } from "@/lib/redux/slices/authSlice"
-import { useAppDispatch } from "@/lib/redux/hooks"
-import { useRouter } from "next/navigation"
+import { useLogout } from "@/app/utils/handleLogout"
 
 type ViewMode = "items" | "edit" | "wallet"
 type StageStatus = "gray" | "green" | "orange";
@@ -26,8 +24,6 @@ export default function ProfilePage() {
     const [viewMode, setViewMode] = useState<ViewMode>("items")
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const user = getUserProfile()
-    const router = useRouter()
-    const dispatch = useAppDispatch()
     const { data: profileData } = useGetProfileQuery()
     const [verifyType, setVerifyType] = useState<"NIN" | "BVN" | null>(null);
     const [showVerifyPhone, setShowVerifyPhone] = useState(false)
@@ -258,10 +254,7 @@ export default function ProfilePage() {
     }
   }
 
-  const handleLogout = () => {
-    dispatch(clearCredentials())
-    router.push("/login")
-  }
+  const handleLogout = useLogout()
 
   const feedbackCount = profile?.feedbacks?.length ?? 0;
 

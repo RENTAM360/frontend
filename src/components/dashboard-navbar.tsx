@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
 import clsx from "clsx"
@@ -13,7 +13,7 @@ import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
 import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { LogOut, User } from "lucide-react"
 import { setSearchTerm } from "@/lib/redux/slices/searchSlice"
-import { clearCredentials } from "@/lib/redux/slices/authSlice"
+import { useLogout } from "@/app/utils/handleLogout"
 // import Image from "next/image"
 
 export function DashboardNavbar() {
@@ -26,12 +26,7 @@ export function DashboardNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { data: profileData } = useGetProfileQuery()
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-
-  const handleLogout = () => {
-    dispatch(clearCredentials()); 
-    router.push("/login");   
-  };
+  const handleLogout = useLogout()
 
   const {data: conversations = []} = useGetConversationsQuery()
   const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
