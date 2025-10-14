@@ -8,7 +8,6 @@ import {
   MapPin,
   Phone,
   CreditCard,
-  Edit3,
   Trash2,
   ChevronRight,
   ChevronDown,
@@ -18,8 +17,8 @@ import {
 import Image from "next/image"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
-import { useGetUserBanksQuery, useGetUserTransactionsQuery,  } from "@/lib/redux/api/adminApi"
-// import { enqueueSnackbar } from "notistack"
+import { useDeleteUserMutation, useGetUserBanksQuery, useGetUserTransactionsQuery, useSuspendUserMutation, useUnsuspendUserMutation,  } from "@/lib/redux/api/adminApi"
+import { enqueueSnackbar } from "notistack"
 // import { getOwnerReviews } from "@/lib/data"
 // import { ReviewsPageClient } from "@/components/reviews-page-client"
 
@@ -31,14 +30,16 @@ interface UserProfileClientProps {
 
 export default function UserProfileClient({ userId }: UserProfileClientProps) {
   const [activeTab, setActiveTab] = useState("Items")
-  const { data: userProfile } = useGetOtherUserProfileQuery(userId!, {
+  const { data: userProfile, refetch } = useGetOtherUserProfileQuery(userId!, {
       skip: !userId,
     });
 
   const user = userProfile?.data?.user
+  // console.log(user)
 
-  // const [suspendUser] = useSuspendUserMutation();
-  // const [unsuspendUser] = useUnsuspendUserMutation();
+  const [deleteUser] = useDeleteUserMutation()
+  const [suspendUser] = useSuspendUserMutation();
+  const [unsuspendUser] = useUnsuspendUserMutation();
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -55,20 +56,43 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
     }
   }
 
-  // const handleSuspendToggle = async () => {
-  //   try {
-  //     if (user?.isSuspended) {
-  //       await unsuspendUser(user._id).unwrap();
-  //       enqueueSnackbar({ variant: "success", message: "User unsuspended" });
-  //     } else {
-  //       await suspendUser(user?._id).unwrap();
-  //       enqueueSnackbar({ variant: "success", message: "User suspended" });
-  //     }
-  //   } catch (err: any) {
-  //     enqueueSnackbar({ variant: "error", message: err?.data?.message || "Operation failed" });
-  //   }
-  // };
-  console.log(user)
+  const handleSuspendToggle = async () => {
+    if (!user?._id) {
+      enqueueSnackbar({ variant: "error", message: "User ID is missing" });
+      return;
+    }
+    try {
+      if (user?.status === "suspended") {
+        await unsuspendUser(user._id).unwrap();
+        enqueueSnackbar({ variant: "success", message: "User unsuspended" });
+        refetch()
+      } else {
+        await suspendUser(user?._id).unwrap();
+        enqueueSnackbar({ variant: "success", message: "User suspended" });
+        refetch()
+      }
+    } catch (err) {
+      enqueueSnackbar({ variant: "error", message: "Operation failed" });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!user?._id) return;
+
+    const confirmDelete = confirm("Are you sure you want to permanently delete this user?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteUser(user._id).unwrap();
+      enqueueSnackbar({ variant: "success", message: "User account deleted!" });
+      window.location.href = "/admin/users";
+    } catch (error) {
+      enqueueSnackbar({ variant: "error", message: "Failed to delete user" });
+      console.error(error);
+    }
+  };
+
+  // console.log(user)
 
   return (
     <>
@@ -121,9 +145,9 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
 
             <div className="flex items-center justify-center gap-3 mt-6">
               <Button 
-                // onClick={handleSuspendToggle}
+                onClick={handleSuspendToggle}
                 className="bg-red-500 hover:bg-red-600 text-xs text-white">
-                  {/* {user?.isSuspended ? "Unsuspend" : "Suspend"} */}Suspend
+                  {user?.status === "suspended" ? "Unsuspend" : "Suspend"}
                 </Button>
               <Button className="bg-[#17b266] hover:bg-[#149655] text-xs text-white">message</Button>
             </div>
@@ -140,20 +164,20 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Phone className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-black text-xs">{user?.phone}</span>
               </div>}
-              {userProfile?.data?.account && <div className="flex gap-2 items-center py-3 border-b">
+              {userProfile?.data?.account && <div className="flex gap-2 items-center py-3">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><CreditCard className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-black text-xs">{userProfile?.data?.account?.accountNumber}, {userProfile?.data?.account?.bankName}</span>
                 {/* <span className="text-gray-400 ml-1">{user.bankName}</span> */}
               </div>}
-              <div className="flex gap-2 items-center py-3 border-b">
+              {/* <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Edit3 className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-[#17b266] text-xs">Edit profile details</span>
-              </div>
+              </div> */}
               {/* <div className="flex gap-2 items-center py-3 border-b">
                 <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><FileText className="w-4 h-4 text-[#17b266]" /></div>
                 <span className="text-black text-xs">{user.nin}</span>
               </div> */}
-              <div className="flex items-center justify-between py-3">
+              <div onClick={handleDeleteUser} className="flex items-center justify-between py-3 cursor-pointer hover:bg-gray-50">
                 <div className="flex gap-2 items-center">
                   <div className="bg-[#F6FEF9] rounded-full p-2 flex justify-center items-center"><Trash2 className="w-4 h-4 text-[#17b266]" /></div>
                   <span className="text-black text-xs">Delete account permanently</span>

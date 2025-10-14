@@ -60,11 +60,12 @@ export default function AdminLayout({
 
           <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
             <Suspense fallback={<div>Loading...</div>}>
-              <NavItem href="/admin" icon={LayoutGrid} label="Dashboard" />
-              <NavItem href="/admin/users" icon={Users} label="Users" />
-              <NavItem href="/admin/messages" icon={MessageSquare} label="Messages" />
-              <NavItem href="/admin/reports" icon={FileText} label="Reports" />
-              <NavItem href="/admin/settings" icon={Settings} label="Settings" />
+              <NavItem href="/admin" icon={LayoutGrid} label="Dashboard" setIsSidebarOpen={setIsSidebarOpen} />
+              <NavItem href="/admin/users" icon={Users} label="Users" setIsSidebarOpen={setIsSidebarOpen} />
+              <NavItem href="/admin/messages" icon={MessageSquare} label="Messages" setIsSidebarOpen={setIsSidebarOpen} />
+              <NavItem href="/admin/reports" icon={FileText} label="Reports" setIsSidebarOpen={setIsSidebarOpen} />
+              <NavItem href="/admin/settings" icon={Settings} label="Settings" setIsSidebarOpen={setIsSidebarOpen} />
+
             </Suspense>
           </nav>
 
@@ -126,7 +127,7 @@ export default function AdminLayout({
           </header>
 
           {/* Page Content */}
-          <main className={`flex-1 ${!isMessagesPage ? "md:p-6" : "px-4"}`}>
+          <main className={`flex-1 p-2 ${!isMessagesPage ? "md:p-6" : "px-4"}`}>
             {children}
           </main>
         </div>
@@ -136,12 +137,12 @@ export default function AdminLayout({
 }
 
 // Component for navigation items
-function NavItem({ icon: Icon, label, href }: { icon: ComponentType<{ className?: string }>; label: string; href: string }) {
+function NavItem({ icon: Icon, label, href, setIsSidebarOpen }: { icon: ComponentType<{ className?: string }>; label: string; href: string; setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
   const pathname = usePathname()
   const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href))
 
   return (
-    <Link href={href} className="block">
+    <Link href={href} onClick={() => setIsSidebarOpen(false)} className="block">
       <div
         className={`flex items-center gap-3 py-2 px-3 rounded-md mb-1 cursor-pointer transition-colors ${
           isActive ? "bg-[#232323] text-white" : "hover:bg-[#232323] text-gray-300"

@@ -3,14 +3,14 @@
 import { AnimatedLogo } from "@/components/loading-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { UsersOverviewChart } from "@/components/users-overview-chart"
-import { UsersReportChart } from "@/components/users-report-chart"
+import { EquipmentReportChart } from "@/components/users-report-chart"
 import { PageHeader } from "@/context/page-header-context"
 import { useGetAdminDashboardQuery } from "@/lib/redux/api/adminApi"
 import { formatCurrency, formatNumber } from "../utils/formatters"
 
 export default function Dashboard() {
   const { data, isLoading, isError } = useGetAdminDashboardQuery()
-  console.log(data)
+  // console.log(data)
 
   if (isLoading) return <AnimatedLogo />
   if (isError) return <p>Error loading dashboard</p>
@@ -103,19 +103,19 @@ export default function Dashboard() {
         <Card className="shadow-none mt-2 md:mt-0">
           <CardContent className="p-6">
             <div className="mb-4">
-              <h3 className="text-lg font-medium">Users Reports</h3>
+              <h3 className="text-lg font-medium">Equipment Report</h3>
             </div>
             <div className="h-[300px] w-full flex items-center justify-center">
-              <UsersReportChart />
+              <EquipmentReportChart />
             </div>
             <div className="flex items-center justify-center gap-6 mt-4">
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gray-700 rounded-sm"></div>
                 <span className="text-sm">Inactive Users</span>
-              </div>
+              </div> */}
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#17b266] rounded-sm"></div>
-                <span className="text-sm">Active Users</span>
+                <span className="text-sm">Equipment count</span>
               </div>
               {/* <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gray-200 rounded-sm"></div>

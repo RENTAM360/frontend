@@ -12,7 +12,7 @@ import { AnimatedLogo } from "./loading-logo"
 
 const COLORS = ["#17b266", "#000000"]
 
-export function UsersReportChart() {
+export function EquipmentReportChart() {
   const { data, isLoading, isError } = useGetAdminEquipmentChartQuery()
 
    if (isLoading) return <AnimatedLogo />
@@ -96,7 +96,7 @@ export function UsersReportChart() {
       {/* Center label */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <p className="text-xl font-bold">{total}</p>
-        <p className="text-[10px] text-gray-500">Total Users</p>
+        <p className="text-[10px] text-gray-500">Total</p>
       </div>
     </div>
   )

@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 // import { Input } from "@/components/ui/input"
-import { ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight, Check } from "lucide-react"
+import { ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
 import Image from "next/image"
 import { Report, useDeleteUserMutation, useGetReportByIdQuery, useGetReportsQuery, useResolveReportMutation, useSuspendUserMutation, useUnsuspendUserMutation } from "@/lib/redux/api/adminApi"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { enqueueSnackbar } from "notistack"
+import Lottie from "lottie-react"
+import successAnimation from "@/assets/animations/Success.json"
 
 // Mock reports data
 // const reportsData = [
@@ -97,13 +99,13 @@ export default function ReportsPage() {
   // const [searchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
-  const [reporterId, setReporterId] = useState<string | null>(null);
+  // const [setReporterId] = useState<string | null>(null);
   const [reportedId, setReportedId] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [isClosing, setIsClosing] = useState(false);
 
 
-  const { data: reportsData } = useGetReportsQuery({ page: 1, limit: 10 });
+  const { data: reportsData, refetch: refetchReports } = useGetReportsQuery({ page: 1, limit: 10 });
   const reports = reportsData?.data?.reports ?? [];
 
   const { data: reportDetails } = useGetReportByIdQuery(selectedReportId!, {
@@ -111,20 +113,21 @@ export default function ReportsPage() {
   });
 
   const reportDetail = reportDetails?.data?.report ?? null;
+  // console.log(reportDetails)
 
   useEffect(() => {
     if (reportDetail) {
-      setReporterId(reportDetail.reporter?._id ?? null);
+      // setReporterId(reportDetail.reporter?._id ?? null);
       setReportedId(reportDetail.reported?._id ?? null);
     } else {
-      setReporterId(null);
+      // setReporterId(null);
       setReportedId(null);
     }
   }, [reportDetail]);
 
-  const { data: reporterProfile } = useGetOtherUserProfileQuery(reporterId!, {
-    skip: !reporterId,
-  });
+  // const { data: reporterProfile } = useGetOtherUserProfileQuery(reporterId!, {
+  //   skip: !reporterId,
+  // });
   const { data: reportedProfile, refetch } = useGetOtherUserProfileQuery(reportedId!, {
     skip: !reportedId,
   });
@@ -135,8 +138,8 @@ export default function ReportsPage() {
   const [unSuspendUser, { isLoading: isUnsuspending }] = useUnsuspendUserMutation();
   const [deleteUser] = useDeleteUserMutation()
 
-  console.log("Reporter:", reporterProfile);
-  console.log("Reported:", reportedProfile);
+  // console.log("Reporter:", reporterProfile);
+  // console.log("Reported:", reportedProfile);
 
 
   // Filter reports based on search and status
@@ -162,6 +165,7 @@ export default function ReportsPage() {
     if (!selectedReportId) return
     await resolveReport(selectedReportId).unwrap()
     setShowSuccessModal(true)
+    refetchReports()
   }
 
   const handleSuspend = async (userId: string) => {
@@ -353,8 +357,8 @@ export default function ReportsPage() {
                         disabled={isSuspending || isUnsuspending}
                         className={`${
                           reportedProfile.data.user.status === "suspended"
-                            ? "bg-green-500 hover:bg-green-600"
-                            : "bg-red-500 hover:bg-red-600"
+                            ? "bg-yellow-400 hover:bg-green-600"
+                            : "bg-[#F04438] hover:bg-red-600"
                         } text-white`}
                         onClick={() => {
                           const userId = reportedProfile.data.user._id;
@@ -375,13 +379,13 @@ export default function ReportsPage() {
                       </Button>
                     )}
 
-                    <Button className="bg-[#17b266] hover:bg-[#149655] text-white" onClick={handleMessage}>
+                    <Button className="bg-[#12B76A] hover:bg-[#149655] text-white" onClick={handleMessage}>
                       Message
                     </Button>
                     {reportDetails?.data?.report?.status !== "resolved" && (
                       <Button
                         variant="outline"
-                        className="border-[#17b266] text-[#17b266] hover:bg-[#17b266] hover:text-white"
+                        className="border-[#17b266] bg-[#E8F8F1] text-[#12B76A] hover:bg-[#17b266] hover:text-white"
                         onClick={handleResolve}
                       >
                         Resolve
@@ -392,17 +396,17 @@ export default function ReportsPage() {
 
                 {/* Report Message - Only show if not resolved */}
                 {reportDetails?.data?.report?.status !== "resolved" && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <h4 className="text-red-600 font-medium mb-2">Report message</h4>
-                    <p className="text-red-600 text-sm">{reportDetails?.data?.report?.reason}</p>
+                  <div className="bg-[#FFF7F6] border border-[#FFB1AB] rounded-lg p-4 mb-6">
+                    <h4 className="text-[#F04438] font-medium mb-2">Report message</h4>
+                    <p className="text-[#F04438] text-sm">{reportDetails?.data?.report?.reason}</p>
                   </div>
                 )}
 
                 {/* Resolved Status Message */}
                 {reportDetails?.data?.report?.status === "resolved" && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                    <h4 className="text-green-600 font-medium mb-2">Status</h4>
-                    <p className="text-green-600 text-sm">
+                    <h4 className="text-[#12B76A] font-medium mb-2">Status</h4>
+                    <p className="text-[#12B76A] text-sm">
                       This report has been resolved and appropriate actions have been completed.
                     </p>
                   </div>
@@ -412,18 +416,18 @@ export default function ReportsPage() {
                 <div className="space-y-4 pb-6">
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <MapPin className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-gray-700">{reportedProfile?.data?.user?.address}</span>
+                    <span className="text-[#000000]">{reportedProfile?.data?.user?.address}</span>
                   </div>
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Phone className="w-5 h-5 text-[#17b266]" />
-                    {reportedProfile?.data?.user?.address && <span className="text-gray-700">{reportedProfile?.data?.user?.phone}</span>}
+                    {reportedProfile?.data?.user?.address && <span className="text-[#000000]">{reportedProfile?.data?.user?.phone}</span>}
                   </div>
                   {
-                    reportDetails?.data?.bank?.length && reportDetails.data.bank.length > 0 && (
+                    reportDetails?.data?.bank && reportDetails.data.bank.length > 0 && (
                       <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                         <CreditCard className="w-5 h-5 text-[#17b266]" />
                         <div>
-                          <span className="text-gray-700">{ reportDetails?.data?.bank}</span>
+                          <span className="text-[#000000]">{ reportDetails?.data?.bank}</span>
                           <br />
                           <span className="text-gray-500 text-sm">{ reportDetails?.data?.bank}</span>
                         </div>
@@ -432,10 +436,10 @@ export default function ReportsPage() {
                   }
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Mail className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-gray-700">{reportedProfile?.data?.user?.email}</span>
+                    <span className="text-[#000000]">{reportedProfile?.data?.user?.email}</span>
                   </div>
                   <div
-                    className="flex items-center justify-between py-3 border-t hover:bg-gray-50 rounded cursor-pointer"
+                    className="flex items-center justify-between py-4 hover:bg-gray-50 rounded cursor-pointer"
                     onClick={() => {
                       const userId = reportedProfile?.data?.user?._id;
                       if (!userId) return;
@@ -445,9 +449,9 @@ export default function ReportsPage() {
                       }
                     }}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex ml-2 items-center gap-3">
                       <Trash2 className="w-5 h-5 text-[#17b266]" />
-                      <span className="text-gray-700">Delete account permanently</span>
+                      <span className="text-[#000000]">Delete account permanently</span>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                   </div>
@@ -465,20 +469,19 @@ export default function ReportsPage() {
           <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
             {/* Success Icon */}
             <div className="mb-6 flex justify-center">
-              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center relative">
-                <Check className="w-10 h-10 text-white" />
-                <div className="absolute inset-0 rounded-full border-2 border-dashed border-pink-400"></div>
+              <div className="w-24 h-24 rounded-full flex items-center justify-center relative">
+               <Lottie animationData={successAnimation} loop={false} autoplay={true} />
               </div>
             </div>
 
             {/* Success Message */}
-            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+            <p className="text-[#000000] text-base mb-8 leading-relaxed">
               The reported case has been reviewed and appropriate actions have been completed.
             </p>
 
             {/* Done Button */}
             <Button
-              className="w-full bg-[#17b266] hover:bg-[#149655] text-white py-3 text-lg rounded-full"
+              className="w-full bg-[#17b266] hover:bg-[#149655] text-white py-4 text-base rounded-full"
               onClick={handleSuccessModalClose}
             >
               Done

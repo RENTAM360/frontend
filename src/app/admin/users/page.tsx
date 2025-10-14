@@ -8,8 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
 import { useRouter } from "next/navigation"
-import { useGetAdminActiveStatusQuery, useGetAdminSuspendedUsersQuery, useGetAdminTotalUsersQuery, useGetAdminUsersQuery } from "@/lib/redux/api/adminApi"
+import { useGetAdminActiveStatusQuery, useGetAdminSuspendedUsersQuery, useGetAdminTotalUsersQuery, useGetAdminUsersQuery, useSuspendUserMutation, useUnsuspendUserMutation } from "@/lib/redux/api/adminApi"
 import { AnimatedLogo } from "@/components/loading-logo"
+import { enqueueSnackbar } from "notistack"
 
 // Mock user data
 // const mockUsers = [
@@ -108,7 +109,7 @@ export default function UsersPage() {
     const { data: totalUsers } = useGetAdminTotalUsersQuery()
     const { data: activeStatus } = useGetAdminActiveStatusQuery()
     const { data: suspendedStatus } = useGetAdminSuspendedUsersQuery()
-    const { data: usersData, isLoading } = useGetAdminUsersQuery({
+    const { data: usersData, isLoading, refetch } = useGetAdminUsersQuery({
       filter: activeTab !== "all" ? activeTab.toLowerCase().replace(" users", "") : undefined,
       search: debouncedSearch || undefined,
       page,
@@ -118,7 +119,8 @@ export default function UsersPage() {
     const total = usersData?.data?.total ?? 0
     const totalPages = total ? Math.ceil(total / limit) : page + (users.length === limit ? 1 : 0)
 
-    // console.log(users)
+    const [suspendUser] = useSuspendUserMutation();
+    const [unsuspendUser] = useUnsuspendUserMutation();
 
     const userCounts = useMemo(() => {
     return {
@@ -133,6 +135,25 @@ export default function UsersPage() {
     }
   }, [totalUsers, activeStatus, suspendedStatus])
 
+  const handleSuspendToggle = async (userId: string, status: string) => {
+      if (!userId) {
+        enqueueSnackbar({ variant: "error", message: "User ID is missing" });
+        return;
+      }
+      try {
+        if (status === "suspended") {
+          await unsuspendUser(userId).unwrap();
+          enqueueSnackbar({ variant: "success", message: "User unsuspended" });
+          refetch()
+        } else {
+          await suspendUser(userId).unwrap();
+          enqueueSnackbar({ variant: "success", message: "User suspended" });
+          refetch()
+        }
+      } catch (err) {
+        enqueueSnackbar({ variant: "error", message: "Operation failed" });
+      }
+    };
  
   // Handle row click to navigate to user profile
   const handleRowClick = (userId: string | number) => {
@@ -296,6 +317,7 @@ export default function UsersPage() {
                           ></div>
                           <span>
                             {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                            
                           </span>
                         </div>
                       </td>
@@ -305,7 +327,7 @@ export default function UsersPage() {
                             className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1"
                             onClick={(e) => {
                               e.stopPropagation()
-                              console.log(`Resume user ${user._id}`)
+                              handleSuspendToggle(user._id, user.status)
                             }}
                           >
                             Resume
@@ -315,7 +337,7 @@ export default function UsersPage() {
                             className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1"
                             onClick={(e) => {
                               e.stopPropagation()
-                              console.log(`Suspend user ${user._id}`)
+                              handleSuspendToggle(user._id, user.status)
                             }}
                           >
                             Suspend
