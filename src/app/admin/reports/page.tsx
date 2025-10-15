@@ -357,7 +357,7 @@ export default function ReportsPage() {
                         disabled={isSuspending || isUnsuspending}
                         className={`${
                           reportedProfile.data.user.status === "suspended"
-                            ? "bg-yellow-400 hover:bg-green-600"
+                            ? "bg-yellow-400 hover:bg-none"
                             : "bg-[#F04438] hover:bg-red-600"
                         } text-white`}
                         onClick={() => {

@@ -12,18 +12,24 @@ interface EquipmentCategoryProps {
   limit?: number
 }
 
-export function EquipmentCategory({ title }: EquipmentCategoryProps) {
+export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
   const searchTerm = useAppSelector((state)=>state.search.term)
   const {
     data: categoryResponse,
   } = useGetCategoriesQuery()
+  const [page, setPage] = useState(1)
 
   // console.log(categoryResponse)
 
   const categories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse])
   // console.log(categories)
 
+  
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+
+  useEffect(() => {
+   setPage(1)
+ }, [selectedCategoryId])
 
    useEffect(() => {
     if (!selectedCategoryId && categories.length > 0) {
@@ -35,12 +41,12 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
     data: equipmentResponse,
     isLoading: isLoadingEquipments,
   } = useGetEquipmentsQuery(
-    selectedCategoryId && selectedCategoryId !== "all" ? { categoryId: selectedCategoryId } : skipToken
+    selectedCategoryId && selectedCategoryId !== "all" ? { categoryId: selectedCategoryId, page, limit } : skipToken
   )
 
-  const allEquipments = useGetEquipmentsQuery(undefined, {
-    skip: selectedCategoryId !== "all",
-  })
+  const allEquipments = useGetEquipmentsQuery(
+    selectedCategoryId === "all" ? { page, limit } : skipToken
+  )
 
   const equipments = useMemo(() => {
     return selectedCategoryId === "all"
@@ -49,7 +55,12 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
   }, [selectedCategoryId, allEquipments.data, equipmentResponse])
 
   // console.log(equipments)
-
+  const totalCount =
+    selectedCategoryId === "all"
+      ? allEquipments.data?.totalCount ?? 0
+      : equipmentResponse?.totalCount ?? 0
+  
+  const totalPages = Math.ceil(totalCount / limit!)
   const isLoading = selectedCategoryId === "all" ? allEquipments.isLoading : isLoadingEquipments
 
   const selectedCategoryName =
@@ -109,7 +120,8 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
             </div>
           </div>
         ) : (
-          <div 
+          <>
+            <div 
             ref={containerRef}
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2"
           >
@@ -127,6 +139,27 @@ export function EquipmentCategory({ title }: EquipmentCategoryProps) {
     
             ))}
           </div>
+
+            <div className="flex justify-center items-center gap-4 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-gray-600">
+                Page {page} of {totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                disabled={page === totalPages || totalPages === 0}
+              >
+                Next
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </div>
