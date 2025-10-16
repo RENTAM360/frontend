@@ -264,7 +264,7 @@ export default function ProfilePage() {
   else reviewText = `View all ${feedbackCount} reviews`;
 
   return (
-    <div className="container font-sans mx-auto px-2 md:px-4 py-8">
+    <div className="container font-sans mx-auto md:px-4 py-8">
       <input
         type="file"
         accept="image/*"
@@ -275,7 +275,7 @@ export default function ProfilePage() {
 
       <div className="flex flex-col md:flex-row">
         {/* Owner Profile Section */}
-        <div className="w-full bg-white rounded-t-3xl md:w-1/3">
+        <div className="w-full bg-white mb-4 rounded-b-3xl md:rounded-b-none rounded-t-3xl md:w-1/3">
           <div className="relative mb-6">
             <div className="relative w-full h-44 rounded-t-3xl rounded-b-[30px] overflow-hidden">
               <Image
@@ -572,7 +572,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Account Actions */}
-          <div className="bg-white rounded-lg  overflow-hidden">
+          <div className="bg-white rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode(viewMode === "wallet" ? "items" : "wallet")}
               className="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50 text-left"
@@ -626,7 +626,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Listed Items or Edit Section */}
-        <div className="w-full md:w-2/3 mx-4">
+        <div className="w-full md:w-2/3 md:mx-4">
 
             {viewMode === "edit" && <ProfileEditForm profile={profile} onCancel={() => setViewMode("items")} />}
 

@@ -6,6 +6,9 @@ import Link from "next/link"
 import Map from "@/components/map"
 import { useEffect, useState } from "react"
 import { getAddress } from "./address-converter"
+import { useMessagingContext } from "@/context/messaging-context"
+import { socketService } from "@/lib/socket"
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 
 const mockEquipmentData = {
   id: "1",
@@ -97,9 +100,16 @@ interface LocationPageProps {
 export default function EquipmentLocationClient({ equipmentId }: LocationPageProps) {
   const router = useRouter()
   const [address, setAddress] = useState("");
+  const {
+    joinConversation,
+  } = useMessagingContext()
 
   const { data: equipmentData, isLoading, isError } = useGetEquipmentByIdQuery(equipmentId)
-  console.log(equipmentData?.media)
+  const ownerId = equipmentData?.owner?.id ?? "";
+
+  const { data: ownerProfile } = useGetOtherUserProfileQuery(ownerId, {
+    skip: !ownerId,
+  });
 
   const handleBookNow = () => {
     window.location.href = `/dashboard/checkout?id=${equipmentId}`
@@ -117,6 +127,44 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
 
         fetchAddress();
     }, [equipmentData]);
+
+    const handleMessage = () => {
+      if (!equipmentData?.owner?.id || !equipmentData?.owner?.name) {
+        console.error("Missing owner data")
+        return
+      }
+      const receiverId = equipmentData.owner.id
+      if (equipmentData) {
+        const existing = JSON.parse(localStorage.getItem("conversationProducts") || "{}")
+        existing[receiverId] = equipmentData
+        localStorage.setItem("conversationProducts", JSON.stringify(existing))
+      }
+  
+      socketService.joinChat(receiverId)
+  
+      const conv = {
+        id: receiverId,
+        name: equipmentData.owner.name,
+        avatar: equipmentData.owner.avatarUrl,
+        messages: [],
+        status: "Online",
+        product: {
+          id: equipmentData.id,
+          name: equipmentData.name,
+          price: String(equipmentData.pricePerDay),
+          image: equipmentData.imageUrl,
+          period: "",
+          phone: "",
+        },
+      }
+      joinConversation(receiverId, conv)
+  
+      console.log("Conv created:", conv)
+      console.log("Owner id from equipmentData:", equipmentData?.owner.id)
+      router.push(`/dashboard/messages?conversation=${conv.id}`)
+    }
+  
+    const isVerified = ownerProfile?.data.user.isVerify
 
   // Loading state
   if (isLoading) {
@@ -257,7 +305,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
               >
                 {equipmentData.owner.phone}
               </a>
-              <button className="flex-1 whitespace-nowrap text-base flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-primary font-medium hover:bg-green-50">
+              <button onClick={handleMessage} className="flex-1 whitespace-nowrap text-base flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-primary font-medium hover:bg-green-50">
                 <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M3.5 15.75H5.25V19.3209L9.71338 15.75H14C14.9651 15.75 15.75 14.9651 15.75 14V7C15.75 6.03487 14.9651 5.25 14 5.25H3.5C2.53487 5.25 1.75 6.03487 1.75 7V14C1.75 14.9651 2.53487 15.75 3.5 15.75Z"
@@ -282,7 +330,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
               <div className="flex items-center gap-4">
                 <div className="relative h-10 w-10 overflow-hidden rounded-full">
                   <Image
-                    src={mockEquipmentData.owner.image || "/placeholder.svg?height=64&width=64&query=person"}
+                    src={equipmentData.owner.avatarUrl || "/user.svg?height=64&width=64&query=person"}
                     alt={equipmentData.owner.name}
                     fill
                     className="object-cover"
@@ -290,7 +338,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                 </div>
                 <div>
                   <h3 className="text-base font-medium">{equipmentData.owner.name}</h3>
-                  {equipmentData.owner.verified && (
+                  {isVerified && (
                     <span className="inline-block rounded-full bg-[#E8F8F1] px-3 py-1 text-[12px] text-green-600">
                       Verified
                     </span>

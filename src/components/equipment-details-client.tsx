@@ -117,8 +117,8 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
 
 
   const {
-      joinConversation,
-    } = useMessagingContext()
+    joinConversation,
+  } = useMessagingContext()
 
   // console.log("🔍 Component rendered with equipmentId:", equipmentId)
 

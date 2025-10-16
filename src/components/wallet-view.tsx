@@ -49,7 +49,7 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
   return (
     <div className="bg-white p-4 rounded-lg">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold">Wallet</h2>
+        <h2 className="text-2xl md:text-3xl font-bold">Wallet</h2>
         <Button className="bg-primary hover:bg-green-600 text-white" onClick={() => setShowAddBankModal(true)}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.9987 15.1666C4.04536 15.1666 0.832031 11.9533 0.832031 7.99992C0.832031 4.04659 4.04536 0.833252 7.9987 0.833252C11.952 0.833252 15.1654 4.04659 15.1654 7.99992C15.1654 11.9533 11.952 15.1666 7.9987 15.1666ZM7.9987 1.83325C4.5987 1.83325 1.83203 4.59992 1.83203 7.99992C1.83203 11.3999 4.5987 14.1666 7.9987 14.1666C11.3987 14.1666 14.1654 11.3999 14.1654 7.99992C14.1654 4.59992 11.3987 1.83325 7.9987 1.83325Z" fill="white"/>
@@ -65,9 +65,9 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
       <div className="bg-black text-white rounded-lg p-6 mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-lg mb-2">Available balance</p>
-            <h3 className="text-4xl font-bold mb-2">₦{balance.toLocaleString()}</h3>
-            <p className="text-sm opacity-80">₦{balance.toLocaleString()} (Total balance)</p>
+            <p className="text-sm md:text-lg mb-2">Available balance</p>
+            <h3 className="text-2xl md:text-4xl font-bold mb-2">₦{balance.toLocaleString()}</h3>
+            <p className="text-xs md:text-sm opacity-80">₦{balance.toLocaleString()} (Total balance)</p>
           </div>
           <Button
             onClick={() => setShowWithdraw(true)}
@@ -79,8 +79,8 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
       </div>
 
       {/* Transaction History */}
-      <div className="mb-4 flex justify-between items-center">
-        <h3 className="text-2xl font-bold">History</h3>
+      <div className="mb-4 flex-col md:flex justify-between items-center">
+        <h3 className="text-xl mb-2 md:mb-0 md:text-2xl font-bold">History</h3>
         <div className="flex gap-2">
           {/* Transaction Type Filter */}
           <div className="relative">
@@ -136,13 +136,13 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
 
                   </div>
                   <div>
-                    <h4 className="font-medium">{transaction.title}</h4>
-                    <p className="text-sm text-gray-500">{transaction.date}</p>
+                    <h4 className="text-sm md:text-base font-medium">{transaction.title}</h4>
+                    <p className="text-xs md:text-sm text-gray-500">{transaction.date}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p
-                    className={` ${
+                    className={` text-sm md:text-base ${
                       transaction.status === "debit" || transaction.status === "withdrawal"
                         ? "text-red-500"
                         : transaction.status === "successful" || transaction.status === "deposit"
@@ -162,7 +162,7 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
                               : "deposit"}
                     </span>
                   </p>
-                  <p className="font-medium">₦{transaction.amount.toLocaleString()}</p>
+                  <p className="text-sm md:text-base font-medium">₦{transaction.amount.toLocaleString()}</p>
                 </div>
               </div>
             </div>

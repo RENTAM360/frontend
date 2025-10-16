@@ -138,7 +138,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
             <div className="mt-2 text-[12px]">
                 <h2 className="text-xl font-medium">Description</h2>
                 <p className="mt-2 text-[#979797]">{equipmentData.name}</p>
-                <p className="mt-2 text-[#979797]">{equipmentData.description}</p>
+                <p className="mt-2 text-[#979797] whitespace-pre-line">{equipmentData.description}</p>
 
                 <div className="mt-6 justify-center md:justify-normal flex gap-4">
                 <div className="flex items-center gap-1 md:gap-2 rounded-md text-[10px] border border-[#12B76A] px-2 md:px-4 py-2 text-[#12B76A]">

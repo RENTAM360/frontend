@@ -69,6 +69,16 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
       : categories.find((cat) => cat._id === selectedCategoryId)?.name ?? ""
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const topContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (topContainerRef.current) {
+      topContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [page])
+
 
   const filteredEquipments = useMemo(() => {
     if (!searchTerm) return equipments
@@ -78,7 +88,7 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
   }, [equipments, searchTerm])
 
   return (
-    <div className="space-y-4 mb-8">
+    <div ref={topContainerRef} className="space-y-4 mb-8">
       <h2 className="text-2xl font-bold md:mt-8">Browse Equipments by Category</h2>
       <div className="flex flex-wrap gap-2">
         <Button

@@ -197,7 +197,6 @@ export function AddBankModal({ isOpen, onClose, onAddBank }: AddBankModalProps) 
             <Input
               id="accountName"
               name="accountName"
-              placeholder="Enter your name"
               value={formData.accountName}
               onChange={handleChange}
               className="bg-[#F8F8FA] border-none rounded-md h-10"
