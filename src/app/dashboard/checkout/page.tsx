@@ -8,41 +8,6 @@ import { useSearchParams } from "next/navigation"
 import { AnimatedLogo } from "@/components/loading-logo"
 import { enqueueSnackbar } from "notistack"
 
-// Sample data for the Toyota Camry
-// const equipmentData = {
-//   id: "1",
-//   title: "Toyota Camry for Rent – Smooth, Stylish, and Reliable!",
-//   description:
-//     "Looking for a comfortable and fuel-efficient ride? Our Toyota Camry is the perfect choice! Whether it's for a business trip, weekend getaway, or city cruising, this sedan offers:",
-//   images: ["/toyota-black.svg"],
-//   price: 50000,
-//   location: "Rivers, Port harcourt, 7 woji road",
-//   phoneNumber: "08107355412",
-//   category: "Vehicles",
-//   owner: {
-//     id: "owner1",
-//     name: "Thankgod Ogbonna",
-//     image: "/tg.svg",
-//     verified: true,
-//   },
-// }
-
-// Sample saved cards
-// const savedCards = [
-//   {
-//     id: "card1",
-//     last4: "3456",
-//     name: "Thankg",
-//     type: "visa",
-//   },
-//   {
-//     id: "card2",
-//     last4: "3456",
-//     name: "Thankg",
-//     type: "mastercard",
-//   },
-// ]
-
 export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const equipmentId = searchParams.get("id")
