@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { addSavedItem, removeSavedItem, selectIsSaved } from "@/lib/redux/slices/savedItemsSlice"
-import { useBookmarkEquipmentMutation, useRemoveBookmarkEquipmentMutation } from "@/lib/redux/api/equipmentApi"
+import { useBookmarkEquipmentMutation, useGetEquipmentByIdQuery, useRemoveBookmarkEquipmentMutation } from "@/lib/redux/api/equipmentApi"
 import { enqueueSnackbar } from "notistack"
 import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 
@@ -29,6 +29,7 @@ export function EquipmentCard({
   imageUrl,
   variant = "default",
 }: EquipmentCardProps) {
+  console.log(ownerId)
 
   const dispatch = useAppDispatch()
   const isSaved = useAppSelector((state) => selectIsSaved(state, id))
@@ -72,8 +73,11 @@ export function EquipmentCard({
     
   }
 
+  const { data: equipment } = useGetEquipmentByIdQuery(id)
+  const isOwner = equipment?.owner?.id === userId
+
   const href =
-    ownerId && userId && ownerId === userId
+    isOwner
       ? `/dashboard/profile/equipment/${id}`
       : `/dashboard/equipment/${id}`
 

@@ -48,6 +48,9 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
     selectedCategoryId === "all" ? { page, limit } : skipToken
   )
 
+  console.log(allEquipments)
+  console.log(equipmentResponse)
+
   const equipments = useMemo(() => {
     return selectedCategoryId === "all"
       ? allEquipments.data?.equipments ?? []
@@ -135,7 +138,9 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
             ref={containerRef}
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2"
           >
-            {filteredEquipments.map((equipment) => (
+            {filteredEquipments.map((equipment) => {
+              console.log(equipment)
+              return (
              
                 <EquipmentCard
                   key={equipment.id}
@@ -148,7 +153,7 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
                   ownerId={equipment.owner?.id}
                 />
     
-            ))}
+            )})}
           </div>
 
             <div className="flex justify-center items-center gap-4 mt-6">
