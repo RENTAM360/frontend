@@ -48,7 +48,7 @@ const mockEquipmentData = {
           />
         </svg>
       ),
-      text: "Guaranteed Car",
+      text: "Guaranteed",
     },
     {
       icon: (
@@ -59,7 +59,7 @@ const mockEquipmentData = {
           />
         </svg>
       ),
-      text: "Money back Guarantee",
+      text: "Money back",
     },
   ],
   images: ["/excavator.svg", "/generator.svg", "/keyboard.svg", "/toyota-black.svg", "/toyota-red.svg"],

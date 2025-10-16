@@ -48,7 +48,7 @@ export function SuccessModal({
           <div
             className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 ${
               icon === "success"
-                ? "bg-gray-200"
+                ? ""
                 : "bg-orange-500 text-white"
             }`}
           >

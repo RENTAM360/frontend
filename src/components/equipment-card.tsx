@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { addSavedItem, removeSavedItem, selectIsSaved } from "@/lib/redux/slices/savedItemsSlice"
 import { useBookmarkEquipmentMutation, useRemoveBookmarkEquipmentMutation } from "@/lib/redux/api/equipmentApi"
 import { enqueueSnackbar } from "notistack"
+import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 
 interface EquipmentCardProps {
   id: string
@@ -14,6 +15,7 @@ interface EquipmentCardProps {
   pricePerDay: number
   rating: number
   imageUrl: string
+  ownerId?: string
   variant?: "default" | "profile" | "saved"
 }
 
@@ -23,12 +25,15 @@ export function EquipmentCard({
   category,
   pricePerDay,
   rating,
+  ownerId,
   imageUrl,
   variant = "default",
 }: EquipmentCardProps) {
 
   const dispatch = useAppDispatch()
   const isSaved = useAppSelector((state) => selectIsSaved(state, id))
+  const { data: profileData } = useGetProfileQuery()
+  const userId = profileData?.data.user._id
 
   const [bookmarkEquipment] = useBookmarkEquipmentMutation()
   const [removeBookmarkEquipment] = useRemoveBookmarkEquipmentMutation()
@@ -67,14 +72,15 @@ export function EquipmentCard({
     
   }
 
+  const href =
+    ownerId && userId && ownerId === userId
+      ? `/dashboard/profile/equipment/${id}`
+      : `/dashboard/equipment/${id}`
+
   return (
     <section className="h-full flex">
         <Link 
-        href={
-          variant === "profile"
-            ? `/dashboard/profile/equipment/${id}`   
-            : `/dashboard/equipment/${id}` 
-        } 
+        href={href} 
         className="relative p-2 rounded-[15.37px] bg-white flex flex-col h-full w-full">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[15.37px]">
             <Image src={getValidImageUrl(imageUrl)} alt={title} fill className="object-cover" />

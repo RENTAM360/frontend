@@ -89,13 +89,13 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
 
   return (
     <div ref={topContainerRef} className="space-y-4 mb-8">
-      <h2 className="text-2xl font-bold md:mt-8">Browse Equipments by Category</h2>
+      <h2 className="text-2xl font-bold md:mt-8">Browse Items by Category</h2>
       <div className="flex flex-wrap gap-2">
         <Button
           variant={selectedCategoryId === "all" ? "default" : "outline"}
           onClick={() => setSelectedCategoryId("all")}
         >
-          All Equipments
+          All Items
         </Button>
 
         {categories.map((cat) => (
@@ -126,7 +126,7 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">{title}</h2>
             <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
-              No equipment found {searchTerm ? `for "${searchTerm}"` : "in this category"}.
+              No item found {searchTerm ? `for "${searchTerm}"` : "in this category"}.
             </div>
           </div>
         ) : (
@@ -145,6 +145,7 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
                   pricePerDay={equipment.pricePerDay}
                   rating={equipment.rating}
                   imageUrl={equipment.imageUrl}
+                  ownerId={equipment.owner?.id}
                 />
     
             ))}

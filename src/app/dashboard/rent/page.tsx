@@ -13,6 +13,7 @@ import { SuccessModal } from "@/components/success-modal"
 import Image from "next/image"
 import { Category, useAddEquipmentMutation, useGetCategoriesQuery, useUploadEquipmentImagesMutation, useGetAddressSuggestionsQuery  } from "@/lib/redux/api/equipmentApi"
 import { useRouter } from "next/navigation"
+import { enqueueSnackbar } from "notistack"
 
 // interface Category {
 //   id: string
@@ -146,9 +147,21 @@ export default function RentPage() {
       console.log(res)
       setShowSuccessModal(true)
     } catch (error) {
-      console.error("Error adding item:", error)
-      alert("Failed to add item. Please try again.")
-    } finally {
+    console.error("Error adding item:", error)
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" &&
+          error !== null &&
+          "data" in error &&
+          typeof (error as { data?: unknown }).data === "object" &&
+          typeof (error as { data: { message?: unknown } }).data.message === "string"
+          ? (error as { data: { message: string } }).data.message
+          : "Something went wrong"
+
+    enqueueSnackbar(message, { variant: "error" })
+  } finally {
       setIsSubmitting(false)
     }
   }
@@ -181,7 +194,7 @@ export default function RentPage() {
               </label>
               <Input
                 id="name"
-                placeholder="Enter equipment name"
+                placeholder="Enter item name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="bg-[#F8F8FA] py-6 rounded-lg border-none"
@@ -213,7 +226,7 @@ export default function RentPage() {
                 <div key={photo.id} className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
                   <Image
                     src={photo.preview || "/placeholder.svg"}
-                    alt="Equipment photo"
+                    alt="Item photo"
                     fill
                     className="object-cover"
                   />
@@ -331,7 +344,7 @@ export default function RentPage() {
       <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
         <DialogContent className="sm:max-w-xl font-sans">
             <VisuallyHidden>
-                <DialogTitle>This is the category modal for adding equipments</DialogTitle>
+                <DialogTitle>This is the category modal for adding items</DialogTitle>
             </VisuallyHidden>
           <div className="p-4">
             <div className="relative">
@@ -347,7 +360,7 @@ export default function RentPage() {
 
           <div className="max-h-[400px] hide-scrollbar overflow-y-auto">
             {isLoading ? (
-              <p>Loading equipments...</p>
+              <p>Loading items...</p>
             ) : (
                 filteredCategories.map((category) => (
                   <div
