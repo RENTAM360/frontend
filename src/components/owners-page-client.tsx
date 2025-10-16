@@ -5,9 +5,11 @@ import Image from "next/image"
 import { ChevronRight, MapPin, Phone } from "lucide-react"
 import { EquipmentCard } from "@/components/equipment-card"
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
-import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetOtherUserProfileQuery, useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { AnimatedLogo } from "./loading-logo"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 // async function getOwnerData(id: string) {
 //   // This would be replaced with your actual data fetching logic
@@ -79,10 +81,19 @@ interface EquipmentIdProps {
 }
 
 export default function OwnerProfileClient({ userId }: EquipmentIdProps) {
+  const router = useRouter()
 
   const { data: userEquipments, isLoading: isLoadingUserEquipments } = useGetEquipmentsQuery({ userId })
 
-  console.log(userEquipments)
+  const { data: profileData, isLoading: profileDataLoading } = useGetProfileQuery()
+
+  const LoggedInuserId = profileData?.data?.user?._id
+
+  useEffect(() => {
+    if (!profileDataLoading && LoggedInuserId && LoggedInuserId === userId) {
+      router.replace("/dashboard/profile")
+    }
+  }, [LoggedInuserId, userId, profileDataLoading, router])
 
 
   const { data: ownerProfile, isLoading: profileLoading } = useGetOtherUserProfileQuery(userId!, {

@@ -400,12 +400,12 @@ const isVerified = ownerProfile?.data.user.isVerify
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
+              {equipmentData.owner.phone &&<a
                 href={`tel:${equipmentData.owner.phone}`}
                 className="flex-1 text-base flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-white font-medium hover:bg-green-600"
               >
-                {equipmentData.owner.phone}
-              </a>
+                Call Rental
+              </a>}
               <button onClick={handleMessage} className="flex-1 whitespace-nowrap text-base flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-primary font-medium hover:bg-green-50">
                 <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3.5 15.75H5.25V19.3209L9.71338 15.75H14C14.9651 15.75 15.75 14.9651 15.75 14V7C15.75 6.03487 14.9651 5.25 14 5.25H3.5C2.53487 5.25 1.75 6.03487 1.75 7V14C1.75 14.9651 2.53487 15.75 3.5 15.75Z" fill="#12B76A"/>

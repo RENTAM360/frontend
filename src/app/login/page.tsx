@@ -171,10 +171,10 @@ export default function LoginPage() {
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
+            </div>
               {errors.password && (
                 <p className="text-[#F04438] text-sm mt-1">{errors.password.message}</p>
               )}
-            </div>
             <button
               type="submit"
               className="w-full bg-primary mt-8 cursor-pointer text-white rounded-full py-3 font-semibold hover:bg-green-600 transition"

@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ReportModal } from "@/components/report-modal"
+import Link from "next/link"
 
 export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -166,7 +167,7 @@ export default function MessagesPage() {
             <>
               {/* Conversation Header */}
               <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
-                <div className="flex items-center space-x-3">
+                <Link href={`/dashboard/user/owner/${activeConversation.id}`} className="flex items-center space-x-3">
                   {/* Back button (mobile only) */}
                   <button
                     onClick={() => setActiveConversationId(null)}
@@ -195,7 +196,7 @@ export default function MessagesPage() {
                     <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
                     <p className="text-xs text-[#B3B3B3]">{isConnected ? activeConversation.status : "Offline"}</p>
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center space-x-2">
                   <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
                     <Flag className="h-5 w-5" fill="#12B76A" />

@@ -7,7 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import clsx from "clsx";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import { RegisterData, useRegisterMutation } from "@/lib/redux/api/authApi";
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { useRouter } from "next/navigation";
@@ -47,6 +47,8 @@ export default function SignUpPage() {
    const router = useRouter()
   const dispatch = useAppDispatch()
   const [ register, { isLoading } ] = useRegisterMutation()
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitError, setSubmitError] = useState("")
 
   const {
@@ -75,7 +77,7 @@ export default function SignUpPage() {
       gender: data.gender,
     };
       const res = await register(payload).unwrap()
-      console.log(res)
+      // console.log(res)
 
       dispatch(setCredentials(res))
 
@@ -196,9 +198,9 @@ export default function SignUpPage() {
               {errors.email && <p className="text-[#F04438] text-sm">{errors.email.message}</p>}
             </div>
 
-            <div>
+            <div className="relative">
               <input
-                type="password"
+                type={!showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 {...registerField("password")}
                 className={clsx(
@@ -206,12 +208,20 @@ export default function SignUpPage() {
                   errors.password && "bg-[#F044380A] border-[#F044383D]"
                 )}
               />
-              {errors.password && <p className="text-[#F04438] text-sm">{errors.password.message}</p>}
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
+              {errors.password && <p className="text-[#F04438] text-sm">{errors.password.message}</p>}
 
-            <div>
+            <div className="relative">
               <input
-                type="password"
+                type={!showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm Password"
                 {...registerField("confirmPassword")}
                 className={clsx(
@@ -219,14 +229,23 @@ export default function SignUpPage() {
                   errors.confirmPassword && "bg-[#F044380A] border-[#F044383D]"
                 )}
               />
-              {errors.confirmPassword && <p className="text-[#F04438] text-sm">{errors.confirmPassword.message}</p>}
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(prev => !prev)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
+              {errors.confirmPassword && <p className="text-[#F04438] text-sm">{errors.confirmPassword.message}</p>}
 
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
                 <input
                     type="date"
+                    placeholder="Date of Birth"
                     {...registerField("dob")}
                     className={clsx(
                     "w-full px-4 py-2 focus:outline-none rounded border",

@@ -78,9 +78,9 @@ export default function BusinessSignUpPage() {
       business_logo: logoUrl, 
     };
 
-    const res = await registerBusiness(payload).unwrap();
+    await registerBusiness(payload).unwrap();
     
-    console.log("✅ Registered:", res);
+    // console.log("✅ Registered:", res);
 
       router.push(`/signup/confirmation?email=${encodeURIComponent(data.businessEmail)}`);
     } catch (err: unknown) {
