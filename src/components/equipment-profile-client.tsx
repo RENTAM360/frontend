@@ -120,6 +120,14 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                 </button>
               ))}
             </div>
+
+            <div className="md:flex mt-3 gap-4 items-center">
+              <p className="font-bold text-2xl text-[#000000]">{equipmentData.name}</p>
+              <div className="">
+                <span className="text-lg font-medium text-primary">₦{equipmentData.pricePerDay.toLocaleString()}</span>
+                <span className="text-xs text-[#979797] ml-2">Per day</span>
+              </div>
+            </div>
           
             <div className="flex items-start gap-2 text-[#979797] mt-6">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -130,14 +138,8 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
               <span className="text-lg text-[13.22px]">{equipmentData.address}</span>
             </div>
 
-            <div className="mb-3">
-              <span className="text-[31.85px] font-medium text-primary">₦{equipmentData.pricePerDay.toLocaleString()}</span>
-              <span className="text-base text-[#979797] ml-2">Per a day</span>
-            </div>
-
             <div className="mt-2 text-[12px]">
                 <h2 className="text-xl font-medium">Description</h2>
-                <p className="mt-2 text-[#979797]">{equipmentData.name}</p>
                 <p className="mt-2 text-[#979797] whitespace-pre-line">{equipmentData.description}</p>
 
                 <div className="mt-6 justify-center md:justify-normal flex gap-4">
@@ -152,7 +154,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                         fill="#12B76A"
                     />
                     </svg>
-                    <span className="bg-[#F6FEF9] whitespace-nowrap">Guaranteed Equipment</span>
+                    <span className="bg-[#F6FEF9] whitespace-nowrap">Guaranteed</span>
                 </div>
                 <div className="flex items-center gap-1 md:gap-2 rounded-md text-[10px] border border-[#12B76A] px-2 md:px-4 py-2 text-[#12B76A]">
                     <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -161,7 +163,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                         fill="#12B76A"
                     />
                     </svg>
-                    <span className="bg-[#F6FEF9] whitespace-nowrap">Money back Guarantee</span>
+                    <span className="bg-[#F6FEF9] whitespace-nowrap">Money back</span>
                 </div>
                 </div>
             </div>
