@@ -9,6 +9,7 @@ interface Conversation {
   lastMessage: string
   time: string
   avatar: string
+  unreadCount?: number
   isActive?: boolean
 }
 
@@ -19,7 +20,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ conversations, activeId, onSelect }: MessageListProps) {
-  // console.log(conversations)
+  console.log(conversations)
   return (
     <div className="divide-y bg-white overflow-y-auto">
       {conversations.map((conversation) => (
@@ -52,9 +53,12 @@ export function MessageList({ conversations, activeId, onSelect }: MessageListPr
           <div className="flex-1 overflow-hidden">
             <div className="flex justify-between">
               <h3 className="font-sm font-medium text-[#5A5555]">{conversation.name}</h3>
-              <span className="text-xs text-[#5A5555]">{conversation.time}</span>
-            </div>
-            <p className="truncate text-xs text-[#5A5555]">{conversation.lastMessage}</p>
+              <div className="flex flex-col">
+                <span className="text-xs text-[#5A5555]">{conversation.time}</span>
+                {(conversation.unreadCount ?? 0) > 0 &&<div className="w-4 h-4 self-end rounded-full flex justify-center items-center text-white p-1 text-[9px] bg-primary">{conversation.unreadCount}</div>}
+              </div>
+            </div>          
+              <p className="truncate text-xs text-[#5A5555]">{conversation.lastMessage}</p>
           </div>
         </button>
       ))}

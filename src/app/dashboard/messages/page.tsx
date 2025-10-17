@@ -28,7 +28,7 @@ export default function MessagesPage() {
     setActiveConversationId,
   } = useMessagingContext()
 
-  // console.log(isConnected, activeConversation, conversations)
+  console.log(activeConversation)
 
   const searchParams = useSearchParams()
   const convId = searchParams.get("conversation")
@@ -37,10 +37,10 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!convId) return
 
-    const existing = conversations.find((c) => c.id === convId)
+    const existing = conversations.find((c) => c.userId === convId)
 
     if (existing) {
-      joinConversation(existing.id, existing)
+      joinConversation(existing.userId, existing)
     } else if (!isLoadingConversations) {
       console.warn("[Messaging] Conversation not found:", convId)
     }
@@ -67,14 +67,16 @@ export default function MessagesPage() {
     }
 
     return conversations.map((conv) => ({
-      id: conv.id,
+      id: conv.userId,
       name: conv.name,
       lastMessage: conv.lastMessage || "No messages yet",
       time: formatTime(conv.lastMessageTime),
+      timestamp: conv.lastMessageTime,
       avatar: conv.avatar,
-      isActive: conv.id === activeConversationId,
+      isActive: conv.userId === activeConversationId,
       unreadCount: conv.unreadCount,
     }))
+    .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
   }, [conversations, activeConversationId])
 
   const handleSendMessage = async (message: string) => {
@@ -82,7 +84,7 @@ export default function MessagesPage() {
       throw new Error("No active conversation")
     }
 
-    await sendMessage(activeConversation.id, message)
+    await sendMessage(activeConversation.userId, message)
   }
 
   // const handleOpenReportModal = () => {
@@ -167,7 +169,7 @@ export default function MessagesPage() {
             <>
               {/* Conversation Header */}
               <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
-                <Link href={`/dashboard/user/owner/${activeConversation.id}`} className="flex items-center space-x-3">
+                <Link href={`/dashboard/user/owner/${activeConversation.userId}`} className="flex items-center space-x-3">
                   {/* Back button (mobile only) */}
                   <button
                     onClick={() => setActiveConversationId(null)}
@@ -194,7 +196,7 @@ export default function MessagesPage() {
                   </div>
                   <div>
                     <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
-                    <p className="text-xs text-[#B3B3B3]">{isConnected ? activeConversation.status : "Offline"}</p>
+                    <p className="text-xs text-[#B3B3B3]">Online</p>
                   </div>
                 </Link>
                 <div className="flex items-center space-x-2">
@@ -251,22 +253,13 @@ export default function MessagesPage() {
           )}
         </div>
 
-        {/* Mobile empty state */}
-        {/* <div className="flex flex-1 items-center justify-center md:hidden">
-          <div className="text-center">
-            <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">Select a conversation to start messaging</p>
-          </div>
-        </div> */}
-       
-
-      {activeConversation && activeConversation.product && (
+      {activeConversation && activeConversation.equipment && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={handleCloseReportModal}
-          reportedUserId={activeConversation.id}
+          reportedUserId={activeConversation.userId}
           reportedUserName={activeConversation.name}
-          equipmentId={activeConversation.product.id}
+          equipmentId={activeConversation.equipment._id}
         />
       )}
     </div>

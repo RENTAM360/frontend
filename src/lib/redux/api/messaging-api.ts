@@ -1,52 +1,21 @@
 import type {
-  ConversationsResponse,
   MessagesResponse,
-  ApiConversation,
-  ApiMessage,
-  Conversation,
   Message,
+  Conversation,
 } from "@/types/messaging"
 import { baseApi } from "./baseApi"
 
-// Helper function to transform API message to UI message
-const transformApiMessage = (apiMessage: ApiMessage, currentUserId: string): Message => ({
-  id: apiMessage._id,
-  content: apiMessage.content,
-  sender: apiMessage.sender === currentUserId ? "user" : "other",
-  timestamp: apiMessage.createdAt,
-  read: apiMessage.read,
-  media: apiMessage.media || undefined,
-})
-
-// Helper function to transform API conversation to UI conversation
-const transformApiConversation = (apiConv: ApiConversation): Conversation => {
-  const storedProducts = JSON.parse(localStorage.getItem("conversationProducts") || "{}")
-
-  return {
-    id: apiConv.userId,
-    name: apiConv.name,
-    avatar: apiConv.avatar,
-    status: "Online",
-    messages: [],
-    lastMessage: apiConv.lastMessage,
-    lastMessageTime: apiConv.lastMessageTime,
-    unreadCount: apiConv.unreadCount,
-    product: storedProducts[apiConv.userId] || undefined,
-  }
-}
-
 export const messagingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Get all conversations for the current user
     getConversations: builder.query<Conversation[], void>({
       query: () => "/messages/conversations",
-      transformResponse: (response: ConversationsResponse): Conversation[] => {
+      transformResponse: (response: { status: string; data: Conversation[] }) => {
         console.log("[v0] Conversations API response:", response)
         if (!response.data || !Array.isArray(response.data)) {
           console.error("[v0] Invalid conversations response format:", response)
           return []
         }
-        return response.data.map(transformApiConversation)
+        return response.data
       },
       providesTags: ["Conversation"],
     }),
@@ -54,13 +23,16 @@ export const messagingApi = baseApi.injectEndpoints({
     // Get all messages with a specific receiver
      getMessages: builder.query<Message[], { receiverId: string; currentUserId: string }>({
       query: ({ receiverId }) => `/messages/${receiverId}`,
-      transformResponse: (response: MessagesResponse, meta, { currentUserId }): Message[] => {
+
+      transformResponse: (response: { status: number; data: { messages: Message[] } }) => {
         console.log("[v0] Messages API response:", response)
+
         if (!response.data || !Array.isArray(response.data.messages)) {
           console.error("[v0] Invalid messages response format:", response)
           return []
         }
-        return response.data.messages.map((msg) => transformApiMessage(msg, currentUserId))
+        
+        return response.data.messages
       },
       providesTags: (result, error, { receiverId }) => [{ type: "Message", id: receiverId }],
     }),
@@ -78,13 +50,13 @@ export const messagingApi = baseApi.injectEndpoints({
         url: `/messages/recent-messages/${receiverId}`,
         params: { limit },
       }),
-      transformResponse: (response: MessagesResponse, meta, { currentUserId }): Message[] => {
+      transformResponse: (response: MessagesResponse): Message[] => {
         console.log("[v0] Recent messages API response:", response)
         if (!response.data || !Array.isArray(response.data)) {
           console.error("[v0] Invalid recent messages response format:", response)
           return []
         }
-        return response.data.map((msg) => transformApiMessage(msg, currentUserId))
+        return response.data
       },
       providesTags: (result, error, { receiverId }) => [{ type: "Message", id: `recent-${receiverId}` }],
     }),
@@ -95,13 +67,14 @@ export const messagingApi = baseApi.injectEndpoints({
       {
         receiverId: string
         message: Message
+        currentUserId: string
       }
     >({
       queryFn: async ({ message }) => {
         // This is an optimistic update - the actual sending happens via socket
         return { data: message }
       },
-      onQueryStarted: async ({ receiverId, message }, { dispatch, queryFulfilled }) => {
+      onQueryStarted: async ({ receiverId, message, currentUserId }, { dispatch, queryFulfilled }) => {
         // Optimistically update the messages cache
         const patchResult = dispatch(
           messagingApi.util.updateQueryData(
@@ -117,17 +90,31 @@ export const messagingApi = baseApi.injectEndpoints({
         dispatch(
           messagingApi.util.updateQueryData(
             "getRecentMessages",
-            { receiverId, currentUserId: message.sender === "user" ? "current" : receiverId },
+            {
+              receiverId,
+              currentUserId: message.sender === "user" ? currentUserId : receiverId,
+            },
             (draft) => {
-              draft.push(message)
-              // Keep only the most recent messages (limit to 20)
+              const apiMessage: Message = {
+                _id: message._id,
+                sender: message.sender === "user" ? currentUserId : receiverId,
+                receiver: message.sender === "user" ? receiverId : currentUserId,
+                content: message.content,
+                read: message.read ?? false,
+                createdAt: message.createdAt,
+                updatedAt: message.updatedAt,
+                __v: message.__v
+              }
+
+              draft.push(apiMessage)
+
+              // Keep only 20 most recent
               if (draft.length > 20) {
                 draft.splice(0, draft.length - 20)
               }
             },
           ),
         )
-
         try {
           await queryFulfilled
         } catch {
@@ -198,7 +185,7 @@ export const messagingApi = baseApi.injectEndpoints({
       onQueryStarted: async ({ conversationId, lastMessage, lastMessageTime }, { dispatch }) => {
         dispatch(
           messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
-            const conversation = draft.find((conv) => conv.id === conversationId)
+            const conversation = draft.find((conv) => conv.userId === conversationId)
             if (conversation) {
               conversation.lastMessage = lastMessage
               conversation.lastMessageTime = lastMessageTime

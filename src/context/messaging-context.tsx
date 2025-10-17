@@ -19,7 +19,6 @@ interface MessagingContextType extends MessagingState {
   joinConversation: (conversationId: string, conv?: Conversation) => void
   sendMessage: (conversationId: string, content: string, media?: string, equipment?: string) => Promise<void>
   markAsRead: (conversationId: string) => void
-  // setActiveConversation: React.Dispatch<React.SetStateAction<Conversation | null>>
   setActiveConversationId: React.Dispatch<React.SetStateAction<string | null>>
 
   // Connection management
@@ -43,9 +42,9 @@ interface MessagingProviderProps {
 }
 
 export function MessagingProvider({ children, currentUserId, authToken }: MessagingProviderProps) {
-  // Local state
+
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  // const [activeConversation, setActiveConversation] = useState<Conversation | null>(null)
+ 
 
   const [isConnected, setIsConnected] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
@@ -60,18 +59,45 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
   const {
     data: conversations = [],
     isLoading: isLoadingConversations,
-    // refetch: refetchConversations,
   } = useGetConversationsQuery()
+
+  console.log("[v0] Fetching messages for:", { receiverId: activeConversationId, currentUserId })
+
 
   const {
     data: messages = [],
     isLoading: isLoadingMessages,
-    // refetch: refetchMessages,
   } = useGetMessagesQuery({ receiverId: activeConversationId!, currentUserId }, { skip: !activeConversationId })
+  console.log(messages)
 
-  // RTK Query mutations
+  useEffect(() => {
+    if (!activeConversationId || messages.length === 0) return
+
+    dispatch(
+    messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+      const conv = draft.find((c) => c.userId === activeConversationId)
+      if (conv) {
+        conv.messages = messages
+      }
+    })
+  )
+
+    const firstWithEquipment = messages.find((msg) => msg.equipment)
+    if (firstWithEquipment?.equipment) {
+      dispatch(
+        messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+          const conv = draft.find((c) => c.userId === activeConversationId)
+          if (conv) {
+            conv.equipment = firstWithEquipment.equipment
+          }
+        })
+      )
+    }
+  }, [messages, activeConversationId, dispatch])
+
+  
+  // RTK Query OPTIMISTIC mutations
   const [addMessage] = useAddMessageMutation()
-  // const [markMessagesAsRead] = useMarkMessagesAsReadMutation()
   const [updateConversationLastMessage] = useUpdateConversationLastMessageMutation()
 
   useEffect(() => {
@@ -108,18 +134,36 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
   socketService.onMessage((socketMessage: SocketMessage) => {
     console.log("[Messaging] Received message:", socketMessage)
     const message: Message = {
-      id: socketMessage._id,
+      _id: socketMessage._id,
       content: socketMessage.content,
+      receiver: socketMessage.receiver,
       sender: socketMessage.sender === currentUserId ? "user" : "other",
-      timestamp: socketMessage.createdAt,
-      read: false,
-      media: socketMessage.media || undefined,
+      createdAt: socketMessage.createdAt,
+      updatedAt: socketMessage.updatedAt,
+      read: socketMessage.read,
+      equipment: socketMessage.equipment
     }
 
     const conversationId =
       socketMessage.sender === currentUserId ? socketMessage.receiver : socketMessage.sender
 
-    addMessage({ receiverId: conversationId, message })
+    dispatch(
+      messagingApi.util.updateQueryData("getMessages", { receiverId: conversationId, currentUserId }, (draft) => {
+        draft.push(message)
+      })
+    )
+
+    dispatch(
+      messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+        const conv = draft.find((c) => c.userId === conversationId)
+        if (conv) {
+          conv.lastMessage = message.content
+          conv.lastMessageTime = message.createdAt
+        }
+      })
+    )
+
+    addMessage({ receiverId: conversationId, message, currentUserId })
     updateConversationLastMessage({
       conversationId,
       lastMessage: socketMessage.content,
@@ -135,7 +179,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     socket.off("connect_error", handleError)
     socketService.disconnect()
   }
-}, [currentUserId, addMessage, updateConversationLastMessage])
+}, [currentUserId, addMessage, dispatch, updateConversationLastMessage])
 
 
   useEffect(() => {
@@ -148,7 +192,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
       // Optimistically update conversation unreadCount = 0
       dispatch(
         messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
-          const conv = draft.find((c) => c.id === receiver);
+          const conv = draft.find((c) => c.userId === receiver);
           if (conv) {
             conv.unreadCount = 0;
           }
@@ -246,35 +290,18 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     setIsConnected(false)
   }, [])
 
-//   useEffect(() => {
-//   if (!activeConversationId) {
-//     setActiveConversation(null)
-//     return
-//   }
-
-//   const conv = conversations.find(c => c.id === activeConversationId)
-
-//   if (conv) {
-//     setActiveConversation({ ...conv, messages: messages || [], product: tempConversationRef.current?.product ?? conv.product, })
-//   } else if (tempConversationRef.current?.id === activeConversationId) {
-//     setActiveConversation(tempConversationRef.current)
-//   } else {
-//     setActiveConversation(null)
-//   }
-// }, [activeConversationId, conversations, messages])
-const activeConversation = useMemo(() => {
+const activeConversation = useMemo<Conversation | null>(() => {
   if (!activeConversationId) return null
 
-  const conv = conversations.find((c) => c.id === activeConversationId)
-  if (!conv && tempConversationRef.current?.id === activeConversationId) {
-    return tempConversationRef.current
+  const conv = conversations.find((c) => c.userId === activeConversationId)
+  if (!conv && tempConversationRef.current?.userId === activeConversationId) {
+    return { ...tempConversationRef.current, messages: messages || [] }
   }
 
   return conv
     ? {
         ...conv,
         messages: messages || [],
-        product: tempConversationRef.current?.product ?? conv.product,
       }
     : null
 }, [activeConversationId, conversations, messages])
@@ -284,48 +311,27 @@ const activeConversation = useMemo(() => {
   const joinConversation = useCallback(
     (conversationId: string, conv?: Conversation) => {
       console.log("[Messaging] Joining conversation:", conversationId)
-
       setActiveConversationId(conversationId)
-
-      if (conv?.product) {
-        tempConversationRef.current = conv
-      }
+      if (conv) tempConversationRef.current = conv
 
       if (isConnected) {
         socketService.joinChat(conversationId)
-        socketService.markMessagesAsRead(conversationId);
+        socketService.markMessagesAsRead(conversationId)
       }
 
-      // markMessagesAsRead({ receiverId: conversationId, currentUserId }).catch((error) => {
-      //   console.warn("[v0] Failed to mark messages as read optimistically:", error)
-      // })
       dispatch(
         messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
-          const c = draft.find((c) => c.id === conversationId)
+          const c = draft.find((c) => c.userId === conversationId)
           if (c) c.unreadCount = 0
         })
       )
-
     },
-    [isConnected, dispatch],
+    [isConnected, dispatch]
   )
-
-  // const activeConversation = useMemo(() => {
-  //   if (!activeConversationId) return null
-
-  //   const conversation = conversations.find(c => c.id === activeConversationId)
-  //   if (conversation) return { ...conversation, messages: messages || [] }
-
-  //   if (tempConversationRef.current?.id === activeConversationId) {
-  //     return tempConversationRef.current
-  //   }
-
-  //   return null
-  // }, [activeConversationId, conversations, messages])
 
   // Send a message
   const sendMessage = useCallback(
-    async (conversationId: string, content: string, media?: string) => {
+    async (conversationId: string, content: string, equipmentId?: string) => {
       const socketReady = isConnected || socketService.rawSocket?.connected
 
       if (!socketReady) {
@@ -338,31 +344,42 @@ const activeConversation = useMemo(() => {
 
       return new Promise<void>((resolve, reject) => {
         const optimisticMessage: Message = {
-          id: `temp-${Date.now()}`,
+          _id: `temp-${Date.now()}`,
+          sender: currentUserId,
+          receiver: conversationId,
           content: content.trim(),
-          sender: "user",
-          timestamp: new Date().toISOString(),
-          read: false,
-          media,
+          read: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          __v: 0,
+          equipment: equipmentId
+            ? { _id: equipmentId, name: "", pricePerDay: 0, category: [], media: [] }
+            : undefined,
         }
 
         addMessage({
           receiverId: conversationId,
           message: optimisticMessage,
+          currentUserId
         })
 
-        socketService.sendMessage(conversationId, content.trim(), media || null, activeConversation?.product?.id, (response: SocketResponse) => {
-          if (response.ok) {
-            console.log("[Messaging] Message sent successfully")
-            resolve()
-          } else {
-            console.error("[Messaging] Failed to send message:", response.error)
-            reject(new Error(response.error || "Failed to send message"))
+        socketService.sendMessage(
+          conversationId,
+          content.trim(),
+          equipmentId || undefined,
+          (response: SocketResponse) => {
+            if (response.ok) {
+              console.log("[Messaging] Message sent successfully")
+              resolve()
+            } else {
+              console.error("[Messaging] Failed to send message:", response.error)
+              reject(new Error(response.error || "Failed to send message"))
+            }
           }
-        })
+        )
       })
     },
-    [isConnected, addMessage, activeConversation?.product?.id],
+    [isConnected, addMessage, currentUserId],
   )
 
 
@@ -422,7 +439,7 @@ const activeConversation = useMemo(() => {
     isLoadingMessages,
   }
 
-  console.log(isConnected)
+  // console.log(isConnected)
 
   return <MessagingContext.Provider value={contextValue}>{children}</MessagingContext.Provider>
 }

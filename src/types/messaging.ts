@@ -1,26 +1,3 @@
-// Base message interface from API response
-export interface ApiMessage {
-  _id: string
-  sender: string
-  receiver: string
-  content: string
-  read: boolean
-  createdAt: string
-  updatedAt: string
-  __v: number
-  media?: string | null
-}
-
-// Transformed message for UI consumption
-export interface Message {
-  id: string
-  content: string
-  sender: "user" | "other"
-  timestamp: string
-  read: boolean
-  media?: string | null
-}
-
 // Product information attached to conversations
 export interface Product {
   id: string
@@ -34,27 +11,40 @@ export interface Product {
   availability?: boolean
 }
 
-// Conversation interface for UI
-export interface Conversation {
-  id: string
+export interface EquipmentCategory {
+  _id: string
   name: string
-  avatar: string
-  status: string
-  messages: Message[]
-  lastMessage?: string
-  lastMessageTime?: string
-  unreadCount?: number
-  product?: Product
 }
 
-// API response for conversations list
-export interface ApiConversation {
-  lastMessage: string
-  lastMessageTime: string
-  unreadCount: number
+export interface Equipment {
+  _id: string
+  name?: string
+  pricePerDay?: number
+  category?: EquipmentCategory[]
+  media?: string[]
+}
+
+export interface Message {
+  _id: string
+  sender: string
+  receiver: string
+  content: string
+  read: boolean
+  createdAt: string
+  updatedAt: string
+  __v?: number
+  equipment?: Equipment
+}
+
+export interface Conversation {
   userId: string
   name: string
   avatar: string
+  lastMessage: string
+  lastMessageTime: string
+  unreadCount: number
+  messages?: Message[] 
+  equipment?: Equipment
 }
 
 // Socket event payloads
@@ -66,7 +56,7 @@ export interface SocketChatPayload {
 
 export interface SocketChatResponse {
   ok: boolean
-  data?: ApiMessage
+  data?: Message
   error?: string
 }
 
@@ -81,12 +71,15 @@ export interface ApiResponse<T> {
   data: T
 }
 
-export interface ConversationsResponse extends ApiResponse<ApiConversation[]> {}
+export interface ConversationsResponse {
+  status: number
+  data: Conversation[]
+}
 export interface MessagesResponse {
   status: number
   message: string
   data: {
-    messages: ApiMessage[]
+    messages: Message[]
   }
 }
 

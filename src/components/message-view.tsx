@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { Paperclip } from "lucide-react"
 import type { Conversation } from "@/types/messaging"
 import { useMessagingContext } from "@/context/messaging-context"
+import { useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
 
 interface MessageViewProps {
   conversation: Conversation
@@ -14,13 +15,25 @@ interface MessageViewProps {
   onSendMessage?: (message: string) => Promise<void>
 }
 
+
 export function MessageView({ conversation, showProductCard }: MessageViewProps) {
+  const { currentUserId } = useMessagingContext();
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { sendMessage } = useMessagingContext()
 
-  console.log(conversation, showProductCard)
+  const eqId = useMemo(() => conversation?.equipment?._id ?? "", [conversation])
+
+  useEffect(() => {
+    console.log("🧩 eqId changed:", eqId)
+  }, [eqId])
+
+  const { data: equipmentData } = useGetEquipmentByIdQuery(eqId, {
+    skip: !eqId,
+  })
+
+  const phone = equipmentData?.owner?.phone
 
    useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -35,7 +48,7 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
     setIsSending(true)
 
     try {
-      await sendMessage(conversation.id, messageContent, undefined, conversation.product?.id)
+      await sendMessage(conversation.userId, messageContent, conversation.equipment?._id)
       console.log("[v0] Message sent successfully via context")
     } catch (error) {
       console.error("[v0] Failed to send message:", error)
@@ -46,52 +59,51 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
     }
   }
 
+  const product = conversation.equipment
+
 
   return (
     <div className="flex h-full bg-[#F9F9F9] flex-col">
       <div className="flex-1 overflow-y-auto p-4">
         {/* Product card */}
-        {showProductCard && conversation.product && (
+        {showProductCard && product && (
           <div className="mb-6 flex justify-between items-center md:mx-auto md:w-[385px] rounded-lg bg-white p-3">
             <div className="flex items-center">
               <div className="relative h-14 w-18 flex-shrink-0 overflow-hidden rounded-md">
                   <Image
-                  src={conversation.product.image || conversation.product.imageUrl || "/placeholder.svg"}
-                  alt={conversation.product.name}
+                  src={product.media?.[0] || "/placeholder.svg"}
+                  alt={product.name || ""}
                   fill
                   className="object-cover"
                   />
               </div>
               <div className="ml-3 flex flex-1 flex-col justify-between">
                   <div>
-                  <h3 className="font-medium">{conversation.product.name}</h3>
+                  <h3 className="font-medium">{product.name}</h3>
                   <div className="flex items-center">
-                      <span className="text-sm font-medium text-emerald-500">₦{Number(conversation.product.price || conversation.product.pricePerDay).toLocaleString("en-NG")} <span className="font-light text-[#979797]">Per day</span></span>
-                      <span className="ml-1 text-xs text-gray-500">{conversation.product.period}</span>
+                      <span className="text-sm font-medium text-emerald-500">₦{Number(product.pricePerDay).toLocaleString("en-NG")} <span className="font-light text-[#979797]">Per day</span></span>
+                      {/* <span className="ml-1 text-xs text-gray-500">{conversation.product.period}</span> */}
                   </div>
                   </div>
               </div>
             </div>
-            {conversation.product.availability ? ( <a
+            {phone && ( <a
+                href={`tel:${phone}`}
                 className="w-fit h-[35px] flex justify-center items-center rounded-md bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600"
               >
-                Available
-              </a>) : <a
-                className="w-fit h-[35px] flex justify-center items-center rounded-md bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600"
-              >
-                Unavailable
-              </a>}
+                Call Rental
+              </a>)}
           </div>
         )}
 
 
         {/* Messages */}
         <div className="space-y-4">
-          {conversation.messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+          {(conversation.messages ?? []).map((msg) => (
+            <div key={msg._id} className={`flex ${msg.sender === currentUserId ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[320px] rounded-b-full px-6 py-4 ${
-                  msg.sender === "user" ? "bg-[#DDF4C7] rounded-tl-full text-[#5A5555]" : "bg-gray-100 rounded-tr-full text-[#5A5555]"
+                  msg.sender === currentUserId ? "bg-[#DDF4C7] rounded-tl-full text-[#5A5555]" : "bg-gray-100 rounded-tr-full text-[#5A5555]"
                 }`}
               >
                 <p className="text-sm">{msg.content}</p>

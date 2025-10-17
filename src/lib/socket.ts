@@ -8,7 +8,13 @@ export interface SocketMessage {
   read: boolean
   createdAt: string
   updatedAt: string
-  media?: string | null
+  equipment?: {
+    _id: string
+    name?: string
+    pricePerDay?: number
+    category?: { _id: string; name: string }[]
+    media?: string[]
+  }
 }
 
 export interface SocketResponse {
@@ -111,7 +117,6 @@ class SocketService {
   sendMessage(
     receiver: string,
     content: string,
-    media: string | null = null,
     equipment?: string,
     callback?: (response: SocketResponse) => void,
   ) {
@@ -121,14 +126,15 @@ class SocketService {
       return
     }
 
+    const payload = {
+      receiver,
+      content,
+      equipment: equipment ?? undefined,
+    }
+
     this.socket.emit(
       "chat",
-      {
-        receiver,
-        content,
-        media,
-        equipment,
-      },
+      payload,
       (response: SocketResponse) => {
         if (response.ok) {
           console.log("[Socket] Message sent:", response.data)
