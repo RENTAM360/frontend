@@ -17,49 +17,49 @@ type CardDetail = {
 const cardDetails: CardDetail[] = [
     {
         id: 1,
-        name: "Excavator", 
-        category: "Construction tools", 
-        price: "50,000", 
-        rating: "4.5",
+        name: "Tractor", 
+        category: "Vehicles", 
+        price: "135,000", 
+        rating: "4.2",
         imgUrl: "/gallery-img1.svg"
     },
     {
         id: 2,
-        name: "Excavator", 
-        category: "Construction tools", 
-        price: "50,000", 
+        name: "200 KVA Generator", 
+        category: "Engineering", 
+        price: "210,000", 
         rating: "4.5",
         imgUrl: "/gallery-img2.svg"
     },
     {
         id: 3,
         name: "Excavator", 
-        category: "Construction tools", 
-        price: "50,000", 
+        category: "Vehicles", 
+        price: "290,000", 
         rating: "4.5",
         imgUrl: "/gallery-img3.svg"
     },
     {
         id: 4,
-        name: "Excavator", 
-        category: "Construction tools", 
-        price: "50,000", 
+        name: "Elepaq Generator", 
+        category: "Engineering", 
+        price: "30,000", 
         rating: "4.5",
         imgUrl: "/gallery-img4.svg"
     },
     {
         id: 5,
-        name: "Excavator", 
-        category: "Construction tools", 
-        price: "50,000", 
+        name: "Toyota Camry 2023", 
+        category: "Vehicles", 
+        price: "95,000", 
         rating: "4.5",
         imgUrl: "/gallery-img5.svg"
     },
     {
         id: 6,
-        name: "Excavator", 
-        category: "Construction tools", 
-        price: "50,000", 
+        name: "Yamaha Keyboard", 
+        category: "Electronics", 
+        price: "15,000", 
         rating: "4.5",
         imgUrl: "/gallery-img6.svg"
     }
