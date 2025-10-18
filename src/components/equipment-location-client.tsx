@@ -143,25 +143,27 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
       socketService.joinChat(receiverId)
   
       const conv = {
-        id: receiverId,
+        userId: receiverId,
         name: equipmentData.owner.name,
         avatar: equipmentData.owner.avatarUrl,
         messages: [],
         status: "Online",
-        product: {
-          id: equipmentData.id,
+        equipment: {
+          _id: equipmentData.id,
           name: equipmentData.name,
-          price: String(equipmentData.pricePerDay),
-          image: equipmentData.imageUrl,
-          period: "",
-          phone: "",
+          pricePerDay: equipmentData.pricePerDay,
+          media: equipmentData.media,
+          category: [],
         },
+        lastMessage: "",
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0,
       }
       joinConversation(receiverId, conv)
   
       console.log("Conv created:", conv)
       console.log("Owner id from equipmentData:", equipmentData?.owner.id)
-      router.push(`/dashboard/messages?conversation=${conv.id}`)
+      router.push(`/dashboard/messages?conversation=${conv.userId}`)
     }
   
     const isVerified = ownerProfile?.data.user.isVerify
