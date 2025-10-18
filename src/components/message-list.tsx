@@ -1,17 +1,8 @@
 "use client"
 
+import { Conversation } from "@/types/messaging"
 import { User } from "lucide-react"
 import Image from "next/image"
-
-interface Conversation {
-  id: string
-  name: string
-  lastMessage: string
-  time: string
-  avatar: string
-  unreadCount?: number
-  isActive?: boolean
-}
 
 interface MessageListProps {
   conversations: Conversation[]
@@ -19,17 +10,50 @@ interface MessageListProps {
   onSelect: (id: string) => void
 }
 
+const formatTime = (timestamp?: string) => {
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffInMinutes = diffMs / (1000 * 60);
+  const diffInHours = diffMs / (1000 * 60 * 60);
+  const diffInDays = diffMs / (1000 * 60 * 60 * 24);
+
+  // Less than a minute ago
+  if (diffInMinutes < 1) {
+    return "now";
+  }
+  // Less than an hour ago
+  else if (diffInMinutes < 60) {
+    return `${Math.floor(diffInMinutes)}m ago`;
+  }
+  // Within today
+  else if (diffInHours < 24 && date.getDate() === now.getDate()) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  // Within this week
+  else if (diffInDays < 7) {
+    return date.toLocaleDateString([], { weekday: "short" }); // e.g., "Fri"
+  }
+  // Older
+  else {
+    return date.toLocaleDateString([], { month: "short", day: "numeric" }); // e.g., "Oct 17"
+  }
+};
+
+
 export function MessageList({ conversations, activeId, onSelect }: MessageListProps) {
-  console.log(conversations)
+  // console.log(conversations)
   return (
     <div className="divide-y bg-white overflow-y-auto">
       {conversations.map((conversation) => (
         <button
-          key={conversation.id}
+          key={conversation.userId}
           className={`flex w-full items-start space-x-3 px-4 py-4 text-left hover:bg-gray-50 ${
-            conversation.id === activeId ? "bg-white" : ""
+            conversation.userId === activeId ? "bg-white" : ""
           }`}
-          onClick={() => onSelect(conversation.id)}
+          onClick={() => onSelect(conversation.userId)}
         >
           <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full">
             {conversation.avatar ? (
@@ -54,7 +78,7 @@ export function MessageList({ conversations, activeId, onSelect }: MessageListPr
             <div className="flex justify-between">
               <h3 className="font-sm font-medium text-[#5A5555]">{conversation.name}</h3>
               <div className="flex flex-col">
-                <span className="text-xs text-[#5A5555]">{conversation.time}</span>
+                <span className="text-xs text-[#5A5555]">{formatTime(conversation.lastMessageTime)}</span>
                 {(conversation.unreadCount ?? 0) > 0 &&<div className="w-4 h-4 self-end rounded-full flex justify-center items-center text-white p-1 text-[9px] bg-primary">{conversation.unreadCount}</div>}
               </div>
             </div>          

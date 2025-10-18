@@ -36,10 +36,10 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!convId) return
 
-    const existing = conversations.find((c) => c.id === convId)
+    const existing = conversations.find((c) => c.userId === convId)
 
     if (existing) {
-      joinConversation(existing.id, existing)
+      joinConversation(existing.userId, existing)
     } else if (!isLoadingConversations) {
       console.warn("[Messaging] Conversation not found:", convId)
     }
@@ -66,12 +66,12 @@ export default function MessagesPage() {
     }
 
     return conversations.map((conv) => ({
-      id: conv.id,
+      userId: conv.userId,
       name: conv.name,
       lastMessage: conv.lastMessage || "No messages yet",
-      time: formatTime(conv.lastMessageTime),
+      lastMessageTime: formatTime(conv.lastMessageTime),
       avatar: conv.avatar,
-      isActive: conv.id === activeConversationId,
+      isActive: conv.userId === activeConversationId,
       unreadCount: conv.unreadCount,
     }))
   }, [conversations, activeConversationId])
@@ -81,7 +81,7 @@ export default function MessagesPage() {
       throw new Error("No active conversation")
     }
 
-    await sendMessage(activeConversation.id, message)
+    await sendMessage(activeConversation.userId, message)
   }
 
   // const handleOpenReportModal = () => {
@@ -193,7 +193,7 @@ export default function MessagesPage() {
                   </div>
                   <div>
                     <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
-                    <p className="text-xs text-[#B3B3B3]">{isConnected ? activeConversation.status : "Offline"}</p>
+                    <p className="text-xs text-[#B3B3B3]">Online</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -259,13 +259,13 @@ export default function MessagesPage() {
         </div> */}
        
 
-      {activeConversation && activeConversation.product && (
+      {activeConversation && activeConversation.equipment && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={handleCloseReportModal}
-          reportedUserId={activeConversation.id}
+          reportedUserId={activeConversation.userId}
           reportedUserName={activeConversation.name}
-          equipmentId={activeConversation.product.id}
+          equipmentId={activeConversation.equipment._id}
         />
       )}
     </div>

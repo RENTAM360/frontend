@@ -67,16 +67,16 @@ export default function MessagesPage() {
     }
 
     return conversations.map((conv) => ({
-      id: conv.userId,
+      userId: conv.userId,
       name: conv.name,
       lastMessage: conv.lastMessage || "No messages yet",
       time: formatTime(conv.lastMessageTime),
-      timestamp: conv.lastMessageTime,
+      lastMessageTime: conv.lastMessageTime,
       avatar: conv.avatar,
       isActive: conv.userId === activeConversationId,
       unreadCount: conv.unreadCount,
     }))
-    .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
+    .sort((a, b) => new Date(b.lastMessageTime ?? 0).getTime() - new Date(a.lastMessageTime ?? 0).getTime())
   }, [conversations, activeConversationId])
 
   const handleSendMessage = async (message: string) => {
