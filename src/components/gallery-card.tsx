@@ -30,12 +30,12 @@ export default function GalleryCard({
   
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-between h-full text-center px-4">
-          {/* <div className="w-[37px] h-[37px] font-semibold text-[12px] bg-white flex justify-center items-center rounded-full self-end text-black my-6">
-            {rating}
-          </div> */}
+          <div className="w-[37px] h-[37px] font-semibold text-[12px] bg-white flex justify-center items-center rounded-full self-end text-black my-6">
+            {/* {rating} */}
+          </div>
           <div className="bg-white flex justify-between rounded-[10px] p-2 gap-12 items-center text-gray-300 max-w-3xs mb-6">
             <div className="text-left">
-                <p className="text-[14px] font-medium text-black">{name}</p>
+                <p className="text-[14px] font-medium whitespace-nowrap text-black">{name}</p>
                 <p className="text-[12px] text-[#979797]">{category}</p>
             </div>
             <p className="bg-primary text-white p-1 text-[12px] rounded-[5px]">#{price}</p>
