@@ -6,6 +6,7 @@ import { PersistGate } from "redux-persist/integration/react"
 import { SnackbarProvider } from "notistack"
 import GlobalToastHandler from "@/context/GlobalToastHandler"
 import { AuthGate } from "@/components/auth-gate"
+import { NotificationProvider } from "@/context/notification-context"
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -20,7 +21,9 @@ export function Providers({ children }: ProvidersProps) {
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
           <GlobalToastHandler />
-          <AuthGate>{children}</AuthGate>
+          <AuthGate>
+            <NotificationProvider>{children}</NotificationProvider>
+          </AuthGate>
         </SnackbarProvider>
       </PersistGate>
     </Provider>

@@ -1,16 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { DatePicker } from "@/components/date-picker"
 import Image from "next/image"
 import { useBookEquipmentMutation, useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
 import { useSearchParams } from "next/navigation"
 import { AnimatedLogo } from "@/components/loading-logo"
 import { enqueueSnackbar } from "notistack"
+import { useNotifications } from "@/context/notification-context"
+import { SuccessModal } from "@/components/success-modal"
 
 export default function CheckoutPage() {
+  const { latestNotif } = useNotifications();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [notifDetails, setNotifDetails] = useState<string | null>(null);
   const searchParams = useSearchParams()
   const equipmentId = searchParams.get("id")
+
+  useEffect(() => {
+    if (latestNotif?.title?.toLowerCase() === "payment success") {
+      setNotifDetails(latestNotif.details);
+      setShowSuccessModal(true);
+    }
+  }, [latestNotif]);
 
   const { data: equipmentData, isLoading, error } = useGetEquipmentByIdQuery(equipmentId || "")
   const [bookEquipment, { isLoading: isBooking }] = useBookEquipmentMutation()
@@ -451,6 +463,16 @@ if (isLoading) {
           </div>
         </div>
       )}
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Payment Successful 🎉"
+        description={notifDetails || "Your payment has been received successfully."}
+        icon="success"
+        actionLabel="Continue"
+        onAction={() => setShowSuccessModal(false)}
+      />
     </div>
   )
 }

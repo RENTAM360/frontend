@@ -1,14 +1,13 @@
 "use client";
+import { useNotifications } from "@/context/notification-context";
 import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/lib/redux/api/notificationsApi";
-import { useAppSelector } from "@/lib/redux/hooks";
-import { socketService } from "@/lib/socket";
 import { Notification } from "@/types/notifications";
 import { Bell } from "lucide-react";
 import { enqueueSnackbar } from "notistack";
 import { useEffect } from "react";
 
 export default function NotificationsDropdown() {
-  const user = useAppSelector((state) => state.auth);
+  const { latestNotif } = useNotifications();
   const { data, isLoading, refetch } = useGetNotificationsQuery({ page: 1, limit: 10 });
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
@@ -47,22 +46,10 @@ const notifications = data?.data
   console.log(notifications)
 
   useEffect(() => {
-    if (!user?.data) return
-
-    socketService.connect(user.data)
-
-    const handleNotification = (newNotif: Notification) => {
-      console.log("New notification received:", newNotif)
-      refetch()
+    if (latestNotif) {
+      refetch();
     }
-
-    // Listen for notification events
-    socketService.on("notification", handleNotification)
-
-    return () => {
-      socketService.off("notification", handleNotification)
-    }
-  }, [user?.data, refetch])
+  }, [latestNotif, refetch]);
 
 function formatTimeAgo(timestamp: string) {
   const date = new Date(timestamp);
@@ -141,7 +128,7 @@ const handleMarkAsRead = async (id: string) => {
                   <p className="text-sm text-gray-600">{notif.title}</p>
                   <div className="flex items-center gap-2">
                     <p className="text-xs text-[#979797] mt-1">{formatTimeAgo(notif.createdAt ?? new Date().toISOString())}</p>
-                      {!notif.isRead && (
+                      {notif.title === "payment success" && (
                         <button
                           onClick={() => markAsRead(notif._id)}
                           className="text-[9px] text-white bg-[#12B76A] p-1 rounded-sm mt-1"

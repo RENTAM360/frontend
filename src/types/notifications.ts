@@ -4,7 +4,7 @@ export interface Notification {
   title: string;
   isRead: boolean;
   details: string;
-  type: string;
+  type?: string;
   createdAt?: string; 
   updatedAt?: string; 
   image?: string;
