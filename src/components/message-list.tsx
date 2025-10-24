@@ -82,7 +82,19 @@ export function MessageList({ conversations, activeId, onSelect }: MessageListPr
                 {(conversation.unreadCount ?? 0) > 0 &&<div className="w-4 h-4 self-end rounded-full flex justify-center items-center text-white p-1 text-[9px] bg-primary">{conversation.unreadCount}</div>}
               </div>
             </div>          
-              <p className="truncate text-xs text-[#5A5555]">{conversation.lastMessage}</p>
+              <p className="truncate text-xs text-[#5A5555]">
+                {(() => {
+                  const msg = conversation.lastMessage || "";
+                  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(msg);
+                  const isVideo = /\.(mp4|mov|webm)$/i.test(msg);
+                  const isDocument = /\.(pdf|docx?|xls|xlsx)$/i.test(msg);
+
+                  if (isImage) return "Image";
+                  if (isVideo) return "Video";
+                  if (isDocument) return "Document";
+                  return msg;
+                })()}
+              </p>
           </div>
         </button>
       ))}

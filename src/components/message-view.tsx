@@ -4,10 +4,11 @@ import type React from "react"
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
-import { Paperclip } from "lucide-react"
 import type { Conversation } from "@/types/messaging"
 import { useMessagingContext } from "@/context/messaging-context"
 import { useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
+import { MediaUploadDropdown } from "./media-upload-dropdown"
+import { Dialog, DialogContent } from "@/components/ui/dialog" 
 
 interface MessageViewProps {
   conversation: Conversation
@@ -22,11 +23,13 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
   const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { sendMessage } = useMessagingContext()
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null)
+  const [isVideoPreview, setIsVideoPreview] = useState(false)
 
   const eqId = useMemo(() => conversation?.equipment?._id ?? "", [conversation])
 
   useEffect(() => {
-    console.log("🧩 eqId changed:", eqId)
+    console.log("eqId changed:", eqId)
   }, [eqId])
 
   const { data: equipmentData } = useGetEquipmentByIdQuery(eqId, {
@@ -99,26 +102,96 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
 
         {/* Messages */}
         <div className="space-y-4">
-          {(conversation.messages ?? []).map((msg) => (
-            <div key={msg._id} className={`flex ${msg.sender === currentUserId ? "justify-end" : "justify-start"}`}>
+          {(conversation.messages ?? []).map((msg) => {
+            const content = msg.content
+            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(content)
+            const isVideo = /\.(mp4|mov|webm)$/i.test(content)
+            const isDocument = /\.(pdf|docx?|xls|xlsx)$/i.test(content)
+            const isSender = msg.sender === currentUserId
+
+            const textBubbleClass = isSender
+              ? "bg-[#DDF4C7] rounded-tl-full text-[#5A5555]"
+              : "bg-gray-100 rounded-tr-full text-[#5A5555]"
+
+            return (
               <div
-                className={`max-w-[320px] rounded-b-full px-6 py-4 ${
-                  msg.sender === currentUserId ? "bg-[#DDF4C7] rounded-tl-full text-[#5A5555]" : "bg-gray-100 rounded-tr-full text-[#5A5555]"
-                }`}
+                key={msg._id}
+                className={`flex ${isSender ? "justify-end" : "justify-start"}`}
               >
-                <p className="text-sm">{msg.content}</p>
+                {/* 🗨️ Text messages */}
+                {!isImage && !isVideo && !isDocument && (
+                  <div
+                    className={`max-w-[320px] rounded-b-full px-6 py-4 ${textBubbleClass}`}
+                  >
+                    <p className="text-sm">{content}</p>
+                  </div>
+                )}
+
+                {/* Image messages */}
+                {isImage && (
+                  <div className="relative w-[191px] h-[223px] rounded-[10px] overflow-hidden">
+                    <Image
+                      src={content}
+                      alt="Sent image"
+                      fill
+                      onClick={() => {
+                        setIsVideoPreview(false)
+                        setMediaPreview(content)
+                      }}
+                      className="object-cover rounded-[10px]"
+                    />
+                  </div>
+                )}
+
+                {/* Video messages */}
+                {isVideo && (
+                  <video
+                    controls
+                    className="w-[191px] h-[223px] rounded-[10px] object-cover"
+                    onClick={() => {
+                      setIsVideoPreview(true)
+                      setMediaPreview(content)
+                    }}
+                  >
+                    <source src={content} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                )}
+
+                {/* Document messages */}
+                {isDocument && (
+                  <a
+                    href={content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-2 text-emerald-600 underline"
+                  >
+                    <span>View Document</span>
+                  </a>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
           <div ref={messagesEndRef} />
         </div>
+
       </div>
 
       {/* Message input */}
       <div className="sticky bottom-0 z-20 border-t bg-white p-3">
         <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-          <button type="button" className="flex-shrink-0 rounded-full p-2 text-gray-500 hover:bg-gray-100">
-            <Paperclip className="h-5 w-5" />
+          <button type="button" className="flex-shrink-0 bg-primary w-8 h-8 flex justify-center items-center cursor-pointer rounded-full p-2">
+            <MediaUploadDropdown
+              onUpload={async (urls) => {
+                console.log("Uploaded file URLs:", urls)
+
+                // Send as a chat message (e.g., sendMessage with type "media")
+                for (const url of urls) {
+                  await sendMessage(conversation.userId, url, conversation.equipment?._id)
+                }
+              }}
+            />
+
           </button>
           <input
             type="text"
@@ -129,7 +202,7 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
           />
           <button
             type="submit"
-            className="flex-shrink-0"
+            className="flex-shrink-0 cursor-pointer"
             disabled={!message.trim() || isSending}
           >
             <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -139,6 +212,26 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
           </button>
         </form>
       </div>
+      <Dialog open={!!mediaPreview} onOpenChange={() => setMediaPreview(null)}>
+        <DialogContent className="max-w-full max-h-full bg-black p-0 flex items-center justify-center">
+          {isVideoPreview ? (
+            <video
+              src={mediaPreview!}
+              controls
+              autoPlay
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+            />
+          ) : (
+            <Image
+              src={mediaPreview!}
+              alt="Preview"
+              width={1000}
+              height={1000}
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

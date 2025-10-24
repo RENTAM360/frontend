@@ -11,98 +11,23 @@ import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { enqueueSnackbar } from "notistack"
 import Lottie from "lottie-react"
 import successAnimation from "@/assets/animations/Success.json"
+import { useMessagingContext } from "@/context/messaging-context"
+import { socketService } from "@/lib/socket"
+import { useRouter } from "next/navigation"
 
-// Mock reports data
-// const reportsData = [
-//   {
-//     id: 1,
-//     reporterName: "Thankgod ogbonna",
-//     reportedUserItem: "Samson Freedom",
-//     reason: "Item not as described",
-//     status: "Pending",
-//     date: "27, Apr, 2025",
-//     reportMessage:
-//       "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
-//     reportedUser: {
-//       id: 1,
-//       name: "Thankgod ogbonna",
-//       username: "thankimedia",
-//       email: "Thankimedia@gmail.com",
-//       phone: "09124639133",
-//       verified: true,
-//       location: "Nigeria",
-//       joinDate: "June 2024",
-//       address: "7 Woji Port harcourt",
-//       bankAccount: "Bank account, 7077900016, FCMB",
-//       bankName: "Thankgod ogbonna",
-//       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-//       coverImage: "/report-coverImg.svg",
-//       profileImage: "/report-profile.svg",
-//     },
-//   },
-//   {
-//     id: 2,
-//     reporterName: "Thankgod ogbonna",
-//     reportedUserItem: "Samson Freedom",
-//     reason: "Item not as described",
-//     status: "Pending",
-//     date: "27, Apr, 2025",
-//     reportMessage:
-//       "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
-//     reportedUser: {
-//       id: 1,
-//       name: "Thankgod ogbonna",
-//       username: "thankimedia",
-//       email: "Thankimedia@gmail.com",
-//       phone: "09124639133",
-//       verified: true,
-//       location: "Nigeria",
-//       joinDate: "June 2024",
-//       address: "7 Woji Port harcourt",
-//       bankAccount: "Bank account, 7077900016, FCMB",
-//       bankName: "Thankgod ogbonna",
-//       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-//       coverImage: "/report-coverImg.svg",
-//       profileImage: "/report-profile.svg",
-//     },
-//   },
-//   // Add more reports with the same structure...
-//   ...Array.from({ length: 8 }, (_, i) => ({
-//     id: i + 3,
-//     reporterName: "Thankgod ogbonna",
-//     reportedUserItem: "Samson Freedom",
-//     reason: "Item not as described",
-//     status: i % 3 === 0 ? "Resolved" : "Pending",
-//     date: "27, Apr, 2025",
-//     reportMessage:
-//       "I paid for the rental, but the equipment was either not delivered as promised, was fake, or the renter disappeared after the payment was made.",
-//     reportedUser: {
-//       id: 1,
-//       name: "Thankgod ogbonna",
-//       username: "thankimedia",
-//       email: "Thankimedia@gmail.com",
-//       phone: "09124639133",
-//       verified: true,
-//       location: "Nigeria",
-//       joinDate: "June 2024",
-//       address: "7 Woji Port harcourt",
-//       bankAccount: "Bank account, 7077900016, FCMB",
-//       bankName: "Thankgod ogbonna",
-//       bio: "Thankgod is a passionate entrepreneur and the founder of rental360, a premier car rental service that provides reliable, affordable, and high-quality vehicles for all kinds of travelers.",
-//       coverImage: "/report-coverImg.svg",
-//       profileImage: "/report-profile.svg",
-//     },
-//   })),
-// ]
-
+ 
 export default function ReportsPage() {
   // const [searchQuery] = useState("")
+  const router = useRouter()
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
   // const [setReporterId] = useState<string | null>(null);
   const [reportedId, setReportedId] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [isClosing, setIsClosing] = useState(false);
+  const {
+    joinConversation,
+  } = useMessagingContext()
 
 
   const { data: reportsData, refetch: refetchReports } = useGetReportsQuery({ page: 1, limit: 10 });
@@ -125,13 +50,11 @@ export default function ReportsPage() {
     }
   }, [reportDetail]);
 
-  // const { data: reporterProfile } = useGetOtherUserProfileQuery(reporterId!, {
-  //   skip: !reporterId,
-  // });
   const { data: reportedProfile, refetch } = useGetOtherUserProfileQuery(reportedId!, {
     skip: !reportedId,
   });
 
+  const user = reportedProfile?.data?.user
 
   const [resolveReport] = useResolveReportMutation()
   const [suspendUser, { isLoading: isSuspending }] = useSuspendUserMutation()
@@ -206,7 +129,40 @@ export default function ReportsPage() {
 
 
   const handleMessage = () => {
-    console.log("Send message to user")
+    if (!user?._id || !user?.firstName) {
+      console.error("Missing user data")
+      return
+    }
+
+    const receiverId = user._id
+
+    // Optional: store user data locally (similar to user-side)
+    const existing = JSON.parse(localStorage.getItem("conversationUsers") || "{}")
+    existing[receiverId] = user
+    localStorage.setItem("conversationUsers", JSON.stringify(existing))
+
+    // Join socket room
+    socketService.joinChat(receiverId)
+
+    // Construct conversation object
+    const conv = {
+      userId: receiverId,
+      name: `${user.firstName} ${user.lastName}`,
+      avatar: user.avatar || "/user.svg",
+      messages: [],
+      status: "Online",
+      lastMessage: "",
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0,
+      role: "user",
+    }
+
+    joinConversation(receiverId, conv)
+
+    console.log("Admin started conversation:", conv)
+
+    // Redirect to admin message thread
+    router.push(`/admin/messages?conversation=${conv.userId}`)
   }
 
   const handleSuccessModalClose = () => {

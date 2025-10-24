@@ -19,6 +19,9 @@ import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
 import { useDeleteUserMutation, useGetUserBanksQuery, useGetUserTransactionsQuery, useSuspendUserMutation, useUnsuspendUserMutation,  } from "@/lib/redux/api/adminApi"
 import { enqueueSnackbar } from "notistack"
+import { socketService } from "@/lib/socket"
+import { useRouter } from "next/navigation"
+import { useMessagingContext } from "@/context/messaging-context"
 // import { getOwnerReviews } from "@/lib/data"
 // import { ReviewsPageClient } from "@/components/reviews-page-client"
 
@@ -30,10 +33,14 @@ interface UserProfileClientProps {
 
 export default function UserProfileClient({ userId }: UserProfileClientProps) {
   const [activeTab, setActiveTab] = useState("Items")
+  const router = useRouter()
   const { data: userProfile, refetch } = useGetOtherUserProfileQuery(userId!, {
       skip: !userId,
     });
 
+   const {
+      joinConversation,
+    } = useMessagingContext()
   const user = userProfile?.data?.user
   // console.log(user)
 
@@ -92,7 +99,42 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
     }
   };
 
-  // console.log(user)
+  const handleMessage = () => {
+    if (!user?._id || !user?.firstName) {
+      console.error("Missing user data")
+      return
+    }
+
+    const receiverId = user._id
+
+    // Optional: store user data locally (similar to user-side)
+    const existing = JSON.parse(localStorage.getItem("conversationUsers") || "{}")
+    existing[receiverId] = user
+    localStorage.setItem("conversationUsers", JSON.stringify(existing))
+
+    // Join socket room
+    socketService.joinChat(receiverId)
+
+    // Construct conversation object
+    const conv = {
+      userId: receiverId,
+      name: `${user.firstName} ${user.lastName}`,
+      avatar: user.avatar || "/user.svg",
+      messages: [],
+      status: "Online",
+      lastMessage: "",
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0,
+      role: "user",
+    }
+
+    joinConversation(receiverId, conv)
+
+    console.log("Admin started conversation:", conv)
+
+    // Redirect to admin message thread
+    router.push(`/admin/messages?conversation=${conv.userId}`)
+  }
 
   return (
     <>
@@ -149,7 +191,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
                 className="bg-red-500 hover:bg-red-600 text-xs text-white">
                   {user?.status === "suspended" ? "Unsuspend" : "Suspend"}
                 </Button>
-              <Button className="bg-[#17b266] hover:bg-[#149655] text-xs text-white">message</Button>
+              <Button onClick={handleMessage} className="bg-[#17b266] hover:bg-[#149655] text-xs text-white">message</Button>
             </div>
           </div>
 

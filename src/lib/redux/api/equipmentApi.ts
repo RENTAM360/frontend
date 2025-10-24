@@ -317,6 +317,16 @@ interface ImageUploadResponse {
   data: string[];
 }
 
+interface VideoUploadResponse {
+  message: string
+  data: { url: string }[]
+}
+
+interface DocumentUploadResponse {
+  message: string
+  data: string[]
+}
+
 export interface ReportUserRequest {
   reason: string
 }
@@ -552,6 +562,35 @@ export const equipmentApi = baseApi.injectEndpoints({
         };
       },
     }),
+    uploadEquipmentVideos: builder.mutation<VideoUploadResponse, File[]>({
+      query: (files) => {
+        const formData = new FormData()
+        files.forEach((file) => {
+          formData.append("video", file)
+        })
+
+        return {
+          url: "/media/upload/video",
+          method: "POST",
+          body: formData,
+        }
+      },
+    }),
+
+    uploadEquipmentDocuments: builder.mutation<DocumentUploadResponse, File[]>({
+      query: (files) => {
+        const formData = new FormData()
+        files.forEach((file) => {
+          formData.append("application", file)
+        })
+
+        return {
+          url: "/media/upload/document",
+          method: "POST",
+          body: formData,
+        }
+      },
+    }),
     createEquipmentReview: builder.mutation<CreateReviewResponse, { equipmentId: string; review: CreateReviewRequest }>(
       {
         query: ({ equipmentId, review }) => ({
@@ -723,4 +762,6 @@ export const {
   useGetBookmarkedEquipmentsQuery,
   useCreateCategoryMutation,
   useDeleteCategoryMutation,
+  useUploadEquipmentDocumentsMutation,
+  useUploadEquipmentVideosMutation,
 } = equipmentApi

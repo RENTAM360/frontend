@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ReportModal } from "@/components/report-modal"
+import { timeAgo } from "@/app/utils/timeAgo"
 
 export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -32,6 +33,26 @@ export default function MessagesPage() {
   const searchParams = useSearchParams()
   const convId = searchParams.get("conversation")
 
+  const [userStatus, setUserStatus] = useState<{ lastActive?: number; isOnlinr?: boolean }>({})
+
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      const users = JSON.parse(localStorage.getItem("activeUsers") || "{}")
+      let status = {}
+      if (activeConversation?.userId) {
+        status = users[activeConversation.userId] || {}
+      }
+      setUserStatus(status)
+    }
+
+    // Load once
+    handleStorageUpdate()
+
+    // Optional: update automatically if socket events update localStorage
+    window.addEventListener("storage", handleStorageUpdate)
+    return () => window.removeEventListener("storage", handleStorageUpdate)
+  }, [activeConversation?.userId])
+
   // Handle URL conversation parameter
   useEffect(() => {
     if (!convId) return
@@ -47,29 +68,12 @@ export default function MessagesPage() {
 
   // Format conversations for MessageList component
   const formattedConversations = useMemo(() => {
-    const formatTime = (timestamp?: string) => {
-      if (!timestamp) return ""
-
-      const date = new Date(timestamp)
-      const now = new Date()
-      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-
-      if (diffInHours < 1) {
-        return "now"
-      } else if (diffInHours < 24) {
-        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      } else if (diffInHours < 168) {
-        return date.toLocaleDateString([], { weekday: "short" })
-      } else {
-        return date.toLocaleDateString([], { month: "short", day: "numeric" })
-      }
-    }
 
     return conversations.map((conv) => ({
       userId: conv.userId,
       name: conv.name,
       lastMessage: conv.lastMessage || "No messages yet",
-      lastMessageTime: formatTime(conv.lastMessageTime),
+      lastMessageTime: conv.lastMessageTime,
       avatar: conv.avatar,
       isActive: conv.userId === activeConversationId,
       unreadCount: conv.unreadCount,
@@ -193,7 +197,15 @@ export default function MessagesPage() {
                   </div>
                   <div>
                     <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
-                    <p className="text-xs text-[#B3B3B3]">Online</p>
+                    <p className="text-xs text-[#B3B3B3]">
+                      {userStatus?.isOnlinr ? (
+                        <span className="text-[#12B76A]">Online</span>
+                      ) : userStatus?.lastActive ? (
+                        `Last active ${timeAgo(userStatus.lastActive)}`
+                      ) : (
+                        "Offline"
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

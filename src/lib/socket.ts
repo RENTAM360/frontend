@@ -23,6 +23,12 @@ export interface SocketResponse {
   error?: string
 }
 
+interface UserStatusData {
+  userId: string
+  lastActive: number
+  isOnlinr: boolean
+}
+
 class SocketService {
   private socket: Socket | null = null
   private token: string | null = null
@@ -82,6 +88,18 @@ class SocketService {
       console.error("[Socket] Error:", error.code, error.message)
     })
 
+    this.socket.on("lastActive", (data) => {
+      console.log("User activity (disconnect/connect):", data)
+      this.updateUserStatus(data)
+      console.log(data)
+    })
+
+    this.socket.on("lastActive1", (data) => {
+      console.log("User activity (sent message):", data)
+      this.updateUserStatus(data)
+      console.log(data)
+    })
+
     console.log("[v0] All event listeners registered")
   }
 
@@ -112,6 +130,12 @@ class SocketService {
 
     this.socket.emit("join chat", receiverUserId)
     console.log("[Socket] Joined chat with:", receiverUserId)
+  }
+
+  updateUserStatus({ userId, lastActive, isOnlinr }: UserStatusData) {
+    const users = JSON.parse(localStorage.getItem("activeUsers") || "{}")
+    users[userId] = { lastActive, isOnlinr }
+    localStorage.setItem("activeUsers", JSON.stringify(users))
   }
 
   sendMessage(
