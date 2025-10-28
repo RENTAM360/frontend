@@ -74,6 +74,8 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
 
   const feedbacks = feedbackData?.data || []
 
+  console.log(feedbacks)
+
   const handleFeedbackSubmit = async (data: { feedback: string; images: File[]; rating: number }) => {
     try {
       let mediaUrls: string[] = []
