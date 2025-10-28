@@ -375,7 +375,7 @@ export default function ProfilePage() {
               <span className="ml-2 font-semibold">{user.rating}</span>
               </div> */}
               <Link
-                href={feedbackCount > 0 ? `/dashboard/user/owner/${user.id}/reviews` : "#"}
+                href={feedbackCount > 0 ? `/dashboard/user/owner/${userId}/reviews` : "#"}
                 className={`ml-4 flex items-center gap-2 text-sm ${
                   feedbackCount === 0
                     ? "text-gray-400 cursor-not-allowed pointer-events-none"
