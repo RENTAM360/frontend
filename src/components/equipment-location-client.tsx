@@ -8,7 +8,8 @@ import { useEffect, useState } from "react"
 import { getAddress } from "./address-converter"
 import { useMessagingContext } from "@/context/messaging-context"
 import { socketService } from "@/lib/socket"
-import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetOtherUserProfileQuery, useGetProfileQuery } from "@/lib/redux/api/authApi"
+import { getInitials } from "@/app/utils/getInitials"
 
 const mockEquipmentData = {
   id: "1",
@@ -111,6 +112,9 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
     skip: !ownerId,
   });
 
+  const { data: profileData } = useGetProfileQuery()
+  const profile = profileData?.data?.user
+
   const handleBookNow = () => {
     window.location.href = `/dashboard/checkout?id=${equipmentId}`
   }
@@ -167,6 +171,16 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
     }
   
     const isVerified = ownerProfile?.data.user.isVerify
+
+    const feedbackCount = profile?.feedbacks?.length ?? 0;
+
+    const latestFeedback = profile?.feedbacks?.[profile.feedbacks.length - 1];
+
+
+    let reviewText: string;
+    if (feedbackCount === 0) reviewText = "No reviews yet";
+    else if (feedbackCount === 1) reviewText = "View review";
+    else reviewText = `View all ${feedbackCount} reviews`;
 
   // Loading state
   if (isLoading) {
@@ -370,7 +384,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                 href={`/dashboard/user/owner/${equipmentData.owner.id}/reviews`}
                 className="flex items-center text-[12.03px] text-primary"
               >
-                View all {mockEquipmentData.totalFeedback}
+                View all {reviewText}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -389,26 +403,30 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
             </div>
 
             {/* Feedback Item */}
-            {mockEquipmentData.feedback.length > 0 && (
-              <div className="p-4 m-4 rounded-lg bg-[#F2F4F7]">
+            {latestFeedback && (
+              <div key={latestFeedback._id} className="p-4 m-4 rounded-lg bg-[#F2F4F7]">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3">
                     <div className="relative h-8 w-8 overflow-hidden rounded-full flex-shrink-0">
-                      <Image
-                        src={
-                          mockEquipmentData.feedback[0].user.image ||
-                          "/placeholder.svg?height=48&width=48&query=person" ||
-                          "/placeholder.svg" ||
-                          "/placeholder.svg"
-                        }
-                        alt={mockEquipmentData.feedback[0].user.name}
-                        fill
-                        className="object-cover"
-                      />
+                      {latestFeedback?.user?.avatar ? (
+                        <Image
+                          src={
+                            mockEquipmentData.feedback[0].user.image ||
+                            "/user.svg?height=48&width=48&query=person" ||
+                            "/user.svg" ||
+                            "/user.svg"
+                          }
+                          alt={mockEquipmentData.feedback[0].user.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        getInitials(latestFeedback.feedackBy.firstName)
+                      )}
                     </div>
                     <div>
-                      <h4 className="font-[500] text-[14.04px]">{mockEquipmentData.feedback[0].user.name}</h4>
-                      <p className="mt-1 text-[12.03px]">{mockEquipmentData.feedback[0].text}</p>
+                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedackBy.firstName}</h4>
+                      <p className="mt-1 text-[12.03px]">{latestFeedback.comment}</p>
                     </div>
                   </div>
                   <div className="text-primary">

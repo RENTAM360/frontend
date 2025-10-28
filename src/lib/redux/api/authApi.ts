@@ -1,5 +1,6 @@
 import { BusinessRegisterRequest, BusinessRegisterResponse } from "../types/auth"
 import { baseApi } from "./baseApi"
+import { Feedback } from "./feedbackApi"
 
 export interface LoginCredentials {
   email: string
@@ -49,7 +50,7 @@ export interface UserProfile {
   dob: string
   gender: string
   email: string
-  feedbacks: []
+  feedbacks: Feedback[]
   phone: string
   address: string
   country: string
@@ -94,7 +95,7 @@ export interface OtherUserProfile {
   status: "active" | "inactive" | "suspended"
   createdAt: string
   coverPhoto: string
-  feedbacks: []
+  feedbacks: Feedback[]
   message: string
   country: string
   _id: string

@@ -71,7 +71,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
 
   const { data: feedbackData, isLoading, error } = useGetUserFeedbacksQuery({ userId: ownerId })
   const [likeFeedback] = useLikeFeedbackMutation()
-  const [createReply, { isLoading: isCreatingReply }] = useCreateFeedbackReplyMutation()
+  const [createFeedbackReply, { isLoading: isCreatingReply }] = useCreateFeedbackReplyMutation()
 
   const feedbacks = feedbackData?.data || []
 
@@ -114,7 +114,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
     if (!replyText) return
 
     try {
-      await createReply({
+      await createFeedbackReply({
         userId: ownerId,
         feedbackId,
         reply: {

@@ -12,7 +12,8 @@ import { useMessagingContext } from "@/context/messaging-context"
 import { AnimatedLogo } from "./loading-logo"
 import { motion, AnimatePresence } from "motion/react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetOtherUserProfileQuery, useGetProfileQuery } from "@/lib/redux/api/authApi"
+import { getInitials } from "@/app/utils/getInitials"
 
 
 
@@ -125,11 +126,13 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
   const { data: equipmentData, isLoading, error, isError } = useGetEquipmentByIdQuery(equipmentId)
   const ownerId = equipmentData?.owner?.id ?? "";
 
-const { data: ownerProfile } = useGetOtherUserProfileQuery(ownerId, {
-  skip: !ownerId,
-});
+  const { data: ownerProfile } = useGetOtherUserProfileQuery(ownerId, {
+    skip: !ownerId,
+  });
+  const { data: profileData } = useGetProfileQuery()
+  const profile = profileData?.data?.user
 
-const isVerified = ownerProfile?.data.user.isVerify
+  const isVerified = ownerProfile?.data.user.isVerify
   // console.log(equipmentData)
 
   // console.log("📊 Query state:", {
@@ -203,6 +206,13 @@ const isVerified = ownerProfile?.data.user.isVerify
     router.push(`/dashboard/messages?conversation=${conv.userId}`)
   }
 
+  const feedbackCount = profile?.feedbacks?.length ?? 0;
+  const latestFeedback = profile?.feedbacks?.[profile.feedbacks.length - 1];
+
+  let reviewText: string;
+  if (feedbackCount === 0) reviewText = "No reviews yet";
+  else if (feedbackCount === 1) reviewText = "View review";
+  else reviewText = `View all ${feedbackCount} reviews`;
 
   // Loading state
   if (isLoading) {
@@ -276,7 +286,7 @@ const isVerified = ownerProfile?.data.user.isVerify
                 className="relative w-full max-w-5xl h-[80vh]"
               >
                 <Image
-                  src={equipmentData.media[selectedImage] || "/placeholder.svg"}
+                  src={equipmentData.media[selectedImage] || "/placehuserolder.svg"}
                   alt={equipmentData.title}
                   fill
                   className="object-contain object-center"
@@ -466,7 +476,7 @@ const isVerified = ownerProfile?.data.user.isVerify
                 href={`/dashboard/user/owner/${equipmentData.owner.id}/reviews`}
                 className="flex items-center text-[12.03px] text-primary"
               >
-                View all {mockEquipmentData.totalFeedback}
+                View all {reviewText}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -485,33 +495,39 @@ const isVerified = ownerProfile?.data.user.isVerify
             </div>
 
             {/* Feedback Item */}
-            {mockEquipmentData.feedback.length > 0 && (
-              <div className="p-4 m-4 rounded-lg bg-[#F2F4F7]">
+            {latestFeedback && (
+              <div key={latestFeedback._id} className="p-4 m-4 rounded-lg bg-[#F2F4F7]">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3">
                     <div className="relative h-8 w-8 overflow-hidden rounded-full flex-shrink-0">
-                      <Image
-                        src={
-                          mockEquipmentData.feedback[0].user.image ||
-                          "/user.svg?height=48&width=48&query=person" ||
-                          "/user.svg"
-                        }
-                        alt={mockEquipmentData.feedback[0].user.name}
-                        fill
-                        className="object-cover"
-                      />
+                      {latestFeedback?.user?.avatar ? (
+                        <Image
+                          src={
+                            mockEquipmentData.feedback[0].user.image ||
+                            "/user.svg?height=48&width=48&query=person" ||
+                            "/user.svg" ||
+                            "/user.svg"
+                          }
+                          alt={mockEquipmentData.feedback[0].user.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        getInitials(latestFeedback.feedackBy.firstName)
+                      )}
                     </div>
                     <div>
-                      <h4 className="font-[500] text-[14.04px]">{mockEquipmentData.feedback[0].user.name}</h4>
-                      <p className="mt-1 text-[12.03px]">{mockEquipmentData.feedback[0].text}</p>
-                      
+                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedackBy.firstName}</h4>
+                      <p className="mt-1 text-[12.03px]">{latestFeedback.comment}</p>
                     </div>
                   </div>
                   <div className="text-primary">
                     <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M16.9287 8.29651C16.9287 6.16921 16.0836 4.12904 14.5794 2.62481C13.0752 1.12058 11.035 0.275513 8.90772 0.275513C6.78042 0.275513 4.74024 1.12058 3.23601 2.62481C1.73179 4.12904 0.886719 6.16921 0.886719 8.29651C0.886719 10.4238 1.73179 12.464 3.23601 13.9682C4.74024 15.4724 6.78042 16.3175 8.90772 16.3175C11.035 16.3175 13.0752 15.4724 14.5794 13.9682C16.0836 12.464 16.9287 10.4238 16.9287 8.29651ZM1.88934 8.29651C1.88934 7.37484 2.07088 6.4622 2.42359 5.61069C2.77629 4.75919 3.29326 3.98549 3.94498 3.33377C4.59669 2.68205 5.37039 2.16509 6.2219 1.81238C7.07341 1.45967 7.98605 1.27814 8.90772 1.27814C9.82938 1.27814 10.742 1.45967 11.5935 1.81238C12.445 2.16509 13.2187 2.68205 13.8705 3.33377C14.5222 3.98549 15.0391 4.75919 15.3918 5.61069C15.7446 6.4622 15.9261 7.37484 15.9261 8.29651C15.9261 10.1579 15.1867 11.943 13.8705 13.2592C12.5543 14.5754 10.7691 15.3149 8.90772 15.3149C7.04633 15.3149 5.26118 14.5754 3.94498 13.2592C2.62878 11.943 1.88934 10.1579 1.88934 8.29651ZM12.4169 6.79257C12.4169 6.52666 12.3113 6.27164 12.1232 6.08361C11.9352 5.89558 11.6802 5.78995 11.4143 5.78995C11.1484 5.78995 10.8933 5.89558 10.7053 6.08361C10.5173 6.27164 10.4117 6.52666 10.4117 6.79257C10.4117 7.05849 10.5173 7.31351 10.7053 7.50154C10.8933 7.68956 11.1484 7.7952 11.4143 7.7952C11.6802 7.7952 11.9352 7.68956 12.1232 7.50154C12.3113 7.31351 12.4169 7.05849 12.4169 6.79257ZM7.40378 6.79257C7.40378 6.52666 7.29815 6.27164 7.11012 6.08361C6.92209 5.89558 6.66707 5.78995 6.40115 5.78995C6.13524 5.78995 5.88022 5.89558 5.69219 6.08361C5.50416 6.27164 5.39853 6.52666 5.39853 6.79257C5.39853 7.05849 5.50416 7.31351 5.69219 7.50154C5.88022 7.68956 6.13524 7.7952 6.40115 7.7952C6.66707 7.7952 6.92209 7.68956 7.11012 7.50154C7.29815 7.31351 7.40378 7.05849 7.40378 6.79257ZM5.78855 10.8181C5.74714 10.7669 5.69605 10.7243 5.63819 10.6929C5.58033 10.6614 5.51684 10.6416 5.45135 10.6347C5.38585 10.6277 5.31963 10.6338 5.25646 10.6524C5.1933 10.6711 5.13442 10.702 5.0832 10.7434C5.03199 10.7848 4.98943 10.8359 4.95795 10.8938C4.92648 10.9516 4.90671 11.0151 4.89977 11.0806C4.89284 11.1461 4.89887 11.2123 4.91753 11.2755C4.93618 11.3387 4.9671 11.3975 5.00851 11.4488C5.47857 12.03 6.07269 12.4988 6.74736 12.8208C7.42202 13.1428 8.16016 13.3098 8.90772 13.3096C10.4818 13.3096 11.8885 12.5827 12.8069 11.4488C12.8484 11.3975 12.8794 11.3387 12.8981 11.2755C12.9168 11.2123 12.9229 11.146 12.916 11.0805C12.9091 11.0149 12.8894 10.9514 12.8579 10.8935C12.8265 10.8355 12.7839 10.7844 12.7327 10.7429C12.6815 10.7014 12.6226 10.6705 12.5594 10.6517C12.4962 10.633 12.43 10.6269 12.3644 10.6338C12.2989 10.6407 12.2353 10.6604 12.1774 10.6919C12.1195 10.7233 12.0684 10.7659 12.0269 10.8171C11.651 11.2823 11.1758 11.6576 10.6361 11.9154C10.0964 12.1732 9.50583 12.307 8.90772 12.307C8.30969 12.3071 7.71921 12.1734 7.17951 11.9158C6.63981 11.6582 6.16456 11.2831 5.78855 10.8181Z" fill="#12B76A"/>
+                      <path
+                        d="M16.9287 8.29651C16.9287 6.16921 16.0836 4.12904 14.5794 2.62481C13.0752 1.12058 11.035 0.275513 8.90772 0.275513C6.78042 0.275513 4.74024 1.12058 3.23601 2.62481C1.73179 4.12904 0.886719 6.16921 0.886719 8.29651C0.886719 10.4238 1.73179 12.464 3.23601 13.9682C4.74024 15.4724 6.78042 16.3175 8.90772 16.3175C11.035 16.3175 13.0752 15.4724 14.5794 13.9682C16.0836 12.464 16.9287 10.4238 16.9287 8.29651ZM1.88934 8.29651C1.88934 7.37484 2.07088 6.4622 2.42359 5.61069C2.77629 4.75919 3.29326 3.98549 3.94498 3.33377C4.59669 2.68205 5.37039 2.16509 6.2219 1.81238C7.07341 1.45967 7.98605 1.27814 8.90772 1.27814C9.82938 1.27814 10.742 1.45967 11.5935 1.81238C12.445 2.16509 13.2187 2.68205 13.8705 3.33377C14.5222 3.98549 15.0391 4.75919 15.3918 5.61069C15.7446 6.4622 15.9261 7.37484 15.9261 8.29651C15.9261 10.1579 15.1867 11.943 13.8705 13.2592C12.5543 14.5754 10.7691 15.3149 8.90772 15.3149C7.04633 15.3149 5.26118 14.5754 3.94498 13.2592C2.62878 11.943 1.88934 10.1579 1.88934 8.29651ZM12.4169 6.79257C12.4169 6.52666 12.3113 6.27164 12.1232 6.08361C11.9352 5.89558 11.6802 5.78995 11.4143 5.78995C11.1484 5.78995 10.8933 5.89558 10.7053 6.08361C10.5173 6.27164 10.4117 6.52666 10.4117 6.79257C10.4117 7.05849 10.5173 7.31351 10.7053 7.50154C10.8933 7.68956 11.1484 7.7952 11.4143 7.7952C11.6802 7.7952 11.9352 7.68956 12.1232 7.50154C12.3113 7.31351 12.4169 7.05849 12.4169 6.79257ZM7.40378 6.79257C7.40378 6.52666 7.29815 6.27164 7.11012 6.08361C6.92209 5.89558 6.66707 5.78995 6.40115 5.78995C6.13524 5.78995 5.88022 5.89558 5.69219 6.08361C5.50416 6.27164 5.39853 6.52666 5.39853 6.79257C5.39853 7.05849 5.50416 7.31351 5.69219 7.50154C5.88022 7.68956 6.13524 7.7952 6.40115 7.7952C6.66707 7.7952 6.92209 7.68956 7.11012 7.50154C7.29815 7.31351 7.40378 7.05849 7.40378 6.79257ZM5.78855 10.8181C5.74714 10.7669 5.69605 10.7243 5.63819 10.6929C5.58033 10.6614 5.51684 10.6416 5.45135 10.6347C5.38585 10.6277 5.31963 10.6338 5.25646 10.6524C5.1933 10.6711 5.13442 10.702 5.0832 10.7434C5.03199 10.7848 4.98943 10.8359 4.95795 10.8938C4.92648 10.9516 4.90671 11.0151 4.89977 11.0806C4.89284 11.1461 4.89887 11.2123 4.91753 11.2755C4.93618 11.3387 4.9671 11.3975 5.00851 11.4488C5.47857 12.03 6.07269 12.4988 6.74736 12.8208C7.42202 13.1428 8.16016 13.3098 8.90772 13.3096C10.4818 13.3096 11.8885 12.5827 12.8069 11.4488C12.8484 11.3975 12.8794 11.3387 12.8981 11.2755C12.9168 11.2123 12.9229 11.146 12.916 11.0805C12.9091 11.0149 12.8894 10.9514 12.8579 10.8935C12.8265 10.8355 12.7839 10.7844 12.7327 10.7429C12.6815 10.7014 12.6226 10.6705 12.5594 10.6517C12.4962 10.633 12.43 10.6269 12.3644 10.6338C12.2989 10.6407 12.2353 10.6604 12.1774 10.6919C12.1195 10.7233 12.0684 10.7659 12.0269 10.8171C11.651 11.2823 11.1758 11.6576 10.6361 11.9154C10.0964 12.1732 9.50583 12.307 8.90772 12.307C8.30969 12.3071 7.71921 12.1734 7.17951 11.9158C6.63981 11.6582 6.16456 11.2831 5.78855 10.8181Z"
+                        fill="#12B76A"
+                      />
                     </svg>
-
                   </div>
                 </div>
               </div>
