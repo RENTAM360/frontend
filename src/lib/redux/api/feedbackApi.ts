@@ -17,6 +17,11 @@ type Reply = {
 export interface Feedback {
   _id: string
   comment: string
+  feedackBy: {
+    _id: string
+    firstName: string
+    createdAt: string
+  }
   rating: number
   createdAt: string
   updatedAt: string
@@ -24,7 +29,7 @@ export interface Feedback {
   likes: number
   user: FeedbackUser
   media?: string[]
-  replies?: Reply[]
+  reply?: Reply[]
 }
 
 export interface FeedbackResponse {
@@ -52,7 +57,6 @@ export interface FeedbackReply {
   updatedAt: string
   dislikes: number
   likes: number
-  user: FeedbackUser
 }
 
 export interface FeedbackRepliesResponse {

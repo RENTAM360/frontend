@@ -50,7 +50,7 @@ import { AnimatedLogo } from "./loading-logo"
 //   likes?: number
 //   dislikes?: number
 //   media?: string[]
-//   replies?: Reply[]
+//   reply?: Reply[]
 // }
 
 interface FeedbackPageClientProps {
@@ -201,14 +201,13 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                           />
                         ) : (
                           <>
-                            {feedback.user.firstName[0]}
-                            {feedback.user.lastName[0]}
+                            {feedback.feedackBy.firstName}
                           </>
                         )}
                       </div>
                       <div>
                         <h3 className="font-semibold">
-                          {feedback.user.firstName} {feedback.user.lastName}
+                           {feedback.feedackBy.firstName}
                         </h3>
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (
@@ -230,9 +229,9 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                   </div>
 
                   {/* Feedback Media (if any) */}
-                  {feedback.media && feedback.media.length > 0 && (
+                  {feedback?.media && feedback?.media.length > 0 && (
                     <div className="mb-3 flex gap-2">
-                      {feedback.media.map((mediaUrl, index) => (
+                      {feedback?.media.map((mediaUrl, index) => (
                         <Image
                           key={index}
                           src={mediaUrl || "/placeholder.svg"}
@@ -247,7 +246,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
 
                   {/* Feedback Actions */}
                   <div className="flex items-center text-sm text-gray-500 gap-4">
-                    <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(feedback.feedackBy.createdAt).toLocaleDateString()}</span>
                     <button
                       className={`flex items-center gap-1 hover:text-gray-700 ${
                         likedFeedbacks.has(feedback._id) ? "text-primary" : ""
@@ -272,10 +271,10 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                     )}
                   </div>
 
-                  {/* Replies */}
-                  {feedback.replies && feedback.replies.length > 0 && (
+                  {/* reply */}
+                  {feedback.reply && feedback.reply.length > 0 && (
                     <div className="mt-4 pl-10 space-y-4">
-                      {feedback.replies.map((reply) => (
+                      {feedback.reply.map((reply) => (
                         <div key={reply._id} className="bg-gray-50 rounded-lg p-4">
                           <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700">
@@ -289,21 +288,20 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                                 />
                               ) : (
                                 <>
-                                  {reply.user.firstName[0]}
-                                  {reply.user.lastName[0]}
+                                   {feedback.feedackBy.firstName}
                                 </>
                               )}
                             </div>
                             <div>
                               <h4 className="font-semibold">
-                                {reply.user.firstName} {reply.user.lastName}
+                                 {feedback.feedackBy.firstName}
                               </h4>
                             </div>
                           </div>
-                          <p className="text-gray-700 mb-2">{reply.comment}</p>
+                          <p className="text-gray-700 mb-2">{reply?.comment}</p>
                           <div className="flex items-center text-sm text-gray-500 gap-4">
-                            <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
-                            {reply.isOwner ? (
+                            <span>{new Date(reply?.createdAt).toLocaleDateString()}</span>
+                            {reply?.isOwner ? (
                               <button className="text-gray-500 hover:text-gray-700">Edit</button>
                             ) : (
                               <button className="text-gray-500 hover:text-gray-700">Like</button>
