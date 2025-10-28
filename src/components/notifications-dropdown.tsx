@@ -3,8 +3,7 @@ import { useNotifications } from "@/context/notification-context";
 import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/lib/redux/api/notificationsApi";
 import { Notification } from "@/types/notifications";
 import { ArrowLeft, Bell, ClipboardCheck } from "lucide-react";
-import { AnimatePresence } from "motion/dist/react";
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
