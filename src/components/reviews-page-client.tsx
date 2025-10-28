@@ -189,9 +189,9 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                     {/* Feedback Header */}
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-sm font-medium text-gray-700">
-                        {feedback.user.avatar ? (
+                        {feedback?.user?.avatar ? (
                           <Image
-                            src={feedback.user.avatar || "/placeholder.svg"}
+                            src={feedback?.user?.avatar || "/placeholder.svg"}
                             alt={`${feedback.user.firstName} ${feedback.user.lastName}`}
                             width={40}
                             height={40}
@@ -277,7 +277,7 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
                         <div key={reply._id} className="bg-gray-50 rounded-lg p-4">
                           <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700">
-                              {reply.user.avatar ? (
+                              {reply?.user?.avatar ? (
                                 <Image
                                   src={reply.user.avatar || "/placeholder.svg"}
                                   alt={`${reply.user.firstName} ${reply.user.lastName}`}

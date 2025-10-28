@@ -13,7 +13,7 @@ export default function SavedPage() {
 
   const savedItems = data?.data?.bookmarks ?? []
 
-  console.log(savedItems)
+  // console.log(savedItems)
 
   return (
     <div className="container font-sans mx-auto px-4 py-8">
