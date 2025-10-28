@@ -98,7 +98,6 @@ const handleMarkAsRead = async (id: string) => {
               className={`p-3 border-t cursor-pointer border-[#EBEBEB] ${
                 notif.isRead ? "bg-white" : "bg-[#F2FEF8]"
               }`}
-              onClick={() => handleMarkAsRead(notif._id)}
             >
               <div className="flex items-start gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -108,7 +107,11 @@ const handleMarkAsRead = async (id: string) => {
                 </div>
                 <div className="flex-1">
                   {/* <h4 className="font-medium">{notif.title}</h4> */}
-                  <p className="text-sm text-gray-600">{notif.title}</p>
+                  <p className="text-sm text-gray-600"
+                  onClick={() => handleMarkAsRead(notif._id)}
+                  >
+                    {notif.title}
+                  </p>
                   <div className="flex items-center gap-2">
                     <p className="text-xs text-[#979797] mt-1">{formatTimeAgo(notif.createdAt ?? new Date().toISOString())}</p>
                       {notif.title === "payment success" && (
