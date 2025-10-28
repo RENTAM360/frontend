@@ -113,7 +113,11 @@ const handleMarkAsRead = async (id: string) => {
                     <p className="text-xs text-[#979797] mt-1">{formatTimeAgo(notif.createdAt ?? new Date().toISOString())}</p>
                       {notif.title === "payment success" && (
                         <button
-                          onClick={() => markAsRead(notif._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNotif(notif);
+                            setShowReceipt(true);
+                          }}
                           className="text-[9px] text-white bg-[#12B76A] p-1 rounded-sm mt-1"
                         >
                           View details
