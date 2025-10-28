@@ -121,7 +121,7 @@ const handleMarkAsRead = async (id: string) => {
                             setSelectedNotif(notif);
                             setShowReceipt(true);
                           }}
-                          className="text-[9px] text-white bg-[#12B76A] p-1 rounded-sm mt-1"
+                          className="text-[9px] text-white cursor-pointer bg-[#12B76A] p-1 rounded-sm mt-1"
                         >
                           View details
                         </button>
