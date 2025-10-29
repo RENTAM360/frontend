@@ -15,8 +15,6 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useGetOtherUserProfileQuery, useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { getInitials } from "@/app/utils/getInitials"
 
-
-
 const mockEquipmentData = {
   id: "1",
   title: "Toyota Camry for Rent – Smooth, Stylish, and Reliable!",
@@ -476,7 +474,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                 href={`/dashboard/user/owner/${equipmentData.owner.id}/reviews`}
                 className="flex items-center text-[12.03px] text-primary"
               >
-                View all {reviewText}
+                {reviewText}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"

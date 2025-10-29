@@ -17,7 +17,7 @@ export default function NotificationsDropdown() {
 
 const notifications = data?.data
 
-  console.log(notifications)
+  // console.log(notifications)
 
   useEffect(() => {
     if (latestNotif) {

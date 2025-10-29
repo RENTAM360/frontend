@@ -384,7 +384,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                 href={`/dashboard/user/owner/${equipmentData.owner.id}/reviews`}
                 className="flex items-center text-[12.03px] text-primary"
               >
-                View all {reviewText}
+                {reviewText}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
