@@ -70,52 +70,7 @@ export default function ProfilePage() {
     }
   }, [profile])
 
-  const transactions = [
-    // Rental transactions
-    {
-      id: "1",
-      title: "Toyota Camry 2010",
-      date: "06 march, 2025",
-      amount: 100000,
-      status: "debit" as const,
-      type: "rental" as const,
-    },
-    {
-      id: "2",
-      title: "Firman SPG3000",
-      date: "06 march, 2025",
-      amount: 100000,
-      status: "successful" as const,
-      type: "rental" as const,
-    },
-    {
-      id: "3",
-      title: "Toyota highlander",
-      date: "06 march, 2025",
-      amount: 100000,
-      status: "pending" as const,
-      type: "rental" as const,
-    },
-    // Financial transactions
-    {
-      id: "4",
-      title: "Withdraw",
-      date: "06 march, 2025",
-      amount: 100000,
-      status: "withdrawal" as const,
-      type: "transaction" as const,
-    },
-    {
-      id: "5",
-      title: "Deposit",
-      date: "05 march, 2025",
-      amount: 150000,
-      status: "deposit" as const,
-      type: "transaction" as const,
-    },
-  ]
-
-   const handleDeleteAccount = async (userId: string) => {
+  const handleDeleteAccount = async (userId: string) => {
     try {
       const response = await deleteAccount(userId).unwrap();
       enqueueSnackbar(response.message || "Account deleted successfully", { variant: "success" });
@@ -630,7 +585,7 @@ export default function ProfilePage() {
 
             {viewMode === "edit" && <ProfileEditForm profile={profile} onCancel={() => setViewMode("items")} />}
 
-            {viewMode === "wallet" && <WalletView balance={100000} transactions={transactions} />}
+            {viewMode === "wallet" && <WalletView />}
             {viewMode === "items" &&
             <>
                 <h2 className="text-2xl font-bold mt-3 md:mt-0 mb-6">Listed items</h2>

@@ -1,21 +1,13 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import Image from "next/image"
 import { ArrowLeft } from "lucide-react"
 import { SuccessModal } from "@/components/success-modal"
-
-interface BankAccount {
-  id: string
-  bank: string
-  accountNumber: string
-  accountName: string
-  logo: string
-}
+import { useGetWalletAccountsQuery, useWithdrawMutation } from "@/lib/redux/api/walletApi"
+import { useSnackbar } from "notistack"
+import { AnimatedLogo } from "./loading-logo"
 
 interface WithdrawViewProps {
   onCancel: () => void
@@ -23,41 +15,59 @@ interface WithdrawViewProps {
 }
 
 export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
-  const [selectedAccount, setSelectedAccount] = useState<string>("gtb")
+  const { enqueueSnackbar } = useSnackbar()
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("")
   const [amount, setAmount] = useState<string>("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-  const bankAccounts: BankAccount[] = [
-    {
-      id: "gtb",
-      bank: "GTB",
-      accountNumber: "7077900016",
-      accountName: "solomon Abuh",
-      logo: "/gtb.svg",
-    },
-    {
-      id: "fcmb",
-      bank: "FCMB",
-      accountNumber: "7077900016",
-      accountName: "solomon Abuh",
-      logo: "/fcmb.svg",
-    },
-  ]
+  const { data: accountsResponse, isLoading: isLoadingAccounts } = useGetWalletAccountsQuery()
+  const [withdraw, { isLoading: isSubmitting }] = useWithdrawMutation()
+
+  const bankAccounts = accountsResponse?.data || []
+
+  // Set default account if available
+  useEffect(() => {
+    if (bankAccounts.length > 0 && !selectedAccountId) {
+      const defaultAccount = bankAccounts.find((acc) => acc.default) || bankAccounts[0]
+      if (defaultAccount._id) {
+        setSelectedAccountId(defaultAccount._id)
+      }
+    }
+  }, [bankAccounts, selectedAccountId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+    
+    if (!selectedAccountId) {
+      enqueueSnackbar("Please select a bank account", { variant: "error" })
+      return
+    }
+
+    const withdrawAmount = Number(amount)
+    if (withdrawAmount <= 0) {
+      enqueueSnackbar("Please enter a valid amount", { variant: "error" })
+      return
+    }
+
+    if (withdrawAmount > balance) {
+      enqueueSnackbar("Insufficient balance", { variant: "error" })
+      return
+    }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await withdraw({
+        amount: withdrawAmount,
+        accountId: selectedAccountId,
+      }).unwrap()
       setShowSuccessModal(true)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing withdrawal:", error)
-    } finally {
-      setIsSubmitting(false)
+      enqueueSnackbar(error?.data?.message || "Failed to process withdrawal", { variant: "error" })
     }
+  }
+
+  if (isLoadingAccounts) {
+    return <AnimatedLogo />
   }
 
   return (
@@ -73,38 +83,44 @@ export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Bank Account Selection */}
         <div className="space-y-4">
-          {bankAccounts.map((account) => (
-            <div
-              key={account.id}
-              className={`border rounded-lg p-4 flex items-center justify-between cursor-pointer ${
-                selectedAccount === account.id ? "border-primary bg-white" : "border-gray-200 bg-gray-50"
-              }`}
-              onClick={() => setSelectedAccount(account.id)}
-            >
-              <div className="flex items-center">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-white flex items-center justify-center mr-4">
-                  <Image
-                    src={account.logo || "/placeholder.svg"}
-                    alt={account.bank}
-                    width={40}
-                    height={40}
-                    className="object-contain"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">{account.bank}</h3>
-                  <p className="text-gray-500">
-                    {account.accountNumber}, {account.accountName}
-                  </p>
-                </div>
-              </div>
-              <div
-                className={`w-6 h-6 rounded-full border-2 ${
-                  selectedAccount === account.id ? "border-primary bg-primary" : "border-gray-300 bg-white"
-                }`}
-              ></div>
+          {bankAccounts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No bank accounts found. Please add a bank account first.</p>
             </div>
-          ))}
+          ) : (
+            bankAccounts.map((account) => {
+              const accountId = account._id || account.accountNumber
+              return (
+                <div
+                  key={accountId}
+                  className={`border rounded-lg p-4 flex items-center justify-between cursor-pointer ${
+                    selectedAccountId === accountId ? "border-primary bg-white" : "border-gray-200 bg-gray-50"
+                  }`}
+                  onClick={() => setSelectedAccountId(accountId)}
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-white flex items-center justify-center mr-4">
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-lg font-bold text-gray-600">{account.bank.charAt(0)}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">{account.bank}</h3>
+                      <p className="text-gray-500">
+                        {account.accountNumber}
+                        {account.default && <span className="ml-2 text-xs text-primary">(Default)</span>}
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-6 h-6 rounded-full border-2 ${
+                      selectedAccountId === accountId ? "border-primary bg-primary" : "border-gray-300 bg-white"
+                    }`}
+                  ></div>
+                </div>
+              )
+            })
+          )}
         </div>
 
         {/* Amount Input */}
@@ -136,7 +152,7 @@ export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
           <Button
             type="submit"
             className="w-2/3 bg-primary hover:bg-green-600 text-white py-6 rounded-full text-lg"
-            disabled={!amount || Number(amount) <= 0 || Number(amount) > balance || isSubmitting}
+            disabled={!amount || Number(amount) <= 0 || Number(amount) > balance || isSubmitting || !selectedAccountId || bankAccounts.length === 0}
           >
             {isSubmitting ? "Processing..." : "Continue"}
           </Button>

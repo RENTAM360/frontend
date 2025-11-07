@@ -1,39 +1,37 @@
 import { baseApi } from "./baseApi"
 
 export interface FeedbackUser {
+  _id: string
   firstName: string
   lastName: string
   avatar: string
+  createdAt?: string
 }
 
 type Reply = {
   _id: string
-  user: FeedbackUser
+  user: string
+  feedbackBy: FeedbackUser
   comment: string
-  createdAt: string
-  isOwner?: boolean
+  likes: number[]
+  dislikes: number[]
+  __v: number
 }
 
 export interface Feedback {
   _id: string
   comment: string
-  feedackBy: {
-    _id: string
-    firstName: string
-    createdAt: string
-  }
+  feedbackBy: FeedbackUser
   rating: number
-  createdAt: string
-  updatedAt: string
   dislikes: number
   likes: number
-  user: FeedbackUser
-  media?: string[]
   reply?: Reply[]
+  replyCount?: number
+  __v: number
 }
 
 export interface FeedbackResponse {
-  status: string
+  status: number
   message: string
   data: Feedback[]
 }
@@ -57,10 +55,15 @@ export interface FeedbackReply {
   updatedAt: string
   dislikes: number
   likes: number
+  user: {
+    firstName: string
+    lastName: string
+    avatar: string
+  }
 }
 
 export interface FeedbackRepliesResponse {
-  status: string
+  status: number
   message: string
   data: FeedbackReply[]
 }
@@ -84,7 +87,7 @@ export const feedbackApi = baseApi.injectEndpoints({
     // Get user feedbacks
     getUserFeedbacks: builder.query<FeedbackResponse, { userId: string; limit?: number; page?: number }>({
       query: ({ userId, limit = 10, page = 1 }) => ({
-        url: `/profile/feedback/${userId}`,
+        url: `/profile/feedback/user/${userId}`,
         params: { limit, page },
       }),
       providesTags: (result, error, { userId }) => [
@@ -96,7 +99,7 @@ export const feedbackApi = baseApi.injectEndpoints({
     // Create feedback for user
     createUserFeedback: builder.mutation<CreateFeedbackResponse, { userId: string; feedback: CreateFeedbackRequest }>({
       query: ({ userId, feedback }) => ({
-        url: `/profile/feedback/${userId}`,
+        url: `/profile/feedback/user/${userId}`,
         method: "POST",
         body: feedback,
       }),
@@ -129,12 +132,19 @@ export const feedbackApi = baseApi.injectEndpoints({
     }),
 
     // Like/dislike feedback
-    likeFeedback: builder.mutation<LikeFeedbackResponse, { feedbackId: string; action: "like" | "dislike" }>({
+    // API docs: PUT /profile/feedback/{feedbackId}/{action}
+    // If you get 404, the endpoint might need userId: /profile/feedback/user/{userId}/{feedbackId}/{action}
+    likeFeedback: builder.mutation<LikeFeedbackResponse, { feedbackId: string; userId: string; action: "like" | "dislike" }>({
       query: ({ feedbackId, action }) => ({
+        // Using path from API docs - if 404, try: `/profile/feedback/user/${userId}/${feedbackId}/${action}`
         url: `/profile/feedback/${feedbackId}/${action}`,
         method: "PUT",
       }),
-      invalidatesTags: (result, error, { feedbackId }) => [{ type: "Feedback", id: feedbackId }],
+      invalidatesTags: (result, error, { feedbackId, userId }) => [
+        { type: "Feedback", id: feedbackId },
+        { type: "Feedback", id: userId },
+        { type: "Feedback", id: "LIST" },
+      ],
     }),
   }),
 })

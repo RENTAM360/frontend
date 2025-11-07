@@ -4,42 +4,78 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { WithdrawView } from "@/components/withdraw-view"
 import { AddBankModal } from "@/components/add-bank-modal"
+import { useGetWalletSummaryQuery, useGetWalletHistoryQuery } from "@/lib/redux/api/walletApi"
+import { AnimatedLogo } from "./loading-logo"
 
-interface Transaction {
-  id: string
-  title: string
-  date: string
-  amount: number
-  status: "debit" | "successful" | "pending" | "withdrawal" | "deposit"
-  type: "rental" | "transaction"
-}
-
-interface WalletViewProps {
-  balance: number
-  transactions: Transaction[]
-}
-
-export function WalletView({ balance, transactions }: WalletViewProps) {
+export function WalletView() {
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [showAddBankModal, setShowAddBankModal] = useState(false)
   const [filter, setFilter] = useState<string>("All")
   const [activeTab, setActiveTab] = useState<"all" | "rentals" | "transactions">("all")
+  const [page, setPage] = useState(1)
+
+  const { data: walletSummary, isLoading: isLoadingSummary } = useGetWalletSummaryQuery()
+  const { data: walletHistory, isLoading: isLoadingHistory } = useGetWalletHistoryQuery({ page, limit: 50 })
+
+  const balance = walletSummary?.data?.available || 0
+  const totalBalance = walletSummary?.data?.total || 0
+  const transactions = walletHistory?.data || []
+
+  if (isLoadingSummary) {
+    return <AnimatedLogo />
+  }
 
   if (showWithdraw) {
     return <WithdrawView onCancel={() => setShowWithdraw(false)} balance={balance} />
   }
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    // First filter by transaction type
-    if (activeTab === "rentals" && transaction.type !== "rental") return false
-    if (activeTab === "transactions" && transaction.type !== "transaction") return false
-    // No filtering needed for "all"
+  // Map API transaction status to display format
+  const getTransactionTitle = (status: string, amount: number) => {
+    const statusLower = status.toLowerCase()
+    if (statusLower === "withdrawn") return "Withdrawal"
+    if (statusLower === "deposit" || statusLower === "deposited") return "Deposit"
+    if (statusLower === "pending") return "Pending Transaction"
+    return "Transaction"
+  }
 
-    // Then filter by status if not "All"
-    if (filter !== "All" && transaction.status !== filter.toLowerCase()) return false
+  const getTransactionType = (status: string): "rental" | "transaction" => {
+    // You may need to adjust this based on your API response
+    // For now, treating all as transactions
+    return "transaction"
+  }
 
-    return true
-  })
+  const filteredTransactions = transactions
+    .map((transaction) => ({
+      id: transaction.time || Math.random().toString(),
+      title: getTransactionTitle(transaction.status, transaction.amount),
+      date: new Date(transaction.time).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+      amount: transaction.amount,
+      status: transaction.status.toLowerCase() as any,
+      type: getTransactionType(transaction.status),
+    }))
+    .filter((transaction) => {
+      // First filter by transaction type
+      if (activeTab === "rentals" && transaction.type !== "rental") return false
+      if (activeTab === "transactions" && transaction.type !== "transaction") return false
+      // No filtering needed for "all"
+
+      // Then filter by status if not "All"
+      if (filter !== "All") {
+        const filterLower = filter.toLowerCase()
+        const statusLower = transaction.status.toLowerCase()
+        if (filterLower === "debit" && statusLower !== "debit") return false
+        if (filterLower === "successful" && statusLower !== "successful") return false
+        if (filterLower === "pending" && statusLower !== "pending") return false
+        if (filterLower === "withdrawal" && statusLower !== "withdrawal" && statusLower !== "withdrawn") return false
+        if (filterLower === "deposit" && statusLower !== "deposit" && statusLower !== "deposited") return false
+      }
+
+      return true
+    })
 
   const handleAddBank = (data: { accountName: string; accountNumber: string; bankName: string }) => {
     console.log("Adding bank account:", data)
@@ -67,7 +103,7 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
           <div>
             <p className="text-sm md:text-lg mb-2">Available balance</p>
             <h3 className="text-2xl md:text-4xl font-bold mb-2">₦{balance.toLocaleString()}</h3>
-            <p className="text-xs md:text-sm opacity-80">₦{balance.toLocaleString()} (Total balance)</p>
+            <p className="text-xs md:text-sm opacity-80">₦{totalBalance.toLocaleString()} (Total balance)</p>
           </div>
           <Button
             onClick={() => setShowWithdraw(true)}
@@ -124,7 +160,9 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
       </div>
 
       <div className="space-y-4">
-        {filteredTransactions.length > 0 ? (
+        {isLoadingHistory ? (
+          <div className="text-center py-8 text-gray-500">Loading transactions...</div>
+        ) : filteredTransactions.length > 0 ? (
           filteredTransactions.map((transaction) => (
             <div key={transaction.id} className="border border-gray-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
@@ -143,23 +181,25 @@ export function WalletView({ balance, transactions }: WalletViewProps) {
                 <div className="text-right">
                   <p
                     className={` text-sm md:text-base ${
-                      transaction.status === "debit" || transaction.status === "withdrawal"
+                      transaction.status === "debit" || transaction.status === "withdrawal" || transaction.status === "withdrawn"
                         ? "text-red-500"
-                        : transaction.status === "successful" || transaction.status === "deposit"
+                        : transaction.status === "successful" || transaction.status === "deposit" || transaction.status === "deposited"
                           ? "text-primary"
                           : "text-orange-500"
                     }`}
                   >
-                    <span>
+                    <span className="capitalize">
                       {transaction.status === "debit"
-                        ? "debit"
+                        ? "Debit"
                         : transaction.status === "successful"
                           ? "Successful"
                           : transaction.status === "pending"
                             ? "Pending"
-                            : transaction.status === "withdrawal"
-                              ? "withdrawal"
-                              : "deposit"}
+                            : transaction.status === "withdrawal" || transaction.status === "withdrawn"
+                              ? "Withdrawal"
+                              : transaction.status === "deposit" || transaction.status === "deposited"
+                                ? "Deposit"
+                                : transaction.status}
                     </span>
                   </p>
                   <p className="text-sm md:text-base font-medium">₦{transaction.amount.toLocaleString()}</p>

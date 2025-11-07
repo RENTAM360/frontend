@@ -85,6 +85,7 @@ export const bankApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      invalidatesTags: ["Wallet"],
     }),
 
     verifyNin: builder.mutation<VerifyNinResponse, VerifyNinRequest>({
