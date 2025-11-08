@@ -20,6 +20,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const user = useAppSelector((state) => state.auth);
 
   useEffect(() => {
+    const stored = sessionStorage.getItem("latestNotif");
+    if (stored) {
+      try {
+        setLatestNotif(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse stored notification:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (!user?.data) return;
 
     socketService.connect(user.data);
@@ -27,6 +38,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const handleNotification = (notif: Notification) => {
       console.log("🔔 New notification:", notif);
       setLatestNotif(notif);
+      sessionStorage.setItem("latestNotif", JSON.stringify(notif));
     };
 
     socketService.on("notification", handleNotification);

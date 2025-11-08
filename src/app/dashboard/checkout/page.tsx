@@ -18,9 +18,12 @@ export default function CheckoutPage() {
   const equipmentId = searchParams.get("id")
 
   useEffect(() => {
+    console.log("CheckoutPage saw notification:", latestNotif);
     if (latestNotif?.title?.toLowerCase() === "payment success") {
       setNotifDetails(latestNotif.details);
       setShowSuccessModal(true);
+
+      sessionStorage.removeItem("latestNotif");
     }
   }, [latestNotif]);
 

@@ -12,6 +12,8 @@ import {
   useCreateFeedbackReplyMutation,
   Feedback,
   useGetFeedbackRepliesQuery,
+  FeedbackReply,
+  Reply,
 } from "@/lib/redux/api/feedbackApi"
 import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import {
@@ -55,6 +57,11 @@ import { getInitials } from "@/app/utils/getInitials"
 //   media?: string[]
 //   reply?: Reply[]
 // }
+
+type UnifiedReply = 
+  | (Reply & { isInline: true })
+  | (FeedbackReply & { isInline?: false });
+
 
 interface FeedbackPageClientProps {
   ownerId: string
@@ -253,9 +260,14 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
   }
 
   // Use inline replies from feedback.reply if available, otherwise use fetched replies
-  const replies = feedback.reply && feedback.reply.length > 0 
-    ? feedback.reply 
-    : (replyData?.data ?? []);
+  // const replies = feedback.reply && feedback.reply.length > 0 
+  //   ? feedback.reply 
+  //   : (replyData?.data ?? []);
+
+  const replies: UnifiedReply[] = feedback.reply?.length
+  ? feedback.reply.map(r => ({ ...r, isInline: true }))
+  : (replyData?.data.map(r => ({ ...r, isInline: false })) ?? []);
+
 
   return (
   <div key={feedback._id} className="bg-white rounded-lg p-6">
@@ -364,12 +376,16 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
         <div className="mt-4 pl-10 space-y-4">
           {replies.map((reply) => {
             // Handle both inline replies (with feedbackBy) and fetched replies (with user)
-            const replyAny = reply as any;
-            const isInlineReply = 'feedbackBy' in reply;
-            const replyUser = isInlineReply ? replyAny.feedbackBy : replyAny.user;
-            const replyDate = isInlineReply && replyAny.feedbackBy?.createdAt 
-              ? replyAny.feedbackBy.createdAt 
-              : (!isInlineReply && replyAny.createdAt ? replyAny.createdAt : undefined);
+            // const replyAny = reply as any;
+            // const isInlineReply = 'feedbackBy' in reply;
+            // const replyUser = isInlineReply ? replyAny.feedbackBy : replyAny.user;
+            // const replyDate = isInlineReply && replyAny.feedbackBy?.createdAt 
+            //   ? replyAny.feedbackBy.createdAt 
+            //   : (!isInlineReply && replyAny.createdAt ? replyAny.createdAt : undefined);
+            const replyUser = reply.isInline ? reply.feedbackBy : reply.user;
+            const replyDate = reply.isInline
+              ? reply.feedbackBy.createdAt
+              : reply.createdAt;
             
             return (
               <div key={reply._id} className="bg-gray-50 rounded-lg p-4">

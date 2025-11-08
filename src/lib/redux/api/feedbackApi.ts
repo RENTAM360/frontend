@@ -8,7 +8,7 @@ export interface FeedbackUser {
   createdAt?: string
 }
 
-type Reply = {
+export type Reply = {
   _id: string
   user: string
   feedbackBy: FeedbackUser

@@ -26,6 +26,7 @@ export interface WalletHistoryResponse {
 export interface BankAccount {
   accountNumber: string
   bank: string
+  bankName: string
   default: boolean
   _id?: string
 }

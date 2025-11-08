@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft } from "lucide-react"
 import { SuccessModal } from "@/components/success-modal"
-import { useGetWalletAccountsQuery, useWithdrawMutation } from "@/lib/redux/api/walletApi"
+import { BankAccount, useGetWalletAccountsQuery, useWithdrawMutation } from "@/lib/redux/api/walletApi"
 import { useSnackbar } from "notistack"
 import { AnimatedLogo } from "./loading-logo"
 
@@ -23,7 +23,11 @@ export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
   const { data: accountsResponse, isLoading: isLoadingAccounts } = useGetWalletAccountsQuery()
   const [withdraw, { isLoading: isSubmitting }] = useWithdrawMutation()
 
-  const bankAccounts = accountsResponse?.data || []
+  const bankAccounts: BankAccount[] = useMemo(() => {
+    return (accountsResponse?.data as BankAccount[]) ?? []
+  }, [accountsResponse?.data])
+
+  // const bankAccounts = accountsResponse?.data || []
 
   // Set default account if available
   useEffect(() => {
@@ -34,6 +38,20 @@ export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
       }
     }
   }, [bankAccounts, selectedAccountId])
+
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "string") return err
+    if (err instanceof Error) return err.message
+    if (typeof err === "object" && err !== null) {
+      const e = err as Record<string, unknown>
+      if (e.data && typeof e.data === "object") {
+        const d = e.data as Record<string, unknown>
+        if (typeof d.message === "string") return d.message
+      }
+      if (typeof e.message === "string") return e.message
+    }
+    return "Failed to process withdrawal"
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,9 +78,9 @@ export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
         accountId: selectedAccountId,
       }).unwrap()
       setShowSuccessModal(true)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error processing withdrawal:", error)
-      enqueueSnackbar(error?.data?.message || "Failed to process withdrawal", { variant: "error" })
+      enqueueSnackbar(getErrorMessage(error), { variant: "error" })
     }
   }
 
@@ -105,7 +123,7 @@ export function WithdrawView({ onCancel, balance }: WithdrawViewProps) {
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">{account.bank}</h3>
+                      <h3 className="font-bold text-lg">{account.bankName}</h3>
                       <p className="text-gray-500">
                         {account.accountNumber}
                         {account.default && <span className="ml-2 text-xs text-primary">(Default)</span>}

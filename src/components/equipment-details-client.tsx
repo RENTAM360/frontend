@@ -12,8 +12,9 @@ import { useMessagingContext } from "@/context/messaging-context"
 import { AnimatedLogo } from "./loading-logo"
 import { motion, AnimatePresence } from "motion/react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useGetOtherUserProfileQuery, useGetProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { getInitials } from "@/app/utils/getInitials"
+import { useGetUserFeedbacksQuery } from "@/lib/redux/api/feedbackApi"
 
 const mockEquipmentData = {
   id: "1",
@@ -119,21 +120,25 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
     joinConversation,
   } = useMessagingContext()
 
-  // console.log("🔍 Component rendered with equipmentId:", equipmentId)
+  // console.log("Component rendered with equipmentId:", equipmentId)
 
   const { data: equipmentData, isLoading, error, isError } = useGetEquipmentByIdQuery(equipmentId)
   const ownerId = equipmentData?.owner?.id ?? "";
 
+  const { data: feedbackData } = useGetUserFeedbacksQuery({ userId: ownerId })
+  
+  const feedbacks = feedbackData?.data || []
+
   const { data: ownerProfile } = useGetOtherUserProfileQuery(ownerId, {
     skip: !ownerId,
   });
-  const { data: profileData } = useGetProfileQuery()
-  const profile = profileData?.data?.user
+  // const { data: profileData } = useGetProfileQuery()
+  // const profile = profileData?.data?.user
 
   const isVerified = ownerProfile?.data.user.isVerify
   // console.log(equipmentData)
 
-  // console.log("📊 Query state:", {
+  // console.log("Query state:", {
   //   data: equipmentData,
   //   isLoading,
   //   error,
@@ -204,8 +209,9 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
     router.push(`/dashboard/messages?conversation=${conv.userId}`)
   }
 
-  const feedbackCount = profile?.feedbacks?.length ?? 0;
-  const latestFeedback = profile?.feedbacks?.[profile.feedbacks.length - 1];
+  const feedbackCount = feedbacks?.length ?? 0;
+  const latestFeedback = feedbacks?.at(-1);
+
 
   let reviewText: string;
   if (feedbackCount === 0) reviewText = "No reviews yet";
@@ -497,25 +503,25 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
               <div key={latestFeedback._id} className="p-4 m-4 rounded-lg bg-[#F2F4F7]">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3">
-                    <div className="relative h-8 w-8 overflow-hidden rounded-full flex-shrink-0">
-                      {latestFeedback?.user?.avatar ? (
+                    <div className="relative h-8 w-8 overflow-hidden flex justify-center items-center bg-white rounded-full flex-shrink-0">
+                      {latestFeedback?.feedbackBy?.avatar ? (
                         <Image
                           src={
-                            mockEquipmentData.feedback[0].user.image ||
+                            latestFeedback?.feedbackBy?.avatar ||
                             "/user.svg?height=48&width=48&query=person" ||
                             "/user.svg" ||
                             "/user.svg"
                           }
-                          alt={mockEquipmentData.feedback[0].user.name}
+                          alt="User Avatar"
                           fill
                           className="object-cover"
                         />
                       ) : (
-                        getInitials(latestFeedback.feedackBy.firstName)
+                        getInitials(latestFeedback?.feedbackBy?.firstName)
                       )}
                     </div>
                     <div>
-                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedackBy.firstName}</h4>
+                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedbackBy.firstName}</h4>
                       <p className="mt-1 text-[12.03px]">{latestFeedback.comment}</p>
                     </div>
                   </div>
@@ -533,7 +539,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
 
             {/* Leave Feedback */}
             <div className="pl-6">
-              <div className="mt-2 flex items-center gap-4 text-gray-500">
+              {/* <div className="mt-2 flex items-center gap-4 text-gray-500">
                 <span className="text-[#979797] text-xs">{mockEquipmentData.feedback[0].timeAgo}</span>
                 <button className="hover:text-gray-700 font-bold text-xs text-[#979797]">Like</button>
                 <button className="hover:text-gray-700 font-bold text-xs text-[#979797]">Reply</button>
@@ -554,7 +560,7 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
 
                   {mockEquipmentData.feedback[0].replies}
                 </div>
-              </div>
+              </div> */}
               <button className="flex items-center pb-4 mt-4 gap-2 w-full text-left hover:bg-gray-50">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4.53314 6.59741C4.57826 6.30164 4.87303 6.02091 5.28912 6.02091C5.70521 6.02091 5.99998 6.30164 6.0451 6.59741C6.05275 6.66437 6.07383 6.72909 6.10706 6.78771C6.14029 6.84633 6.18501 6.89765 6.23852 6.9386C6.29204 6.97955 6.35327 7.00929 6.41854 7.02604C6.48381 7.0428 6.55179 7.04622 6.61841 7.0361C6.68504 7.02599 6.74894 7.00254 6.80629 6.96717C6.86365 6.9318 6.91329 6.88523 6.95224 6.83024C6.99119 6.77525 7.01866 6.71298 7.033 6.64713C7.04734 6.58129 7.04825 6.51323 7.03569 6.44702C6.90836 5.60983 6.14736 5.01828 5.28912 5.01828C4.43087 5.01828 3.66988 5.60983 3.54255 6.44702C3.52998 6.51323 3.5309 6.58129 3.54524 6.64713C3.55958 6.71298 3.58704 6.77525 3.62599 6.83024C3.66494 6.88523 3.71458 6.9318 3.77194 6.96717C3.8293 7.00254 3.8932 7.02599 3.95982 7.0361C4.02645 7.04622 4.09443 7.0428 4.1597 7.02604C4.22497 7.00929 4.28619 6.97955 4.33971 6.9386C4.39323 6.89765 4.43794 6.84633 4.47118 6.78771C4.50441 6.72909 4.52548 6.66437 4.53314 6.59741ZM10.8036 6.02091C10.3875 6.02091 10.0937 6.30164 10.0476 6.59741C10.0234 6.7249 9.95071 6.83804 9.84482 6.91305C9.73893 6.98805 9.60809 7.01908 9.4798 6.9996C9.35151 6.98012 9.23577 6.91166 9.15692 6.80861C9.07806 6.70555 9.04224 6.57594 9.05698 6.44702C9.18431 5.60983 9.94531 5.01828 10.8036 5.01828C11.6618 5.01828 12.4228 5.60983 12.5501 6.44702C12.5649 6.57594 12.529 6.70555 12.4502 6.80861C12.3713 6.91166 12.2556 6.98012 12.1273 6.9996C11.999 7.01908 11.8682 6.98805 11.7623 6.91305C11.6564 6.83804 11.5837 6.7249 11.5595 6.59741C11.5134 6.30164 11.2196 6.02091 10.8036 6.02091ZM3.53152 8.52747C3.46159 8.52755 3.39246 8.54226 3.32855 8.57065C3.26465 8.59905 3.2074 8.6405 3.16047 8.69234C3.11354 8.74417 3.07797 8.80526 3.05606 8.87166C3.03414 8.93806 3.02636 9.00832 3.03321 9.07791C3.27184 11.5273 5.19487 13.5406 8.04333 13.5406C10.8918 13.5406 12.8158 11.5273 13.0544 9.07791C13.0613 9.00823 13.0535 8.9379 13.0315 8.87142C13.0095 8.80495 12.9739 8.74382 12.9269 8.69196C12.8798 8.64011 12.8224 8.59868 12.7584 8.57035C12.6944 8.54202 12.6251 8.52741 12.5551 8.52747H3.53152ZM8.04333 12.538C5.95687 12.538 4.5181 11.2315 4.12106 9.53009H11.9666C11.5686 11.2315 10.1308 12.538 8.04333 12.538ZM8.04834 0.50647C5.92104 0.50647 3.88087 1.35154 2.37664 2.85577C0.872411 4.35999 0.0273438 6.40017 0.0273438 8.52747C0.0273438 10.6548 0.872411 12.6949 2.37664 14.1992C3.88087 15.7034 5.92104 16.5485 8.04834 16.5485C10.1756 16.5485 12.2158 15.7034 13.72 14.1992C15.2243 12.6949 16.0693 10.6548 16.0693 8.52747C16.0693 6.40017 15.2243 4.35999 13.72 2.85577C12.2158 1.35154 10.1756 0.50647 8.04834 0.50647ZM1.02997 8.52747C1.02997 7.6058 1.2115 6.69316 1.56421 5.84165C1.91692 4.99014 2.43389 4.21644 3.0856 3.56473C3.73732 2.91301 4.51102 2.39604 5.36253 2.04334C6.21403 1.69063 7.12668 1.50909 8.04834 1.50909C8.97001 1.50909 9.88265 1.69063 10.7342 2.04334C11.5857 2.39604 12.3594 2.91301 13.0111 3.56473C13.6628 4.21644 14.1798 4.99014 14.5325 5.84165C14.8852 6.69316 15.0667 7.6058 15.0667 8.52747C15.0667 10.3889 14.3273 12.174 13.0111 13.4902C11.6949 14.8064 9.90973 15.5458 8.04834 15.5458C6.18695 15.5458 4.4018 14.8064 3.0856 13.4902C1.7694 12.174 1.02997 10.3889 1.02997 8.52747Z" fill="#FF5F00"/>
