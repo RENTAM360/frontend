@@ -139,7 +139,7 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2"
           >
             {filteredEquipments.map((equipment) => {
-              console.log(equipment)
+              // console.log(equipment)
               return (
              
                 <EquipmentCard

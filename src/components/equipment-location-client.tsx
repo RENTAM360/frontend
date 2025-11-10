@@ -8,91 +8,92 @@ import { useEffect, useState } from "react"
 import { getAddress } from "./address-converter"
 import { useMessagingContext } from "@/context/messaging-context"
 import { socketService } from "@/lib/socket"
-import { useGetOtherUserProfileQuery, useGetProfileQuery } from "@/lib/redux/api/authApi"
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
 import { getInitials } from "@/app/utils/getInitials"
+import { useGetUserFeedbacksQuery } from "@/lib/redux/api/feedbackApi"
 
-const mockEquipmentData = {
-  id: "1",
-  title: "Toyota Camry for Rent – Smooth, Stylish, and Reliable!",
-  description:
-    "Looking for a comfortable and fuel-efficient ride? Our Toyota Camry is the perfect choice! Whether it's for a business trip, weekend getaway, or city cruising, this sedan offers:",
-  features: [
-    {
-      icon: "🚗",
-      text: "Smooth Performance – Powerful engine with excellent fuel efficiency.",
-    },
-    {
-      icon: "👔",
-      text: "Spacious & Comfortable – Premium interior with ample legroom.",
-    },
-    {
-      icon: "🎮",
-      text: "Modern Features – Bluetooth, touchscreen display, and premium sound system.",
-    },
-    {
-      icon: "🛡️",
-      text: "Safe & Reliable – Advanced safety features for a worry-free drive.",
-    },
-  ],
-  callToAction: "Rent this stylish Camry today and enjoy a seamless driving experience! Book now!",
-  guarantees: [
-    {
-      icon: (
-        <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M15.0404 7.12501C15.0407 6.17097 14.7948 5.233 14.3263 4.4019C13.8579 3.57079 13.1828 2.8747 12.3664 2.381C11.5501 1.8873 10.6201 1.61272 9.66647 1.58384C8.71287 1.55496 7.76796 1.77275 6.92322 2.21614C6.07847 2.65952 5.3625 3.31349 4.84461 4.11472C4.32672 4.91595 4.02445 5.83732 3.96707 6.78963C3.90968 7.74193 4.09912 8.69293 4.51704 9.55055C4.93497 10.4082 5.56723 11.1434 6.35262 11.685L3.95703 15.8333L5.74303 15.907L6.69937 17.4167L9.44328 12.6635L9.4987 12.6667C9.52641 12.6683 9.53512 12.6643 9.55412 12.6635L12.298 17.4167L13.2734 15.9394L15.0404 15.8333L12.6448 11.685C13.3839 11.1761 13.9882 10.4951 14.4055 9.70073C14.8228 8.90633 15.0407 8.02236 15.0404 7.12501ZM5.54037 7.12501C5.54037 6.34212 5.77252 5.57682 6.20746 4.92588C6.64241 4.27493 7.26062 3.76758 7.98391 3.46798C8.7072 3.16839 9.50309 3.09 10.2709 3.24273C11.0388 3.39547 11.7441 3.77246 12.2977 4.32604C12.8512 4.87963 13.2282 5.58493 13.381 6.35278C13.5337 7.12062 13.4553 7.91651 13.1557 8.6398C12.8561 9.36309 12.3488 9.98129 11.6978 10.4162C11.0469 10.8512 10.2816 11.0833 9.4987 11.0833C8.44888 11.0833 7.44207 10.6663 6.69973 9.92397C5.9574 9.18164 5.54037 8.17482 5.54037 7.12501Z"
-            fill="#12B76A"
-          />
-          <path
-            d="M9.5 9.5C10.8117 9.5 11.875 8.43668 11.875 7.125C11.875 5.81332 10.8117 4.75 9.5 4.75C8.18832 4.75 7.125 5.81332 7.125 7.125C7.125 8.43668 8.18832 9.5 9.5 9.5Z"
-            fill="#12B76A"
-          />
-        </svg>
-      ),
-      text: "Guaranteed",
-    },
-    {
-      icon: (
-        <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M1.1875 5.04688C1.1875 4.2275 1.8525 3.5625 2.67188 3.5625H13.9531C14.7725 3.5625 15.4375 4.2275 15.4375 5.04688V11.5781C15.4375 12.3975 14.7725 13.0625 13.9531 13.0625H2.67188C1.8525 13.0625 1.1875 12.3975 1.1875 11.5781V5.04688ZM4.75 5.34375V4.75H3.5625V5.34375C3.5625 5.50122 3.49994 5.65224 3.38859 5.76359C3.27724 5.87494 3.12622 5.9375 2.96875 5.9375H2.375V7.125H2.96875C3.44117 7.125 3.89423 6.93733 4.22828 6.60328C4.56233 6.26923 4.75 5.81617 4.75 5.34375ZM10.6875 8.3125C10.6875 7.68261 10.4373 7.07852 9.99188 6.63312C9.54648 6.18772 8.94239 5.9375 8.3125 5.9375C7.68261 5.9375 7.07852 6.18772 6.63312 6.63312C6.18772 7.07852 5.9375 7.68261 5.9375 8.3125C5.9375 8.94239 6.18772 9.54648 6.63312 9.99188C7.07852 10.4373 7.68261 10.6875 8.3125 10.6875C8.94239 10.6875 9.54648 10.4373 9.99188 9.99188C10.4373 9.54648 10.6875 8.94239 10.6875 8.3125ZM13.0625 4.75H11.875V5.34375C11.875 5.81617 12.0627 6.26923 12.3967 6.60328C12.7308 6.93733 13.1838 7.125 13.6562 7.125H14.25V5.9375H13.6562C13.4988 5.9375 13.3478 5.87494 13.2364 5.76359C13.1251 5.65224 13.0625 5.50122 13.0625 5.34375V4.75ZM4.75 11.2812C4.75 10.8088 4.56233 10.3558 4.22828 10.0217C3.89423 9.68767 3.44117 9.5 2.96875 9.5H2.375V10.6875H2.96875C3.12622 10.6875 3.27724 10.7501 3.38859 10.8614C3.49994 10.9728 3.5625 11.1238 3.5625 11.2812V11.875H4.75V11.2812ZM13.0625 11.875V11.2812C13.0625 11.1238 13.1251 10.9728 13.2364 10.8614C13.3478 10.7501 13.4988 10.6875 13.6562 10.6875H14.25V9.5H13.6562C13.1838 9.5 12.7308 9.68767 12.3967 10.0217C12.0627 10.3558 11.875 10.8088 11.875 11.2812V11.875H13.0625ZM5.34375 15.4375C4.96757 15.4376 4.60101 15.3187 4.29659 15.0977C3.99218 14.8767 3.76555 14.565 3.64919 14.2072C3.81385 14.2357 3.98288 14.25 4.15625 14.25H13.9531C14.6617 14.25 15.3414 13.9685 15.8424 13.4674C16.3435 12.9664 16.625 12.2867 16.625 11.5781V6.03844C16.9724 6.16127 17.2732 6.38885 17.4859 6.68979C17.6986 6.99074 17.8127 7.35024 17.8125 7.71875V11.5781C17.8125 12.0849 17.7127 12.5868 17.5187 13.055C17.3248 13.5233 17.0405 13.9487 16.6821 14.3071C16.3237 14.6655 15.8983 14.9498 15.43 15.1437C14.9618 15.3377 14.4599 15.4375 13.9531 15.4375H5.34375Z"
-            fill="#12B76A"
-          />
-        </svg>
-      ),
-      text: "Money back",
-    },
-  ],
-  images: ["/excavator.svg", "/generator.svg", "/keyboard.svg", "/toyota-black.svg", "/toyota-red.svg"],
-  price: 50000,
-  location: "Rivers, Port harcourt, 7 woji road",
-  phoneNumber: "08107355412",
-  category: "Vehicles",
-  rating: 4.5,
-  owner: {
-    id: "1",
-    name: "Thankgod Ogbonna",
-    image: "/tg.svg",
-    verified: true,
-  },
-  feedback: [
-    {
-      id: "feedback1",
-      user: {
-        id: "user1",
-        name: "David Okwudiri",
-        image: "/david.svg",
-      },
-      text: "Good guy... helped follow up with installation",
-      rating: "positive", // positive, neutral, negative
-      timeAgo: "2 d",
-      likes: 0,
-      replies: 1,
-    },
-    // More feedback items would go here
-  ],
-  totalFeedback: 24,
-}
+// const mockEquipmentData = {
+//   id: "1",
+//   title: "Toyota Camry for Rent – Smooth, Stylish, and Reliable!",
+//   description:
+//     "Looking for a comfortable and fuel-efficient ride? Our Toyota Camry is the perfect choice! Whether it's for a business trip, weekend getaway, or city cruising, this sedan offers:",
+//   features: [
+//     {
+//       icon: "🚗",
+//       text: "Smooth Performance – Powerful engine with excellent fuel efficiency.",
+//     },
+//     {
+//       icon: "👔",
+//       text: "Spacious & Comfortable – Premium interior with ample legroom.",
+//     },
+//     {
+//       icon: "🎮",
+//       text: "Modern Features – Bluetooth, touchscreen display, and premium sound system.",
+//     },
+//     {
+//       icon: "🛡️",
+//       text: "Safe & Reliable – Advanced safety features for a worry-free drive.",
+//     },
+//   ],
+//   callToAction: "Rent this stylish Camry today and enjoy a seamless driving experience! Book now!",
+//   guarantees: [
+//     {
+//       icon: (
+//         <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+//           <path
+//             d="M15.0404 7.12501C15.0407 6.17097 14.7948 5.233 14.3263 4.4019C13.8579 3.57079 13.1828 2.8747 12.3664 2.381C11.5501 1.8873 10.6201 1.61272 9.66647 1.58384C8.71287 1.55496 7.76796 1.77275 6.92322 2.21614C6.07847 2.65952 5.3625 3.31349 4.84461 4.11472C4.32672 4.91595 4.02445 5.83732 3.96707 6.78963C3.90968 7.74193 4.09912 8.69293 4.51704 9.55055C4.93497 10.4082 5.56723 11.1434 6.35262 11.685L3.95703 15.8333L5.74303 15.907L6.69937 17.4167L9.44328 12.6635L9.4987 12.6667C9.52641 12.6683 9.53512 12.6643 9.55412 12.6635L12.298 17.4167L13.2734 15.9394L15.0404 15.8333L12.6448 11.685C13.3839 11.1761 13.9882 10.4951 14.4055 9.70073C14.8228 8.90633 15.0407 8.02236 15.0404 7.12501ZM5.54037 7.12501C5.54037 6.34212 5.77252 5.57682 6.20746 4.92588C6.64241 4.27493 7.26062 3.76758 7.98391 3.46798C8.7072 3.16839 9.50309 3.09 10.2709 3.24273C11.0388 3.39547 11.7441 3.77246 12.2977 4.32604C12.8512 4.87963 13.2282 5.58493 13.381 6.35278C13.5337 7.12062 13.4553 7.91651 13.1557 8.6398C12.8561 9.36309 12.3488 9.98129 11.6978 10.4162C11.0469 10.8512 10.2816 11.0833 9.4987 11.0833C8.44888 11.0833 7.44207 10.6663 6.69973 9.92397C5.9574 9.18164 5.54037 8.17482 5.54037 7.12501Z"
+//             fill="#12B76A"
+//           />
+//           <path
+//             d="M9.5 9.5C10.8117 9.5 11.875 8.43668 11.875 7.125C11.875 5.81332 10.8117 4.75 9.5 4.75C8.18832 4.75 7.125 5.81332 7.125 7.125C7.125 8.43668 8.18832 9.5 9.5 9.5Z"
+//             fill="#12B76A"
+//           />
+//         </svg>
+//       ),
+//       text: "Guaranteed",
+//     },
+//     {
+//       icon: (
+//         <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+//           <path
+//             d="M1.1875 5.04688C1.1875 4.2275 1.8525 3.5625 2.67188 3.5625H13.9531C14.7725 3.5625 15.4375 4.2275 15.4375 5.04688V11.5781C15.4375 12.3975 14.7725 13.0625 13.9531 13.0625H2.67188C1.8525 13.0625 1.1875 12.3975 1.1875 11.5781V5.04688ZM4.75 5.34375V4.75H3.5625V5.34375C3.5625 5.50122 3.49994 5.65224 3.38859 5.76359C3.27724 5.87494 3.12622 5.9375 2.96875 5.9375H2.375V7.125H2.96875C3.44117 7.125 3.89423 6.93733 4.22828 6.60328C4.56233 6.26923 4.75 5.81617 4.75 5.34375ZM10.6875 8.3125C10.6875 7.68261 10.4373 7.07852 9.99188 6.63312C9.54648 6.18772 8.94239 5.9375 8.3125 5.9375C7.68261 5.9375 7.07852 6.18772 6.63312 6.63312C6.18772 7.07852 5.9375 7.68261 5.9375 8.3125C5.9375 8.94239 6.18772 9.54648 6.63312 9.99188C7.07852 10.4373 7.68261 10.6875 8.3125 10.6875C8.94239 10.6875 9.54648 10.4373 9.99188 9.99188C10.4373 9.54648 10.6875 8.94239 10.6875 8.3125ZM13.0625 4.75H11.875V5.34375C11.875 5.81617 12.0627 6.26923 12.3967 6.60328C12.7308 6.93733 13.1838 7.125 13.6562 7.125H14.25V5.9375H13.6562C13.4988 5.9375 13.3478 5.87494 13.2364 5.76359C13.1251 5.65224 13.0625 5.50122 13.0625 5.34375V4.75ZM4.75 11.2812C4.75 10.8088 4.56233 10.3558 4.22828 10.0217C3.89423 9.68767 3.44117 9.5 2.96875 9.5H2.375V10.6875H2.96875C3.12622 10.6875 3.27724 10.7501 3.38859 10.8614C3.49994 10.9728 3.5625 11.1238 3.5625 11.2812V11.875H4.75V11.2812ZM13.0625 11.875V11.2812C13.0625 11.1238 13.1251 10.9728 13.2364 10.8614C13.3478 10.7501 13.4988 10.6875 13.6562 10.6875H14.25V9.5H13.6562C13.1838 9.5 12.7308 9.68767 12.3967 10.0217C12.0627 10.3558 11.875 10.8088 11.875 11.2812V11.875H13.0625ZM5.34375 15.4375C4.96757 15.4376 4.60101 15.3187 4.29659 15.0977C3.99218 14.8767 3.76555 14.565 3.64919 14.2072C3.81385 14.2357 3.98288 14.25 4.15625 14.25H13.9531C14.6617 14.25 15.3414 13.9685 15.8424 13.4674C16.3435 12.9664 16.625 12.2867 16.625 11.5781V6.03844C16.9724 6.16127 17.2732 6.38885 17.4859 6.68979C17.6986 6.99074 17.8127 7.35024 17.8125 7.71875V11.5781C17.8125 12.0849 17.7127 12.5868 17.5187 13.055C17.3248 13.5233 17.0405 13.9487 16.6821 14.3071C16.3237 14.6655 15.8983 14.9498 15.43 15.1437C14.9618 15.3377 14.4599 15.4375 13.9531 15.4375H5.34375Z"
+//             fill="#12B76A"
+//           />
+//         </svg>
+//       ),
+//       text: "Money back",
+//     },
+//   ],
+//   images: ["/excavator.svg", "/generator.svg", "/keyboard.svg", "/toyota-black.svg", "/toyota-red.svg"],
+//   price: 50000,
+//   location: "Rivers, Port harcourt, 7 woji road",
+//   phoneNumber: "08107355412",
+//   category: "Vehicles",
+//   rating: 4.5,
+//   owner: {
+//     id: "1",
+//     name: "Thankgod Ogbonna",
+//     image: "/tg.svg",
+//     verified: true,
+//   },
+//   feedback: [
+//     {
+//       id: "feedback1",
+//       user: {
+//         id: "user1",
+//         name: "David Okwudiri",
+//         image: "/david.svg",
+//       },
+//       text: "Good guy... helped follow up with installation",
+//       rating: "positive", // positive, neutral, negative
+//       timeAgo: "2 d",
+//       likes: 0,
+//       replies: 1,
+//     },
+//     // More feedback items would go here
+//   ],
+//   totalFeedback: 24,
+// }
 
 interface LocationPageProps {
  equipmentId: string
@@ -112,8 +113,12 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
     skip: !ownerId,
   });
 
-  const { data: profileData } = useGetProfileQuery()
-  const profile = profileData?.data?.user
+  const { data: feedbackData } = useGetUserFeedbacksQuery({ userId: ownerId })
+  
+  const feedbacks = feedbackData?.data || []
+
+  // const { data: profileData } = useGetProfileQuery()
+  // const profile = profileData?.data?.user
 
   const handleBookNow = () => {
     window.location.href = `/dashboard/checkout?id=${equipmentId}`
@@ -172,9 +177,10 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
   
     const isVerified = ownerProfile?.data.user.isVerify
 
-    const feedbackCount = profile?.feedbacks?.length ?? 0;
+    // const feedbackCount = profile?.feedbacks?.length ?? 0;
+    const feedbackCount = feedbacks.length;
 
-    const latestFeedback = profile?.feedbacks?.[profile.feedbacks.length - 1];
+    const latestFeedback = feedbacks?.at(-1);
 
 
     let reviewText: string;
@@ -408,24 +414,24 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3">
                     <div className="relative h-8 w-8 overflow-hidden rounded-full flex-shrink-0">
-                      {latestFeedback?.user?.avatar ? (
+                      {latestFeedback?.feedbackBy?.avatar ? (
                         <Image
                           src={
-                            mockEquipmentData.feedback[0].user.image ||
+                            latestFeedback.feedbackBy.avatar ||
                             "/user.svg?height=48&width=48&query=person" ||
                             "/user.svg" ||
                             "/user.svg"
                           }
-                          alt={mockEquipmentData.feedback[0].user.name}
+                          alt={latestFeedback.feedbackBy.avatar || "User Avatar"}
                           fill
                           className="object-cover"
                         />
                       ) : (
-                        getInitials(latestFeedback.feedackBy.firstName)
+                        getInitials(latestFeedback.feedbackBy.firstName)
                       )}
                     </div>
                     <div>
-                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedackBy.firstName}</h4>
+                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedbackBy.firstName}</h4>
                       <p className="mt-1 text-[12.03px]">{latestFeedback.comment}</p>
                     </div>
                   </div>
@@ -443,7 +449,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
 
             {/* Leave Feedback */}
             <div className="pl-6">
-              <div className="mt-2 flex items-center gap-4 text-gray-500">
+              {/* <div className="mt-2 flex items-center gap-4 text-gray-500">
                 <span className="text-[#979797] text-xs">{mockEquipmentData.feedback[0].timeAgo}</span>
                 <button className="hover:text-gray-700 font-bold text-xs text-[#979797]">Like</button>
                 <button className="hover:text-gray-700 font-bold text-xs text-[#979797]">Reply</button>
@@ -471,7 +477,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
 
                   {mockEquipmentData.feedback[0].replies}
                 </div>
-              </div>
+              </div> */}
               <button className="flex items-center pb-4 my-4 gap-2 w-full text-left hover:bg-gray-50">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path

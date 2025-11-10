@@ -13,6 +13,7 @@ export function WalletView() {
   const [filter, setFilter] = useState<string>("All")
   const [activeTab, setActiveTab] = useState<"all" | "rentals" | "transactions">("all")
   const [page, setPage] = useState(1)
+  console.log(setPage)
 
   const { data: walletSummary, isLoading: isLoadingSummary } = useGetWalletSummaryQuery()
   const { data: walletHistory, isLoading: isLoadingHistory } = useGetWalletHistoryQuery({ page, limit: 50 })
@@ -31,6 +32,7 @@ export function WalletView() {
 
   // Map API transaction status to display format
   const getTransactionTitle = (status: string, amount: number) => {
+    console.log(status, amount)
     const statusLower = status.toLowerCase()
     if (statusLower === "withdrawn") return "Withdrawal"
     if (statusLower === "deposit" || statusLower === "deposited") return "Deposit"
@@ -39,6 +41,7 @@ export function WalletView() {
   }
 
   const getTransactionType = (status: string): "rental" | "transaction" => {
+    console.log(status)
     // You may need to adjust this based on your API response
     // For now, treating all as transactions
     return "transaction"
@@ -54,7 +57,7 @@ export function WalletView() {
         day: "numeric",
       }),
       amount: transaction.amount,
-      status: transaction.status.toLowerCase() as any,
+      status: transaction.status.toLowerCase() as string,
       type: getTransactionType(transaction.status),
     }))
     .filter((transaction) => {
