@@ -24,15 +24,18 @@ export const messagingApi = baseApi.injectEndpoints({
      getMessages: builder.query<Message[], { receiverId: string; currentUserId: string }>({
       query: ({ receiverId }) => `/messages/${receiverId}`,
 
-      transformResponse: (response: { status: number; data: { messages: Message[] } }) => {
+      transformResponse: (response: { status: number; data: { messages: { messages: Message[] } }; }) => {
         console.log("[v0] Messages API response:", response)
 
-        if (!response.data || !Array.isArray(response.data.messages)) {
+        const messages = response.data?.messages?.messages ?? [];
+        
+        if (!Array.isArray(messages)) {
           console.error("[v0] Invalid messages response format:", response)
           return []
         }
+
         
-        return response.data.messages
+        return messages;
       },
       providesTags: (result, error, { receiverId }) => [{ type: "Message", id: receiverId }],
     }),
