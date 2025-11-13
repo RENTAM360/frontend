@@ -1,7 +1,9 @@
 import type {
   MessagesResponse,
+  MessagesWithEquipmentResponse,
   Message,
   Conversation,
+  MessagesPayload,
 } from "@/types/messaging"
 import { baseApi } from "./baseApi"
 
@@ -21,21 +23,26 @@ export const messagingApi = baseApi.injectEndpoints({
     }),
 
     // Get all messages with a specific receiver
-     getMessages: builder.query<Message[], { receiverId: string; currentUserId: string }>({
+    getMessages: builder.query<MessagesPayload, { receiverId: string; currentUserId: string }>({
       query: ({ receiverId }) => `/messages/${receiverId}`,
 
-      transformResponse: (response: { status: number; data: { messages: { messages: Message[] } }; }) => {
+      transformResponse: (response: MessagesWithEquipmentResponse): MessagesPayload => {
         console.log("[v0] Messages API response:", response)
 
-        const messages = response.data?.messages?.messages ?? [];
-        
+        const payload = response.data?.messages
+        const messages = payload?.messages ?? []
+
         if (!Array.isArray(messages)) {
           console.error("[v0] Invalid messages response format:", response)
-          return []
+          return { messages: [] }
         }
 
-        
-        return messages;
+        const equipment = payload?.equipment ?? undefined
+
+        return {
+          messages,
+          equipment,
+        }
       },
       providesTags: (result, error, { receiverId }) => [{ type: "Message", id: receiverId }],
     }),
@@ -84,7 +91,15 @@ export const messagingApi = baseApi.injectEndpoints({
             "getMessages",
             { receiverId, currentUserId: message.sender === "user" ? "current" : receiverId },
             (draft) => {
-              draft.push(message)
+              if (!Array.isArray(draft.messages)) {
+                draft.messages = []
+              }
+
+              draft.messages.push(message)
+
+              if (!draft.equipment && message.equipment && typeof message.equipment !== "string") {
+                draft.equipment = message.equipment
+              }
             },
           ),
         )
@@ -143,7 +158,7 @@ export const messagingApi = baseApi.injectEndpoints({
         const patchResults = [
           dispatch(
             messagingApi.util.updateQueryData("getMessages", { receiverId, currentUserId }, (draft) => {
-              draft.forEach((message) => {
+              draft.messages?.forEach((message) => {
                 if (message.sender === "other") {
                   message.read = true
                 }

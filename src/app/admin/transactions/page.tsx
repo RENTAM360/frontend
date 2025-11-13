@@ -13,6 +13,7 @@ import {
   useGetTransactionsQuery,
 } from "@/lib/redux/api/transactionApi";
 import { AnimatedLogo } from "@/components/loading-logo"
+import TransactionsFilter, { TransactionsFilterValue } from "@/components/transaction-filter"
 // import { enqueueSnackbar } from "notistack"
 
 
@@ -21,6 +22,7 @@ export default function TransactionsPage() {
     const [activeTab, setActiveTab] = useState("all")
     const [searchQuery, setSearchQuery] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+    const [filter, setFilter] = useState<TransactionsFilterValue>({ mode: "none" })
     const [page, setPage] = useState(1)
     const limit = 10
 
@@ -37,14 +39,23 @@ export default function TransactionsPage() {
     }, [searchQuery])
 
     const { data: overviewData } = useGetTransactionOverviewQuery();
-  const { data: transactionsData, isLoading } = useGetTransactionsQuery({
-    page,
-    limit,
-    status:
-      activeTab !== "all"
-        ? activeTab.toLowerCase().replace(" transactions", "")
-        : undefined,
-  });
+    const { data: transactionsData, isLoading } = useGetTransactionsQuery({
+      page,
+      limit,
+      status:
+        activeTab !== "all"
+          ? activeTab.toLowerCase().replace(" transactions", "")
+          : undefined,
+      startDate: filter.mode === "date" ? filter.startDate : undefined,
+      endDate: filter.mode === "date" ? filter.endDate : undefined,
+      amountFilter:
+        filter.mode === "amount"
+          ? JSON.stringify({
+              min: filter.minAmount,
+              max: filter.maxAmount,
+            })
+          : undefined,
+    })
 
   const transactions = transactionsData?.data?.history ?? [];
   const total = transactionsData?.data?.total ?? 0;
@@ -147,16 +158,27 @@ export default function TransactionsPage() {
               )
             )}
           </div>
-          <div className="relative mt-4 md:mt-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search by name, email, address"
-              className="w-[300px] pl-9 shadow-none py-4 rounded-lg border-[#EAEAEA]"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+          <div className="flex items-center gap-3 relative border border-gray-200 rounded-full shadow-sm overflow-hidden mt-4 md:mt-0">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="search"
+                placeholder="Search by name or email address"
+                className="w-[300px] pl-9 shadow-none py-4 rounded-lg border-[#EAEAEA]"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setPage(1)
+                }}
+              />
+            </div>
+            <TransactionsFilter
+              initial={filter}
+              onApply={(value) => setFilter(value)}
+              onClear={() => setFilter({ mode: "none" })}
             />
           </div>
+
         </div>
 
        <div className="w-full">

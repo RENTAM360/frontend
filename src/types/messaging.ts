@@ -33,7 +33,7 @@ export interface Message {
   createdAt: string
   updatedAt: string
   __v?: number
-  equipment?: Equipment
+  equipment?: Equipment | string
 }
 
 export interface Conversation {
@@ -75,12 +75,23 @@ export interface ConversationsResponse {
   status: number
   data: Conversation[]
 }
+export interface MessagesPayload {
+  messages: Message[]
+  equipment?: Equipment
+}
+
+export interface MessagesWithEquipmentResponse {
+  status: number
+  message: string
+  data?: {
+    messages?: MessagesPayload
+  }
+}
+
 export interface MessagesResponse {
   status: number
   message: string
-  data: {
-    messages: Message[]
-  }
+  data?: Message[]
 }
 
 // Socket event types

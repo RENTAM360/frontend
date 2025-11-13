@@ -65,13 +65,36 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
 
 
   const {
-    data: messages = [],
+    data: messagesData,
+    currentData: currentMessagesData,
+    originalArgs: messagesQueryArgs,
     isLoading: isLoadingMessages,
+    // isFetching: isFetchingMessages,
   } = useGetMessagesQuery({ receiverId: activeConversationId!, currentUserId }, { skip: !activeConversationId })
+
+  const messagesPayload = useMemo(() => {
+    const latestPayload = currentMessagesData ?? messagesData
+
+    if (!latestPayload) {
+      return undefined
+    }
+
+    if (messagesQueryArgs?.receiverId !== activeConversationId) {
+      return undefined
+    }
+
+    return latestPayload
+  }, [currentMessagesData, messagesData, messagesQueryArgs?.receiverId, activeConversationId])
+
+  const messages = useMemo(() => {
+    return messagesPayload?.messages ?? []
+  }, [messagesPayload])
+  
+  const equipmentFromMessages = messagesPayload?.equipment
   console.log(messages)
 
   useEffect(() => {
-    if (!activeConversationId || messages.length === 0) return
+    if (!activeConversationId || !messagesPayload) return
 
     dispatch(
     messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
@@ -82,18 +105,19 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     })
   )
 
-    const firstWithEquipment = messages.find((msg) => msg.equipment)
-    if (firstWithEquipment?.equipment) {
-      dispatch(
-        messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
-          const conv = draft.find((c) => c.userId === activeConversationId)
-          if (conv) {
-            conv.equipment = firstWithEquipment.equipment
-          }
-        })
-      )
-    }
-  }, [messages, activeConversationId, dispatch])
+    dispatch(
+      messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+        const conv = draft.find((c) => c.userId === activeConversationId)
+        if (!conv) return
+
+        if (equipmentFromMessages) {
+          conv.equipment = equipmentFromMessages
+        } else {
+          conv.equipment = undefined
+        }
+      })
+    )
+  }, [messagesPayload, equipmentFromMessages, messages, activeConversationId, dispatch])
 
   
   // RTK Query OPTIMISTIC mutations
@@ -149,7 +173,13 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
 
     dispatch(
       messagingApi.util.updateQueryData("getMessages", { receiverId: conversationId, currentUserId }, (draft) => {
-        draft.push(message)
+        if (!Array.isArray(draft.messages)) {
+          draft.messages = []
+        }
+        draft.messages.push(message)
+        if (!draft.equipment && message.equipment && typeof message.equipment !== "string") {
+          draft.equipment = message.equipment
+        }
       })
     )
 
@@ -295,16 +325,21 @@ const activeConversation = useMemo<Conversation | null>(() => {
 
   const conv = conversations.find((c) => c.userId === activeConversationId)
   if (!conv && tempConversationRef.current?.userId === activeConversationId) {
-    return { ...tempConversationRef.current, messages: messages || [] }
+    return {
+      ...tempConversationRef.current,
+      messages: messages || [],
+      equipment: equipmentFromMessages ?? tempConversationRef.current.equipment ?? undefined,
+    }
   }
 
   return conv
     ? {
         ...conv,
         messages: messages || [],
+        equipment: equipmentFromMessages ?? conv.equipment ?? undefined,
       }
     : null
-}, [activeConversationId, conversations, messages])
+}, [activeConversationId, conversations, messages, equipmentFromMessages])
 
 
   // Join a conversation
@@ -325,6 +360,7 @@ const activeConversation = useMemo<Conversation | null>(() => {
           if (c) c.unreadCount = 0
         })
       )
+
     },
     [isConnected, dispatch]
   )

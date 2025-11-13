@@ -5,8 +5,8 @@ import { MessageList } from "@/components/message-list"
 import { MessageView } from "@/components/message-view"
 import { ArrowLeft, Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
 import { useMessagingContext } from "@/context/messaging-context"
-import { useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ReportModal } from "@/components/report-modal"
 import Link from "next/link"
@@ -15,6 +15,7 @@ import { timeAgo } from "@/app/utils/timeAgo"
 export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
 
   const {
     conversations,
@@ -29,6 +30,8 @@ export default function MessagesPage() {
     setActiveConversationId,
   } = useMessagingContext()
 
+  const router = useRouter()
+  const pathname = usePathname()
   // console.log(activeConversation)
 
   const searchParams = useSearchParams()
@@ -56,7 +59,16 @@ export default function MessagesPage() {
 
   // Handle URL conversation parameter
   useEffect(() => {
-    if (!convId) return
+    if (!convId) {
+      setSelectedConversationId(null)
+      return
+    }
+
+    setSelectedConversationId(convId)
+
+    if (activeConversationId === convId) {
+      return
+    }
 
     const existing = conversations.find((c) => c.userId === convId)
 
@@ -65,7 +77,21 @@ export default function MessagesPage() {
     } else if (!isLoadingConversations) {
       console.warn("[Messaging] Conversation not found:", convId)
     }
-  }, [convId, joinConversation, conversations, isLoadingConversations])
+  }, [convId, activeConversationId, joinConversation, conversations, isLoadingConversations])
+
+  useEffect(() => {
+    if (activeConversationId) {
+      setSelectedConversationId(activeConversationId)
+    }
+  }, [activeConversationId])
+
+  const desiredConversationId = selectedConversationId ?? convId ?? activeConversationId ?? null
+  const activeListId = desiredConversationId ?? ""
+  const conversationForView =
+    activeConversation && desiredConversationId && activeConversation.userId === desiredConversationId
+      ? activeConversation
+      : null
+  const isConversationPending = !!desiredConversationId && !conversationForView
 
   // Format conversations for MessageList component
   const formattedConversations = useMemo(() => {
@@ -94,18 +120,34 @@ export default function MessagesPage() {
       time: formatTime(conv.lastMessageTime),
       lastMessageTime: conv.lastMessageTime,
       avatar: conv.avatar,
-      isActive: conv.userId === activeConversationId,
+      isActive: conv.userId === activeListId,
       unreadCount: conv.unreadCount,
     }))
     .sort((a, b) => new Date(b.lastMessageTime ?? 0).getTime() - new Date(a.lastMessageTime ?? 0).getTime())
-  }, [conversations, activeConversationId])
+  }, [conversations, activeListId])
+
+  const handleSelectConversation = useCallback(
+    (conversationId: string) => {
+      setSelectedConversationId(conversationId)
+
+      const params = new URLSearchParams(searchParams.toString())
+      params.set("conversation", conversationId)
+      const nextPath = params.toString() ? `${pathname}?${params.toString()}` : pathname
+      router.replace(nextPath, { scroll: false })
+
+      const targetConversation = conversations.find((c) => c.userId === conversationId)
+      joinConversation(conversationId, targetConversation)
+    },
+    [conversations, joinConversation, pathname, router, searchParams],
+  )
 
   const handleSendMessage = async (message: string) => {
-    if (!activeConversation) {
+    const targetConversation = conversationForView ?? activeConversation
+    if (!targetConversation) {
       throw new Error("No active conversation")
     }
 
-    await sendMessage(activeConversation.userId, message)
+    await sendMessage(targetConversation.userId, message)
   }
 
   // const handleOpenReportModal = () => {
@@ -132,7 +174,7 @@ export default function MessagesPage() {
           flex flex-col md:border-r bg-white
           transition-transform duration-300 ease-in-out
           w-full md:w-[30%]
-          ${activeConversation && !isLoadingMessages ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"}
+          ${desiredConversationId ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"}
         `}
         >
           {/* Header */}
@@ -170,8 +212,8 @@ export default function MessagesPage() {
             ) : (
               <MessageList
                 conversations={filteredConversations}
-                activeId={activeConversationId ?? ""}
-                onSelect={joinConversation}
+                activeId={activeListId}
+                onSelect={handleSelectConversation}
               />
             )}
           </div>
@@ -183,51 +225,60 @@ export default function MessagesPage() {
           absolute top-0 left-0 w-full h-full bg-white flex flex-col
           transition-transform duration-300 ease-in-out
           md:static md:flex-1
-          ${activeConversation ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+          ${desiredConversationId ? "translate-x-0" : "translate-x-full md:translate-x-0"}
         `}
         >
-          {activeConversation ? (
+          {conversationForView ? (
             <>
               {/* Conversation Header */}
               <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
-                <Link href={`/dashboard/user/owner/${activeConversation.userId}`} className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3">
                   {/* Back button (mobile only) */}
                   <button
-                    onClick={() => setActiveConversationId(null)}
+                    onClick={() => {
+                      setSelectedConversationId(null)
+                      setActiveConversationId(null)
+                      const params = new URLSearchParams(searchParams.toString())
+                      params.delete("conversation")
+                      const nextPath = params.toString() ? `${pathname}?${params.toString()}` : pathname
+                      router.replace(nextPath, { scroll: false })
+                    }}
                     className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
                   >
                     <ArrowLeft className="h-5 w-5 text-gray-600" />
                   </button>
-                  <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-100">
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                      <User className="h-5 w-5" />
-                    </div>
-                    {activeConversation.avatar && (
-                      <Image
-                        src={activeConversation.avatar || "/placeholder.svg"}
-                        alt={activeConversation.name}
-                        fill
-                        className="object-cover z-10"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = "none"
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{activeConversation.name}</h2>
-                    <p className="text-xs text-[#B3B3B3]">
-                      {userStatus?.isOnlinr ? (
-                        <span className="text-[#12B76A]">Online</span>
-                      ) : userStatus?.lastActive ? (
-                        `Last active ${timeAgo(userStatus.lastActive)}`
-                      ) : (
-                        "Offline"
+                  <Link href={`/dashboard/user/owner/${conversationForView.userId}`} className="flex items-center space-x-3">
+                    <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-100">
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                        <User className="h-5 w-5" />
+                      </div>
+                      {conversationForView.avatar && (
+                        <Image
+                          src={conversationForView.avatar || "/placeholder.svg"}
+                          alt={conversationForView.name}
+                          fill
+                          className="object-cover z-10"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = "none"
+                          }}
+                        />
                       )}
-                    </p>
-                  </div>
-                </Link>
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{conversationForView.name}</h2>
+                      <p className="text-xs text-[#B3B3B3]">
+                        {userStatus?.isOnlinr ? (
+                          <span className="text-[#12B76A]">Online</span>
+                        ) : userStatus?.lastActive ? (
+                          `Last active ${timeAgo(userStatus.lastActive)}`
+                        ) : (
+                          "Offline"
+                        )}
+                      </p>
+                    </div>
+                  </Link>
+                </div>
                 <div className="flex items-center space-x-2">
                   <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
                     <Flag className="h-5 w-5" fill="#12B76A" />
@@ -254,14 +305,14 @@ export default function MessagesPage() {
               </div>
 
               {/* Message View */}
-              {isLoadingMessages ? (
+              {isLoadingMessages || isConversationPending ? (
                 <div className="flex-1 flex items-center overflow-y-auto justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
                 </div>
               ) : (
                 <div className="flex-1 overflow-hidden">
                   <MessageView
-                    conversation={activeConversation}
+                    conversation={conversationForView}
                     showProductCard={true}
                     onSendMessage={handleSendMessage}
                   />
@@ -282,13 +333,13 @@ export default function MessagesPage() {
           )}
         </div>
 
-      {activeConversation && activeConversation.equipment && (
+      {conversationForView && conversationForView.equipment && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={handleCloseReportModal}
-          reportedUserId={activeConversation.userId}
-          reportedUserName={activeConversation.name}
-          equipmentId={activeConversation.equipment._id}
+          reportedUserId={conversationForView.userId}
+          reportedUserName={conversationForView.name}
+          equipmentId={conversationForView.equipment._id}
         />
       )}
     </div>

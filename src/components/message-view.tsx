@@ -180,7 +180,7 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
       {/* Message input */}
       <div className="sticky bottom-0 z-20 border-t bg-white p-3">
         <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-          <button type="button" className="flex-shrink-0 bg-primary w-8 h-8 flex justify-center items-center cursor-pointer rounded-full p-2">
+          <div className="flex-shrink-0 bg-primary w-8 h-8 flex justify-center items-center cursor-pointer rounded-full p-2">
             <MediaUploadDropdown
               onUpload={async (urls) => {
                 console.log("Uploaded file URLs:", urls)
@@ -192,7 +192,7 @@ export function MessageView({ conversation, showProductCard }: MessageViewProps)
               }}
             />
 
-          </button>
+          </div>
           <input
             type="text"
             value={message}
