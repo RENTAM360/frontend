@@ -399,9 +399,13 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
         {replies.map((reply) => {
           const replyUser = reply.isInline ? reply.feedbackBy : reply.user
           const replyDate = reply.isInline ? reply.feedbackBy.createdAt : reply.createdAt
-          const replyLikeCount = Array.isArray((reply as any).likes)
-            ? (reply as any).likes.length
-            : (reply as any).likes ?? 0
+          const replyLikesRaw = (reply as Reply).likes
+          let replyLikeCount = 0
+          if (Array.isArray(replyLikesRaw)) {
+            replyLikeCount = replyLikesRaw.length
+          } else if (typeof replyLikesRaw === "number") {
+            replyLikeCount = replyLikesRaw
+          }
           const replyLiked = likedReplyIds.has(reply._id)
           const displayedLikeCount = replyLiked && replyLikeCount === 0 ? 1 : replyLikeCount
 
