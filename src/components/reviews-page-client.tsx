@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, MessageCircle, ThumbsUp, Paperclip, Send, X } from "lucide-react"
+import { ArrowLeft, ThumbsUp, Paperclip, Send, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FeedbackModal } from "@/components/feedback-modal"
 import {
@@ -203,27 +203,36 @@ export function FeedbackPageClient({ ownerId }: FeedbackPageClientProps) {
 
 function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: string}) {
   console.log(feedback)
-  const [activeReplyId, setActiveReplyId] = useState<string | null>(null)
+  const [activeReplyTarget, setActiveReplyTarget] = useState<{ feedbackId: string; replyId?: string } | null>(null)
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
   const [likedFeedbacks, setLikedFeedbacks] = useState<Set<string>>(new Set())
+  const [likedReplyIds, setLikedReplyIds] = useState<Set<string>>(new Set())
   const [likeFeedback] = useLikeFeedbackMutation()
   const [createFeedbackReply, { isLoading: isCreatingReply }] = useCreateFeedbackReplyMutation()
   const { data: replyData, isFetching } = useGetFeedbackRepliesQuery(feedback._id, {
-    skip: activeReplyId !== feedback._id || (feedback.reply && feedback.reply.length > 0),
+    skip:
+      (feedback.reply && feedback.reply.length > 0) ||
+      activeReplyTarget?.feedbackId !== feedback._id,
   })
 
   console.log(replyData)
 
-  const handleReplyClick = (feedbackId: string) => {
-    setActiveReplyId(activeReplyId === feedbackId ? null : feedbackId)
+  const handleReplyClick = (feedbackId: string, replyId?: string) => {
+    setActiveReplyTarget((prev) => {
+      if (prev && prev.feedbackId === feedbackId && prev.replyId === replyId) {
+        return null
+      }
+      return { feedbackId, replyId }
+    })
   }
 
-  const handleReplyTextChange = (feedbackId: string, text: string) => {
-    setReplyTexts((prev) => ({ ...prev, [feedbackId]: text }))
+  const handleReplyTextChange = (targetId: string, text: string) => {
+    setReplyTexts((prev) => ({ ...prev, [targetId]: text }))
   }
 
-  const handleSubmitReply = async (feedbackId: string) => {
-    const replyText = replyTexts[feedbackId]?.trim()
+  const handleSubmitReply = async (feedbackId: string, replyId?: string) => {
+    const targetKey = replyId ?? feedbackId
+    const replyText = replyTexts[targetKey]?.trim()
     if (!replyText) return
 
     try {
@@ -232,11 +241,12 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
         feedbackId,
         reply: {
           comment: replyText,
+          parentReplyId: replyId,
         },
       }).unwrap()
 
-      setReplyTexts((prev) => ({ ...prev, [feedbackId]: "" }))
-      setActiveReplyId(null)
+      setReplyTexts((prev) => ({ ...prev, [targetKey]: "" }))
+      setActiveReplyTarget(null)
     } catch (error) {
       console.error("Failed to submit reply:", error)
     }
@@ -257,6 +267,18 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
     } catch (error) {
       console.error("Failed to like feedback:", error)
     }
+  }
+
+  const toggleReplyLike = (replyId: string) => {
+    setLikedReplyIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(replyId)) {
+        next.delete(replyId)
+      } else {
+        next.add(replyId)
+      }
+      return next
+    })
   }
 
   // Use inline replies from feedback.reply if available, otherwise use fetched replies
@@ -295,7 +317,7 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
             {feedback.feedbackBy?.firstName} {feedback.feedbackBy?.lastName}
           </h3>
 
-          <div className="flex items-center gap-1">
+          {/* <div className="flex items-center gap-1">
             {[...Array(5)].map((_, i) => (
               <svg
                 key={i}
@@ -308,7 +330,7 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
                 />
               </svg>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -339,26 +361,26 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
       )}
 
       <button
-        className={`flex items-center gap-1 cursor-pointer hover:text-gray-700 ${
+        className={`flex items-center font-semibold gap-1 cursor-pointer text-[#979797] ${
           likedFeedbacks.has(feedback._id) ? "text-primary" : ""
         }`}
         onClick={() => handleLikeFeedback(feedback._id)}
       >
-        <ThumbsUp
+        {/* <ThumbsUp
           className={`w-4 h-4 ${likedFeedbacks.has(feedback._id) ? "fill-primary" : ""}`}
-        />
+        /> */}
         Like
       </button>
 
       <button
-        className="flex items-center cursor-pointer gap-1 hover:text-gray-700"
+        className="flex items-center font-semibold cursor-pointer gap-1 text-[#979797]"
         onClick={() => handleReplyClick(feedback._id)}
       >
-        <MessageCircle className="w-4 h-4" />
+        {/* <MessageCircle className="w-4 h-4" /> */}
         Reply
-        {feedback.replyCount !== undefined && feedback.replyCount > 0 && (
-          <span className="ml-1">({feedback.replyCount})</span>
-        )}
+        {/* {feedback.replyCount !== undefined && feedback.replyCount > 0 && (
+          <span className="ml-1">{feedback.replyCount}</span>
+        )} */}
       </button>
 
       {feedback.likes > 0 && (
@@ -372,94 +394,139 @@ function FeedbackItem({ feedback, ownerId }: {feedback: Feedback; ownerId: strin
     {/* Replies */}
     {isFetching && !feedback.reply ? (
       <div className="mt-4 pl-10 text-sm text-gray-500">Loading replies...</div>
-      ) : replies.length > 0 ? (
-        <div className="mt-4 pl-10 space-y-4">
-          {replies.map((reply) => {
-            // Handle both inline replies (with feedbackBy) and fetched replies (with user)
-            // const replyAny = reply as any;
-            // const isInlineReply = 'feedbackBy' in reply;
-            // const replyUser = isInlineReply ? replyAny.feedbackBy : replyAny.user;
-            // const replyDate = isInlineReply && replyAny.feedbackBy?.createdAt 
-            //   ? replyAny.feedbackBy.createdAt 
-            //   : (!isInlineReply && replyAny.createdAt ? replyAny.createdAt : undefined);
-            const replyUser = reply.isInline ? reply.feedbackBy : reply.user;
-            const replyDate = reply.isInline
-              ? reply.feedbackBy.createdAt
-              : reply.createdAt;
-            
-            return (
-              <div key={reply._id} className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700">
-                    {replyUser?.avatar ? (
-                      <Image
-                        src={replyUser.avatar || "/placeholder.svg"}
-                        alt={`${replyUser.firstName} ${replyUser.lastName}`}
-                        width={32}
-                        height={32}
-                        className="object-cover"
-                      />
-                    ) : (
-                      getInitials(replyUser?.firstName || "U")
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">
-                      {replyUser?.firstName} {replyUser?.lastName}
-                    </h4>
-                  </div>
-                </div>
-                <p className="text-gray-700 mb-2">{reply.comment}</p>
-                <div className="flex items-center text-sm text-gray-500 gap-4">
-                  {replyDate && (
-                    <span>{new Date(replyDate).toLocaleDateString()}</span>
+    ) : replies.length > 0 ? (
+      <div className="mt-4 pl-10 space-y-4">
+        {replies.map((reply) => {
+          const replyUser = reply.isInline ? reply.feedbackBy : reply.user
+          const replyDate = reply.isInline ? reply.feedbackBy.createdAt : reply.createdAt
+          const replyLikeCount = Array.isArray((reply as any).likes)
+            ? (reply as any).likes.length
+            : (reply as any).likes ?? 0
+          const replyLiked = likedReplyIds.has(reply._id)
+          const displayedLikeCount = replyLiked && replyLikeCount === 0 ? 1 : replyLikeCount
+
+          return (
+            <div key={reply._id} className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700">
+                  {replyUser?.avatar ? (
+                    <Image
+                      src={replyUser.avatar || "/placeholder.svg"}
+                      alt={`${replyUser?.firstName ?? ""} ${replyUser?.lastName ?? ""}`}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                    />
+                  ) : (
+                    getInitials(replyUser?.firstName || "U")
                   )}
-                  <button className="text-gray-500 hover:text-gray-700">Reply</button>
+                </div>
+                <div className="flex flex-col">
+                  <h4 className="font-semibold">
+                    {replyUser?.firstName} {replyUser?.lastName}
+                  </h4>
+                  {replyDate && (
+                    <span className="text-xs text-gray-400">
+                      {new Date(replyDate).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      ) : null}
 
-    {/* Reply input box */}
-    <div
-      className={`mt-4 pl-4 md:pl-10 transition-all duration-300 ease-in-out ${
-        activeReplyId === feedback._id ? "max-h-20 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-      }`}
-    >
-      <div className="flex items-center gap-1 md:gap-2 border rounded-sm p-1.5 md:p-2 bg-[#F8F8F8] overflow-hidden">
-        <input
-          type="text"
-          placeholder="Write a reply..."
-          className="flex-1 min-w-0 outline-none text-sm px-1 md:px-2 bg-transparent"
-          value={replyTexts[feedback._id] || ""}
-          onChange={(e) => handleReplyTextChange(feedback._id, e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault()
-              handleSubmitReply(feedback._id)
-            }
-          }}
-        />
-        <button className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-1">
-          <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
-        </button>
-        <button
-          className="bg-primary text-white rounded-full p-1 md:p-1.5 disabled:opacity-50 flex-shrink-0"
-          onClick={() => handleSubmitReply(feedback._id)}
-          disabled={isCreatingReply || !replyTexts[feedback._id]?.trim()}
-        >
-          <Send className="w-3.5 h-3.5 md:w-4 md:h-4" />
-        </button>
-        <button
-          className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-1"
-          onClick={() => setActiveReplyId(null)}
-        >
-          <X className="w-4 h-4" />
-        </button>
+              <p className="text-gray-700 mb-3">{reply.comment}</p>
+
+              <div className="flex items-center text-sm text-gray-500 gap-4">
+                <button
+                  className={`flex items-center gap-1 font-medium transition-colors ${
+                    replyLiked ? "text-primary" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => toggleReplyLike(reply._id)}
+                >
+                  Like
+                  {displayedLikeCount > 0 && <span className="text-xs">{displayedLikeCount}</span>}
+                </button>
+
+                <button
+                  className="text-gray-500 hover:text-gray-700 font-medium"
+                  onClick={() => handleReplyClick(feedback._id, reply._id)}
+                >
+                  Reply
+                </button>
+              </div>
+
+              {activeReplyTarget?.feedbackId === feedback._id && activeReplyTarget?.replyId === reply._id && (
+                <div className="mt-4 pl-6">
+                  <div className="flex items-center gap-2 border rounded-sm p-2 bg-white">
+                    <input
+                      type="text"
+                      placeholder="Write a reply..."
+                      className="flex-1 min-w-0 outline-none text-sm px-1 bg-transparent"
+                      value={replyTexts[reply._id] || ""}
+                      onChange={(e) => handleReplyTextChange(reply._id, e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSubmitReply(feedback._id, reply._id)
+                        }
+                      }}
+                    />
+                    <button
+                      className="bg-primary text-white rounded-full p-1 disabled:opacity-50 flex-shrink-0"
+                      onClick={() => handleSubmitReply(feedback._id, reply._id)}
+                      disabled={isCreatingReply || !replyTexts[reply._id]?.trim()}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-1"
+                      onClick={() => setActiveReplyTarget(null)}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
-    </div>
+    ) : null}
+
+    {activeReplyTarget?.feedbackId === feedback._id && !activeReplyTarget?.replyId && (
+      <div className="mt-4">
+        <div className="flex items-center gap-1 md:gap-2 border rounded-sm p-1.5 md:p-2 bg-[#F8F8F8] overflow-hidden">
+          <input
+            type="text"
+            placeholder="Write a reply..."
+            className="flex-1 min-w-0 outline-none text-sm px-1 md:px-2 bg-transparent"
+            value={replyTexts[feedback._id] || ""}
+            onChange={(e) => handleReplyTextChange(feedback._id, e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                handleSubmitReply(feedback._id)
+              }
+            }}
+          />
+          <button className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-1">
+            <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
+          <button
+            className="bg-primary text-white rounded-full p-1 md:p-1.5 disabled:opacity-50 flex-shrink-0"
+            onClick={() => handleSubmitReply(feedback._id)}
+            disabled={isCreatingReply || !replyTexts[feedback._id]?.trim()}
+          >
+            <Send className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          </button>
+          <button
+            className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-1"
+            onClick={() => setActiveReplyTarget(null)}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    )}
   </div>
 )
 

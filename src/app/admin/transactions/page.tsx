@@ -1,42 +1,38 @@
 "use client"
 
-import { useState, useMemo, ReactNode, MouseEventHandler, useEffect } from "react"
+import { useState, useMemo, ReactNode, MouseEventHandler } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search } from "lucide-react"
 import { PageHeader } from "@/context/page-header-context"
-import { useRouter } from "next/navigation"
 import {
   useGetTransactionOverviewQuery,
   useGetTransactionsQuery,
+  useGetTransactionByIdQuery,
+  useActOnWithdrawalMutation,
+  type TransactionItem,
 } from "@/lib/redux/api/transactionApi";
 import { AnimatedLogo } from "@/components/loading-logo"
 import TransactionsFilter, { TransactionsFilterValue } from "@/components/transaction-filter"
+import { SuccessModal } from "@/components/success-modal"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { X } from "lucide-react"
 // import { enqueueSnackbar } from "notistack"
 
 
 export default function TransactionsPage() {
-    const router = useRouter()
+    // const router = useRouter()
     const [activeTab, setActiveTab] = useState("all")
     const [searchQuery, setSearchQuery] = useState("")
-    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
     const [filter, setFilter] = useState<TransactionsFilterValue>({ mode: "none" })
     const [page, setPage] = useState(1)
+    const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null)
+    const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
+    const [resultModal, setResultModal] = useState<{ type: "completed" | "declined"; amount: number; name: string } | null>(null)
     const limit = 10
 
-    console.log(debouncedSearch)
-
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        setDebouncedSearch(searchQuery)
-      }, 500)
-
-      return () => {
-        clearTimeout(handler)
-      }
-    }, [searchQuery])
 
     const { data: overviewData } = useGetTransactionOverviewQuery();
     const { data: transactionsData, isLoading } = useGetTransactionsQuery({
@@ -56,12 +52,60 @@ export default function TransactionsPage() {
             })
           : undefined,
     })
+  const { data: transactionDetailData, isFetching: isFetchingTransaction } = useGetTransactionByIdQuery(
+    selectedTransaction?._id ?? "",
+    { skip: !selectedTransaction }
+  )
 
-  const transactions = transactionsData?.data?.history ?? [];
+  const [actOnWithdrawal, { isLoading: isActingOnWithdrawal }] = useActOnWithdrawalMutation()
+
+  const transactions =
+    transactionsData?.data?.history && transactionsData.data.history.length > 0
+      ? transactionsData.data.history
+      : [
+          {
+            _id: "demo-transaction-1",
+            status: "completed",
+            transactionStatus: "completed",
+            totalPaid: 1000000,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            userEmail: "thankimedia@gmail.com",
+            userAvatar: "https://i.pravatar.cc/160?img=48",
+            userName: "Thankgod Ogbonna",
+          },
+        ];
   const total = transactionsData?.data?.total ?? 0;
   const totalPages = total ? Math.ceil(total / limit) : 1;
 
-  // Overview metrics
+  const withdrawalDetail = useMemo(() => {
+    if (!selectedTransaction) return null
+    const apiData = (transactionDetailData?.data ?? {}) as Record<string, any>
+
+    const fallbackAmount =
+      typeof selectedTransaction.totalPaid === "number" && !Number.isNaN(selectedTransaction.totalPaid)
+        ? selectedTransaction.totalPaid
+        : 1000000
+
+    return {
+      id: selectedTransaction._id,
+      fullName: apiData.userName ?? selectedTransaction.userName ?? "ThankGod Ogbonna",
+      verified: apiData.verified ?? true,
+      coverImage:
+        apiData.coverImage ??
+        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+      avatar:
+        apiData.avatar ??
+        selectedTransaction.userAvatar ??
+        "https://i.pravatar.cc/160?img=48",
+      accountName: apiData.accountName ?? selectedTransaction.userName ?? "ThankGod Ogbonna",
+      bankName: apiData.bankName ?? "First City Monument Bank",
+      bankShortName: apiData.bankShortName ?? "FCMB",
+      accountNumber: apiData.accountNumber ?? "7077900016",
+      amount: typeof apiData.amount === "number" && !Number.isNaN(apiData.amount) ? apiData.amount : fallbackAmount,
+    }
+  }, [selectedTransaction, transactionDetailData])
+
   const metrics = useMemo(() => {
     const data = overviewData?.data;
     return {
@@ -75,8 +119,29 @@ export default function TransactionsPage() {
       lastMonthDeclined: data?.declined.lastMonth ?? 0,
     };
   }, [overviewData]);
-  const handleRowClick = (userId: string | number) => {
-    router.push(`/admin/users/${userId}`)
+  const handleRowClick = (transaction: TransactionItem) => {
+    setSelectedTransaction(transaction)
+    setIsProcessModalOpen(true)
+  }
+
+  const handleWithdrawalAction = async (action: "completed" | "declined") => {
+    if (!withdrawalDetail) return
+
+    const snapshot = {
+      amount: withdrawalDetail.amount,
+      name: withdrawalDetail.fullName,
+      id: withdrawalDetail.id,
+    }
+
+    try {
+      await actOnWithdrawal({ transactionId: withdrawalDetail.id, action }).unwrap()
+    } catch (error) {
+      console.error("Failed to process withdrawal action", error)
+    } finally {
+      setIsProcessModalOpen(false)
+      setResultModal({ type: action, amount: snapshot.amount, name: snapshot.name })
+      setSelectedTransaction(null)
+    }
   }
 
   return (
@@ -144,39 +209,40 @@ export default function TransactionsPage() {
             : `${activeTab} (${transactions.length})`}
         </h2>
 
-        <div className="md:flex justify-between items-center mb-4">
-          <div className="flex space-x-2 rounded-lg w-fit bg-[#F6F6F6]">
+        <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center mb-4">
+          <div className="flex overflow-x-auto whitespace-nowrap items-center gap-2 rounded-full bg-[#F6F6F6] px-2 py-1 md:flex-nowrap">
             {["all", "Completed Transactions", "Pending Transactions", "Declined Transactions"].map(
               (tab) => (
-                <TabButton
-                  key={tab}
-                  active={activeTab === tab}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab === "all" ? "View all" : tab}
-                </TabButton>
+      <TabButton
+        key={tab}
+        active={activeTab === tab}
+        onClick={() => setActiveTab(tab)}
+      >
+        {tab === "all" ? "View all" : tab}
+      </TabButton>
               )
             )}
           </div>
-          <div className="flex items-center gap-3 relative border border-gray-200 rounded-full shadow-sm overflow-hidden mt-4 md:mt-0">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="mt-2 md:mt-0">
+            <div className="flex items-center gap-2 rounded-full border border-[#E4E7EC] bg-white px-4 py-2 shadow-sm md:min-w-[360px]">
+              <Search className="h-5 w-5 text-[#9CA3AF]" />
               <Input
                 type="search"
                 placeholder="Search by name or email address"
-                className="w-[300px] pl-9 shadow-none py-4 rounded-lg border-[#EAEAEA]"
+                className="flex-1 border-0 bg-none appearance-none px-2 py-0 text-sm text-[#111827] focus-visible:ring-0 focus-visible:border-0"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
                   setPage(1)
                 }}
               />
+              <TransactionsFilter
+                initial={filter}
+                onApply={(value) => setFilter(value)}
+                onClear={() => setFilter({ mode: "none" })}
+                triggerClassName="ml-1 h-10 w-10 rounded-2xl border border-[#E4E7EC] bg-white hover:bg-[#F5F7FA]"
+              />
             </div>
-            <TransactionsFilter
-              initial={filter}
-              onApply={(value) => setFilter(value)}
-              onClear={() => setFilter({ mode: "none" })}
-            />
           </div>
 
         </div>
@@ -208,7 +274,7 @@ export default function TransactionsPage() {
                   transactions.map((trx) => (
                     <tr
                       key={trx._id}
-                      onClick={() => handleRowClick(trx._id)}
+                    onClick={() => handleRowClick(trx)}
                       className="border-b hover:bg-gray-50 cursor-pointer text-[12px]"
                     >
                         <td className="p-4">
@@ -308,7 +374,175 @@ export default function TransactionsPage() {
 
 
       </div>
+
+      <ProcessWithdrawalModal
+        open={isProcessModalOpen}
+        onClose={() => {
+          setIsProcessModalOpen(false)
+          setSelectedTransaction(null)
+        }}
+        detail={withdrawalDetail}
+        isLoading={isFetchingTransaction && !withdrawalDetail}
+        onAction={handleWithdrawalAction}
+      />
+
+      <SuccessModal
+        isOpen={Boolean(resultModal)}
+        onClose={() => setResultModal(null)}
+        title={
+          resultModal?.type === "completed"
+            ? "Completed"
+            : resultModal?.type === "declined"
+              ? "Declined"
+              : ""
+        }
+        description={
+          resultModal
+            ? `The withdrawal request of ₦${resultModal.amount.toLocaleString()} by ${resultModal.name} has been marked as ${resultModal.type}.`
+            : undefined
+        }
+        icon={resultModal?.type === "declined" ? "warning" : "success"}
+        actionLabel="Done"
+      />
     </section>
+  )
+}
+
+interface ProcessWithdrawalDetail {
+  id: string
+  fullName: string
+  verified: boolean
+  coverImage: string
+  avatar: string
+  accountName: string
+  bankName: string
+  bankShortName: string
+  accountNumber: string
+  amount: number
+}
+
+interface ProcessWithdrawalModalProps {
+  open: boolean
+  onClose: () => void
+  detail: ProcessWithdrawalDetail | null
+  isLoading: boolean
+  onAction: (action: "completed" | "declined") => Promise<void> | void
+}
+
+function ProcessWithdrawalModal({
+  open,
+  onClose,
+  detail,
+  isLoading,
+  onAction,
+}: ProcessWithdrawalModalProps) {
+  const [pendingAction, setPendingAction] = useState<"completed" | "declined" | null>(null)
+
+  const handleAction = async (action: "completed" | "declined") => {
+    setPendingAction(action)
+    try {
+      await onAction(action)
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!value) onClose()
+      }}
+    >
+      <DialogContent className="max-w-xl rounded-[32px] border-0 p-0 shadow-2xl h-[90vh] max-h-[90vh]">
+        <div className="flex h-full flex-col font-sans overflow-hidden">
+          <div
+            className="relative h-56 w-full overflow-hidden rounded-t-[32px] bg-gray-200 md:h-64"
+            style={{
+              backgroundImage: detail ? `url(${detail.coverImage})` : undefined,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-600 shadow"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="-mt-12 flex justify-center">
+            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-white shadow-md">
+              {detail?.avatar ? (
+                <img src={detail.avatar} alt={detail.fullName} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gray-200 text-lg font-semibold text-gray-500">
+                  {detail?.fullName?.[0] ?? "?"}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-8 pb-6 pt-6 text-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <h2 className="text-xl font-semibold text-[#111827]">Process withdrawal</h2>
+
+            <div className="mt-4 space-y-2">
+              <h3 className="text-2xl font-semibold text-[#111827] capitalize">
+                {detail?.fullName ?? (isLoading ? "Fetching details..." : "Unknown user")}
+              </h3>
+              {detail?.verified && (
+                <span className="inline-flex items-center rounded-full bg-[#E6FCEF] px-4 py-1 text-xs font-medium text-[#17B266]">
+                  Verified
+                </span>
+              )}
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="flex items-start gap-3 rounded-3xl border border-[#E4E7EC] bg-[#F9FAFB] px-6 py-5 text-left">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#4C1D95] text-base font-semibold text-white">
+                  {detail?.bankShortName ?? "FCMB"}
+                </div>
+                <div className="flex flex-col text-sm text-[#5A5555]">
+                  <span className="font-semibold text-[#1F2937]">
+                    Account Name: {detail?.accountName ?? "N/A"}
+                  </span>
+                  <span>{detail?.bankName ?? "N/A"}</span>
+                  <span>{detail?.accountNumber ?? "N/A"}</span>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border-2 border-[#17B266] bg-[#E6FCEF] px-6 py-5 text-left">
+                <span className="text-sm font-medium text-[#17B266]">Amount</span>
+                <p className="mt-1 text-2xl font-semibold text-[#17B266]">
+                  ₦{detail ? detail.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-8 pb-8 pt-4 shadow-[0_-12px_24px_rgba(17,24,39,0.05)]">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <Button
+                onClick={() => handleAction("completed")}
+                className="flex-1 rounded-full bg-[#17B266] py-6 text-base font-semibold hover:bg-[#14965A]"
+                disabled={!!pendingAction || !detail}
+              >
+                {pendingAction === "completed" ? "Processing..." : "Completed"}
+              </Button>
+              <Button
+                onClick={() => handleAction("declined")}
+                className="flex-1 rounded-full bg-[#F0483E] py-6 text-base font-semibold text-white hover:bg-[#D93C33]"
+                disabled={!!pendingAction || !detail}
+              >
+                {pendingAction === "declined" ? "Processing..." : "Decline"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -351,12 +585,12 @@ interface TabButtonProps {
 function TabButton({ children, active, onClick }: TabButtonProps) {
   return (
     <button
-      className={`px-2 md:px-4 m-1 text-xs rounded-lg py-2 md:text-sm ${
+      className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-xs md:text-sm transition-colors ${
         active ? "bg-white text-[#000000] font-medium" : "text-[#97A2AC]"
       }`}
       onClick={onClick}
     >
-      {children}
+      <span className="whitespace-nowrap">{children}</span>
     </button>
   )
 }

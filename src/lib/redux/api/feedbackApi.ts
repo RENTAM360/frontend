@@ -72,6 +72,7 @@ export interface CreateReplyRequest {
   comment: string
   media?: string[]
   rating?: number
+  parentReplyId?: string
 }
 
 export interface LikeFeedbackResponse {

@@ -130,7 +130,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
   const socket = socketService.rawSocket
 
   const handleConnect = () => {
-    console.log("[Messaging] Socket connected ✅")
+    console.log("[Messaging] Socket connected")
     setIsConnected(true)
     setConnectionError(null)
   }
