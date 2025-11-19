@@ -37,8 +37,8 @@ const MessagingContext = createContext<MessagingContextType | null>(null)
 
 interface MessagingProviderProps {
   children: React.ReactNode
-  currentUserId: string
-  authToken?: string
+  currentUserId?: string | null
+  authToken?: string | null
 }
 
 export function MessagingProvider({ children, currentUserId, authToken }: MessagingProviderProps) {
@@ -61,7 +61,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     isLoading: isLoadingConversations,
   } = useGetConversationsQuery()
 
-  console.log("[v0] Fetching messages for:", { receiverId: activeConversationId, currentUserId })
+  console.log("Fetching messages for:", { receiverId: activeConversationId, currentUserId })
 
 
   const {
@@ -70,7 +70,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     originalArgs: messagesQueryArgs,
     isLoading: isLoadingMessages,
     // isFetching: isFetchingMessages,
-  } = useGetMessagesQuery({ receiverId: activeConversationId!, currentUserId }, { skip: !activeConversationId })
+  } = useGetMessagesQuery({ receiverId: activeConversationId!, currentUserId: currentUserId! }, { skip: !activeConversationId || !currentUserId })
 
   const messagesPayload = useMemo(() => {
     const latestPayload = currentMessagesData ?? messagesData
@@ -110,11 +110,12 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
         const conv = draft.find((c) => c.userId === activeConversationId)
         if (!conv) return
 
+        // Update equipment from messages if present
+        // Otherwise, preserve existing equipment (don't clear it if it was set via joinConversation)
         if (equipmentFromMessages) {
           conv.equipment = equipmentFromMessages
-        } else {
-          conv.equipment = undefined
         }
+        // Don't clear equipment if messages don't have it - it might have been set via joinConversation
       })
     )
   }, [messagesPayload, equipmentFromMessages, messages, activeConversationId, dispatch])
@@ -136,7 +137,7 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
   }
 
   const handleDisconnect = (reason: string) => {
-    console.log("[Messaging] Socket disconnected ❌", reason)
+    console.log("[Messaging] Socket disconnected", reason)
     setIsConnected(false)
     setConnectionError(reason)
   }
@@ -156,6 +157,8 @@ export function MessagingProvider({ children, currentUserId, authToken }: Messag
     }
   // incoming messages etc
   socketService.onMessage((socketMessage: SocketMessage) => {
+    if (!currentUserId) return // Skip if currentUserId is not available
+    
     console.log("[Messaging] Received message:", socketMessage)
     const message: Message = {
       _id: socketMessage._id,
@@ -324,11 +327,18 @@ const activeConversation = useMemo<Conversation | null>(() => {
   if (!activeConversationId) return null
 
   const conv = conversations.find((c) => c.userId === activeConversationId)
+  
+  // If tempConversationRef has equipment for this conversation, prioritize it
+  // This handles the case where a new conversation is initiated with equipment
+  const tempEquipment = tempConversationRef.current?.userId === activeConversationId 
+    ? tempConversationRef.current.equipment 
+    : undefined
+  
   if (!conv && tempConversationRef.current?.userId === activeConversationId) {
     return {
       ...tempConversationRef.current,
       messages: messages || [],
-      equipment: equipmentFromMessages ?? tempConversationRef.current.equipment ?? undefined,
+      equipment: tempEquipment ?? equipmentFromMessages ?? undefined,
     }
   }
 
@@ -336,7 +346,8 @@ const activeConversation = useMemo<Conversation | null>(() => {
     ? {
         ...conv,
         messages: messages || [],
-        equipment: equipmentFromMessages ?? conv.equipment ?? undefined,
+        // Prioritize tempEquipment (from joinConversation) over cached or messages equipment
+        equipment: tempEquipment ?? equipmentFromMessages ?? conv.equipment ?? undefined,
       }
     : null
 }, [activeConversationId, conversations, messages, equipmentFromMessages])
@@ -354,10 +365,17 @@ const activeConversation = useMemo<Conversation | null>(() => {
         socketService.markMessagesAsRead(conversationId)
       }
 
+      // Update the cached conversation with new data, especially equipment
       dispatch(
         messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
           const c = draft.find((c) => c.userId === conversationId)
-          if (c) c.unreadCount = 0
+          if (c) {
+            c.unreadCount = 0
+            // Update equipment if provided in the new conversation
+            if (conv?.equipment) {
+              c.equipment = conv.equipment
+            }
+          }
         })
       )
 
@@ -368,6 +386,10 @@ const activeConversation = useMemo<Conversation | null>(() => {
   // Send a message
   const sendMessage = useCallback(
     async (conversationId: string, content: string, equipmentId?: string) => {
+      if (!currentUserId) {
+        throw new Error("User not authenticated")
+      }
+
       const socketReady = isConnected || socketService.rawSocket?.connected
 
       if (!socketReady) {
@@ -458,12 +480,14 @@ const activeConversation = useMemo<Conversation | null>(() => {
     }
   }, [activeConversationId, isConnected])
 
+  const normalizedCurrentUserId: string | null = currentUserId ?? null
+
   const contextValue: MessagingContextType = {
     conversations,
     activeConversationId,
     activeConversation,
     isConnected,
-    currentUserId,
+    currentUserId: normalizedCurrentUserId,
     connectionError,
     joinConversation,
     sendMessage,

@@ -26,15 +26,19 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
   })
 
-  if (!userToken) return <>{children}</>
   if (isLoading) return <AnimatedLogo />
   if (error) return null;
-  if (!profile?.data) return <div>Failed to load user</div>
-
+  
+  // Convert null to undefined for type compatibility
+  const normalizeToUndefined = <T,>(value: T | null | undefined): T | undefined => {
+    return value === null ? undefined : value
+  }
+  
+  // Always wrap in MessagingProvider, even if no token (provider will handle missing data)
   return (
     <MessagingProvider
-      currentUserId={profile.data.user._id}
-      authToken={userToken}
+      currentUserId={normalizeToUndefined(profile?.data?.user?._id)}
+      authToken={normalizeToUndefined(userToken)}
     >
       {children}
     </MessagingProvider>
