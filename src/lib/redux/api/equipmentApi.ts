@@ -312,6 +312,56 @@ interface BookingResponse {
   };
 }
 
+// Booking interfaces for the bookings endpoints
+export interface BookingCustomer {
+  _id: string;
+  firstName: string;
+  lastName?: string;
+  email: string;
+}
+
+export interface BookingEquipment {
+  _id: string;
+  name: string;
+  pricePerDay: number;
+  media: string[];
+}
+
+export interface Booking {
+  status: string;
+  _id: string;
+  owner: string;
+  customer: BookingCustomer;
+  quantity: number;
+  startDate: string; // ISO date string
+  endDate: string;   // ISO date string
+  payment: boolean;
+  dispute: boolean;
+  isCompleted: boolean;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  __v: number;
+  equipment?: BookingEquipment;
+}
+
+export interface GetBookingsResponse {
+  status: number;
+  message: string;
+  data: Booking[];
+}
+
+export interface GetBookingDetailResponse {
+  status: number;
+  message: string;
+  data: Booking;
+}
+
+export interface ConfirmBookingResponse {
+  status: number;
+  message: string;
+  data: Booking;
+}
+
 interface ImageUploadResponse {
   message: string;
   data: string[];
@@ -733,6 +783,36 @@ export const equipmentApi = baseApi.injectEndpoints({
       }),
     }),
 
+    // Get bookings for equipment owners
+    getBookings: builder.query<Booking[], void>({
+      query: () => "equipment/bookings",
+      providesTags: ["Equipment"],
+      transformResponse: (response: GetBookingsResponse) => {
+        return response.data || [];
+      },
+    }),
+
+    // Get booking details by ID
+    getBookingById: builder.query<Booking, string>({
+      query: (bookingId) => `equipment/bookings/${bookingId}`,
+      providesTags: (result, error, bookingId) => [{ type: "Booking", id: bookingId }],
+      transformResponse: (response: GetBookingDetailResponse) => {
+        return response.data;
+      },
+    }),
+
+    // Confirm booking
+    confirmBooking: builder.mutation<ConfirmBookingResponse, string>({
+      query: (bookingId) => ({
+        url: `equipment/bookings/${bookingId}/confirm`,
+        method: "POST",
+      }),
+      invalidatesTags: (result, error, bookingId) => [
+        { type: "Booking", id: bookingId },
+        "Equipment",
+      ],
+    }),
+
   }),
 })
 
@@ -764,4 +844,7 @@ export const {
   useDeleteCategoryMutation,
   useUploadEquipmentDocumentsMutation,
   useUploadEquipmentVideosMutation,
+  useGetBookingsQuery,
+  useGetBookingByIdQuery,
+  useConfirmBookingMutation,
 } = equipmentApi

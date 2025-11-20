@@ -48,8 +48,8 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
     selectedCategoryId === "all" ? { page, limit } : skipToken
   )
 
-  console.log(allEquipments)
-  console.log(equipmentResponse)
+  // console.log(allEquipments)
+  // console.log(equipmentResponse)
 
   const equipments = useMemo(() => {
     return selectedCategoryId === "all"
@@ -127,7 +127,7 @@ export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
           </div>
         ) : filteredEquipments.length === 0 ? (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold">{title}</h2>
+            {/* <h2 className="text-2xl font-bold">{title}</h2> */}
             <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
               No item found {searchTerm ? `for "${searchTerm}"` : "in this category"}.
             </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useNotifications } from "@/context/notification-context";
 import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/lib/redux/api/notificationsApi";
+import { useGetProfileQuery } from "@/lib/redux/api/authApi";
 import { Notification } from "@/types/notifications";
 import { ArrowLeft, Bell, ClipboardCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react"
@@ -10,10 +11,13 @@ import { useEffect, useState } from "react";
 export default function NotificationsDropdown() {
   const { latestNotif } = useNotifications();
   const { data, isLoading, refetch } = useGetNotificationsQuery({ page: 1, limit: 10 });
+  const { data: profileData } = useGetProfileQuery();
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
+
+  const currentUserId = profileData?.data?.user?._id;
 
 const notifications = data?.data
 
@@ -113,7 +117,7 @@ const handleMarkAsRead = async (id: string) => {
                   </p>
                   <div className="flex items-center gap-2">
                     <p className="text-xs text-[#979797] mt-1">{formatTimeAgo(notif.createdAt ?? new Date().toISOString())}</p>
-                      {notif.title === "payment success" && (
+                      {notif.title === "payment success" && notif.user === currentUserId && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
