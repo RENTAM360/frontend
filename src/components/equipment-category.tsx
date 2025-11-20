@@ -12,7 +12,7 @@ interface EquipmentCategoryProps {
   limit?: number
 }
 
-export function EquipmentCategory({ title, limit }: EquipmentCategoryProps) {
+export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
   const searchTerm = useAppSelector((state)=>state.search.term)
   const {
     data: categoryResponse,
