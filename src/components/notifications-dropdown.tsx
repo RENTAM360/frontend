@@ -2,11 +2,14 @@
 import { useNotifications } from "@/context/notification-context";
 import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/lib/redux/api/notificationsApi";
 import { useGetProfileQuery } from "@/lib/redux/api/authApi";
+import { useGetBookingByIdQuery, useConfirmBookingMutation } from "@/lib/redux/api/equipmentApi";
 import { Notification } from "@/types/notifications";
+import { ReportModal } from "@/components/report-modal";
 import { ArrowLeft, Bell, ClipboardCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react"
 import { enqueueSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import Image from "next/image";
 
 export default function NotificationsDropdown() {
   const { latestNotif } = useNotifications();
@@ -16,10 +19,50 @@ export default function NotificationsDropdown() {
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [confirmBooking, { isLoading: isConfirming }] = useConfirmBookingMutation();
 
   const currentUserId = profileData?.data?.user?._id;
 
-const notifications = data?.data
+  const notifications = data?.data || [];
+
+  const handleOpenReportModal = () => setIsReportModalOpen(true)
+  const handleCloseReportModal = () => setIsReportModalOpen(false)
+
+  // Get booking ID directly from the payment success notification's meta field
+  const selectedBookingId = useMemo(() => {
+    if (!selectedNotif || selectedNotif.title !== "payment success") return null;
+    return selectedNotif.meta?.bookingId || null;
+  }, [selectedNotif]);
+
+  // Fetch booking details using the booking ID
+  const { data: bookingData, isLoading: isLoadingBooking } = useGetBookingByIdQuery(
+    selectedBookingId || "",
+    { skip: !selectedBookingId }
+  );
+
+  const equipment = bookingData?.equipment;
+  const customer = bookingData?.customer;
+  const rentalStart = bookingData?.startDate ? new Date(bookingData.startDate) : null;
+  const rentalEnd = bookingData?.endDate ? new Date(bookingData.endDate) : null;
+  const totalDays =
+    rentalStart && rentalEnd
+      ? Math.max(1, Math.ceil((rentalEnd.getTime() - rentalStart.getTime()) / (1000 * 60 * 60 * 24)))
+      : null;
+  const totalAmount =
+    equipment?.pricePerDay && totalDays
+      ? equipment.pricePerDay * (bookingData?.quantity ?? 1) * totalDays
+      : null;
+
+  // Check if current user is the customer who made the payment
+  const isPaymentCustomer = (notif: Notification): boolean => {
+    if (!currentUserId || notif.title !== "payment success") return false;
+    
+    // Check if the notification belongs to the current user
+    if (notif.user !== currentUserId) return false;
+    
+    return true;
+  };
 
   // console.log(notifications)
 
@@ -67,6 +110,24 @@ const handleMarkAsRead = async (id: string) => {
       console.error("Failed to mark all as read:", err);
     }
   };
+
+  const handleConfirmBooking = async () => {
+    if (!bookingData?._id) {
+      enqueueSnackbar("No booking selected", { variant: "error" })
+      return
+    }
+   try {
+      await confirmBooking(bookingData._id).unwrap()
+      enqueueSnackbar("Booking confirmed", { variant: "success" })
+      // refresh notifications/booking state
+      refetch()
+      setShowReceipt(false)
+      setSelectedNotif(null)
+    } catch (err) {
+      console.error("Confirm booking failed:", err)
+      enqueueSnackbar("Failed to confirm booking", { variant: "error" })
+    }
+ }
 
 
   return (
@@ -117,7 +178,7 @@ const handleMarkAsRead = async (id: string) => {
                   </p>
                   <div className="flex items-center gap-2">
                     <p className="text-xs text-[#979797] mt-1">{formatTimeAgo(notif.createdAt ?? new Date().toISOString())}</p>
-                      {notif.title === "payment success" && notif.user === currentUserId && (
+                      {isPaymentCustomer(notif) && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -170,25 +231,113 @@ const handleMarkAsRead = async (id: string) => {
                   {selectedNotif?.details ??
                     "You made a successful payment transaction."}
                 </p>
-                <h1 className="text-2xl font-bold mt-3 text-black">
-                  ₦250,000.00
-                </h1>
+                {isLoadingBooking ? (
+                  <p className="text-sm text-gray-500 mt-3">Loading details...</p>
+                ) : bookingData ? (
+                  <>
+                    {equipment?.media?.[0] && (
+                      <div className="relative w-20 h-20 rounded-lg overflow-hidden mt-3 mb-2">
+                        <Image 
+                          src={equipment.media[0]} 
+                          alt={equipment.name || "Equipment"} 
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    {equipment?.name && (
+                      <p className="text-sm font-medium text-gray-700 mt-2">
+                        {equipment.name}
+                      </p>
+                    )}
+                    <h1 className="text-2xl font-bold mt-3 text-black">
+                      {totalAmount !== null
+                        ? `₦${totalAmount.toLocaleString("en-NG", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : selectedNotif?.details || "₦0.00"}
+                    </h1>
+                  </>
+                ) : selectedBookingId ? (
+                  <p className="text-sm text-gray-500 mt-3">Unable to load booking details.</p>
+                ) : (
+                  <h1 className="text-2xl font-bold mt-3 text-black">
+                    {selectedNotif?.details || "₦0.00"}
+                  </h1>
+                )}
               </div>
 
               <div className="mt-5 border-t border-dashed border-gray-300 pt-4 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Transaction ID</span>
-                  <span>{selectedNotif?._id ?? "—"}</span>
+                  <span className="text-xs break-all text-black">{selectedNotif?._id ?? "—"}</span>
                 </div>
+                {bookingData && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Booking ID</span>
+                      <span className="text-xs break-all text-black">{bookingData._id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Booking Status</span>
+                      <span className={`font-medium capitalize ${
+                        bookingData.status === "initilized" || bookingData.status === "initialized" 
+                          ? "text-blue-600" 
+                          : bookingData.isCompleted 
+                            ? "text-[#12B76A]" 
+                            : "text-orange-600"
+                      }`}>
+                        {bookingData.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Equipment</span>
+                      <span className="font-medium text-black">{equipment?.name ?? "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Price per day</span>
+                      <span className="text-black">
+                        {equipment?.pricePerDay !== undefined
+                          ? `₦${equipment.pricePerDay.toLocaleString("en-NG")}`
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Quantity</span>
+                      <span className="text-black">{bookingData.quantity ?? "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Rental period</span>
+                      <span className="text-black">
+                        {rentalStart && rentalEnd
+                          ? `${rentalStart.toLocaleDateString()} - ${rentalEnd.toLocaleDateString()}`
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Total days</span>
+                      <span className="text-black">{totalDays ? `${totalDays} day(s)` : "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Customer</span>
+                      <span className="font-medium text-black">
+                        {customer ? `${customer.firstName} ${customer.lastName || ""}` : "—"}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Status</span>
-                  <span className="text-[#12B76A] font-medium">Success</span>
+                  <span className="text-gray-500">Payment Status</span>
+                  <span className={bookingData?.payment ? "text-[#12B76A] font-medium" : "text-orange-600 font-medium"}>
+                    {bookingData?.payment ? "Paid" : "Pending"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Date</span>
-                  <span>
+                  <span className="text-black">
                     {new Date(
-                      selectedNotif?.createdAt ?? new Date()
+                      selectedNotif?.createdAt ?? bookingData?.createdAt ?? new Date()
                     ).toLocaleString()}
                   </span>
                 </div>
@@ -207,16 +356,33 @@ const handleMarkAsRead = async (id: string) => {
 
             {/* Buttons */}
             <div className="flex gap-3">
-              <button className="flex-1 bg-[#12B76A] text-white font-semibold py-3 rounded-full">
-                Confirm
-              </button>
-              <button className="flex-1 border border-[#12B76A] text-[#12B76A] font-semibold py-3 rounded-full">
+              <button
+               className="flex-1 bg-[#12B76A] text-white font-semibold py-3 rounded-full disabled:opacity-60"
+               onClick={handleConfirmBooking}
+               disabled={!bookingData?._id || isConfirming}
+             >
+                {isConfirming ? "Confirming..." : "Confirm"}
+             </button>
+              <button
+                className="flex-1 border border-[#12B76A] text-[#12B76A] font-semibold py-3 rounded-full"
+                onClick={() => {
+                 handleOpenReportModal()
+               }}
+             >
                 Send report
-              </button>
+             </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={handleCloseReportModal}
+        reportedUserId={customer?._id ?? ""}
+        reportedUserName={customer ? `${customer.firstName} ${customer.lastName ?? ""}` : ""}
+        equipmentId={equipment?._id ?? ""}
+      />
     </div>
   );
 }

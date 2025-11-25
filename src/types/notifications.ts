@@ -8,4 +8,8 @@ export interface Notification {
   createdAt?: string; 
   updatedAt?: string; 
   image?: string;
+  meta?: {
+    bookingId?: string;
+    [key: string]: any;
+  };
 }

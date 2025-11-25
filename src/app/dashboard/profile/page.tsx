@@ -384,7 +384,7 @@ export default function ProfilePage() {
                   </div>
                   {viewMode === "edit" ? "View listed items" : "Edit profile details"}
               </button>
-              {!profile?.isVerify && <button
+              {profile?.isVerify && <button
                   onClick={() => setVerifyType("NIN")}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
                 >
@@ -396,7 +396,7 @@ export default function ProfilePage() {
                   </div>
                   NIN Verification
               </button>}
-              { !profile?.isVerify && <button
+              { profile?.isVerify && <button
                   onClick={() => setVerifyType("BVN")}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
                 >

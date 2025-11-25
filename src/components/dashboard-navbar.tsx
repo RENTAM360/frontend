@@ -26,6 +26,7 @@ export function DashboardNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { data: profileData } = useGetProfileQuery()
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
   const handleLogout = useLogout()
 
   const {data: conversations = []} = useGetConversationsQuery()
@@ -36,6 +37,16 @@ export function DashboardNavbar() {
   const unreadCount = data?.data?.length ?? 0;
 
   // console.log(data)
+
+  useEffect(() => {
+    const handleClickOutsideProfile = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutsideProfile)
+    return () => document.removeEventListener("mousedown", handleClickOutsideProfile)
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -188,7 +199,7 @@ export function DashboardNavbar() {
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={profileRef}>
               <button onClick={() => setDropdownOpen((prev) => !prev)} className="relative rounded-full pr-2 flex justify-center items-center gap-3">
                 {profileData?.data?.user?.avatar ? (<Image
                   src={`${profileData?.data?.user?.avatar}`}
