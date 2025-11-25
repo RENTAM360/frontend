@@ -10,6 +10,6 @@ export interface Notification {
   image?: string;
   meta?: {
     bookingId?: string;
-    [key: string]: any;
+    transactionId?: string;
   };
 }
