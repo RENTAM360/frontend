@@ -521,8 +521,8 @@ export default function EquipmentDetailsClient({ equipmentId }: EquipmentIdProps
                       )}
                     </div>
                     <div>
-                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedbackBy.firstName}</h4>
-                      <p className="mt-1 text-[12.03px]">{latestFeedback.comment}</p>
+                      <h4 className="font-[500] text-[14.04px]">{latestFeedback?.feedbackBy?.firstName}</h4>
+                      <p className="mt-1 text-[12.03px]">{latestFeedback?.comment}</p>
                     </div>
                   </div>
                   <div className="text-primary">

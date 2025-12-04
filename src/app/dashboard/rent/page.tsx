@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useEffect, useMemo } from "react"
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, ChevronRight, Search, X } from "lucide-react"
+import { Plus, ChevronRight, Search, X, AlertCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SuccessModal } from "@/components/success-modal"
@@ -14,6 +14,8 @@ import Image from "next/image"
 import { Category, useAddEquipmentMutation, useGetCategoriesQuery, useUploadEquipmentImagesMutation, useGetAddressSuggestionsQuery  } from "@/lib/redux/api/equipmentApi"
 import { useRouter } from "next/navigation"
 import { enqueueSnackbar } from "notistack"
+import { useGetProfileQuery } from "@/lib/redux/api/authApi"
+import Link from "next/link"
 
 // interface Category {
 //   id: string
@@ -44,11 +46,53 @@ export default function RentPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const router = useRouter()
+  const { data: profileData } = useGetProfileQuery()
   const { data: addressData } = useGetAddressSuggestionsQuery(location, {
     skip: !location || location.length < 3,
   })
   const { data: categoriesData, isLoading } = useGetCategoriesQuery()
   const categories = categoriesData?.data || []
+
+  const profile = profileData?.data?.user
+
+  const eligibilityCheck = useMemo(() => {
+    if (!profile) {
+      return {
+        canAddItems: false,
+        missingRequirements: ["Profile data not loaded"],
+      }
+    }
+
+    const missingRequirements: string[] = []
+
+    const isProfileComplete = !!(
+      profile.firstName?.trim() &&
+      profile.lastName?.trim() &&
+      profile.address?.trim() &&
+      profile.country?.trim() &&
+      profile.bio?.trim()
+    )
+    if (!isProfileComplete) {
+      missingRequirements.push("Complete your profile details (first name, last name, address, country, and bio)")
+    }
+
+    if (!profile.isNinVerify) {
+      missingRequirements.push("Verify your NIN")
+    }
+
+    if (!profile.isBvnVerify) {
+      missingRequirements.push("Verify your BVN")
+    }
+
+    if (!profile.account) {
+      missingRequirements.push("Link your bank account")
+    }
+
+    return {
+      canAddItems: missingRequirements.length === 0,
+      missingRequirements,
+    }
+  }, [profile])
 
  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -69,7 +113,7 @@ export default function RentPage() {
   )
 
   const handleAddPhoto = () => {
-    // Trigger the hidden file input
+    
     if (fileInputRef.current) {
       fileInputRef.current.click()
     }
@@ -85,7 +129,6 @@ export default function RentPage() {
         return
       }
 
-      // Create preview URLs for the new files
       const newPhotos = newFiles.map((file) => ({
         id: Math.random().toString(36).substring(2, 9),
         file,
@@ -94,7 +137,6 @@ export default function RentPage() {
 
       setPhotos([...photos, ...newPhotos])
 
-      // Reset the file input so the same file can be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -116,6 +158,11 @@ export default function RentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!eligibilityCheck.canAddItems) {
+      enqueueSnackbar("Please complete your profile verification before adding items", { variant: "error" })
+      return
+    }
 
     if (!selectedCategory) {
       alert("Please select a category")
@@ -181,7 +228,35 @@ export default function RentPage() {
     <div className="container font-sans mx-auto py-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-8">Add new item</h1>
 
-      <div className="bg-white rounded-lg p-6">
+      {!eligibilityCheck.canAddItems && (
+        <div className="bg-[#FEF3C7] border border-[#F59E0B] rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-[#F59E0B] mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-[#92400E] mb-2">
+                Complete your profile to add items
+              </h3>
+              <p className="text-sm text-[#78350F] mb-3">
+                To list items for rent, you need to complete the following:
+              </p>
+              <ul className="list-disc list-inside text-sm text-[#78350F] space-y-1 mb-4">
+                {eligibilityCheck.missingRequirements.map((req: string, idx: number) => {
+                  return (
+                    <li key={idx}>{req}</li>
+                  )
+                })}
+              </ul>
+              <Link href="/dashboard/profile">
+                <Button className="bg-[#F59E0B] hover:bg-[#D97706] text-white">
+                  Complete Profile
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`bg-white rounded-lg p-6 ${!eligibilityCheck.canAddItems ? "opacity-50 pointer-events-none" : ""}`}>
         <p className="text-[#5A5555] text-xs mb-6">
           Upload some photos of your item, so people can see the details. Try to spot all features
         </p>

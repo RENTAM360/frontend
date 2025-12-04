@@ -121,6 +121,11 @@ export default function TransactionsPage() {
         ? selectedTransaction.totalPaid
         : 1000000
 
+    const accountValue = "account" in apiData ? apiData.account : undefined
+    const account = accountValue && typeof accountValue === "object" && !Array.isArray(accountValue)
+      ? (accountValue as Record<string, unknown>)
+      : null
+
     return {
       id: selectedTransaction._id,
       fullName: getString(apiData.userName, selectedTransaction.userName ?? "ThankGod Ogbonna"),
@@ -133,11 +138,11 @@ export default function TransactionsPage() {
         apiData.avatar,
         selectedTransaction.userAvatar ?? "/user.svg"
       ),
-      accountName: getString(apiData.accountName, selectedTransaction.userName ?? "ThankGod Ogbonna"),
-      bankName: getString(apiData.bankName, "First City Monument Bank"),
-      bankShortName: getString(apiData.bankShortName, "FCMB"),
-      accountNumber: getString(apiData.accountNumber, "7077900016"),
-      amount: getNumber(apiData.amount, fallbackAmount),
+      accountName: getString(apiData.accountName, selectedTransaction.userName ?? ""),
+      bankName: getString(account?.bankName, ""),
+      bankShortName: getString(apiData.bankShortName, ""),
+      accountNumber: getString(account?.accountNumber, ""),
+      amount: getNumber(apiData.totalPaid, fallbackAmount),
     }
   }, [selectedTransaction, transactionDetailData])
 
@@ -302,7 +307,7 @@ export default function TransactionsPage() {
                   <th className="text-left p-4 w-[16.6%]">Email</th>
                   <th className="text-left p-4 w-[16.6%]">Amount</th>
                   <th className="text-left p-4 w-[16.6%]">Date</th>
-                  <th className="text-left p-4 w-[16.6%]">Status</th>
+                  <th className="text-left p-4 w-[16.6%]">Trans. Status</th>
                 </tr>
               </thead>
 
@@ -343,14 +348,14 @@ export default function TransactionsPage() {
                         </td>
                         <td className="p-4">
                           {(() => {
-                            const status = trx.status?.toLowerCase() || ""
+                            const status = trx.transactionStatus?.toLowerCase() || ""
                             const isCompleted = status === "completed" || status === "active"
                             const isDeclined = status === "declined" || status === "declined transactions"
                             const isPending = status === "pending"
                             
                             let bgColor = "bg-gray-100"
                             let textColor = "text-gray-600"
-                            const displayText = trx.status ? trx.status.charAt(0).toUpperCase() + trx.status.slice(1) : "N/A"
+                            const displayText = trx.transactionStatus ? trx.transactionStatus.charAt(0).toUpperCase() + trx.transactionStatus.slice(1) : "N/A"
                             
                             if (isCompleted) {
                               bgColor = "bg-[#E6FCEF]"
