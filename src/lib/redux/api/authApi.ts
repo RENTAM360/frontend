@@ -200,6 +200,19 @@ export interface PhoneUpdateResponse {
   }
 }
 
+export interface UpdatePasswordRequest {
+  old_passord: string  // Note: Backend uses typo "old_passord" instead of "old_password"
+  new_password: string
+}
+
+export interface UpdatePasswordResponse {
+  status: number
+  message: string
+  data: {
+    message: string
+  }
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginCredentials>({
@@ -315,6 +328,14 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
+    updatePassword: builder.mutation<UpdatePasswordResponse, UpdatePasswordRequest>({
+      query: (body) => ({
+        url: "/profile/update-password",
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["User"],
+    }),
     googleLogin: builder.query<{ url: string }, void>({
       query: () => ({
         url: "/auth/google",
@@ -337,7 +358,8 @@ export const {
   useUpdateProfileMutation,
   useGetOtherUserProfileQuery, 
   useUpdatePhoneMutation,
-  useVerifyPhoneMutation, 
+  useVerifyPhoneMutation,
+  useUpdatePasswordMutation,
   useGoogleLoginQuery,
   useLazyGoogleLoginQuery,
   useDeleteAccountMutation,

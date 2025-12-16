@@ -6,14 +6,14 @@ import { useAppSelector } from "@/lib/redux/hooks"
 import { selectSavedItems } from "@/lib/redux/slices/savedItemsSlice"
 import { NavLinkProps } from "./dashboard-navbar"
 import clsx from "clsx"
-import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
+import { useGetConversationsByEquipmentQuery } from "@/lib/redux/api/messaging-api"
 
 export function MobileNav() {
   const pathname = usePathname()
   const savedItems = useAppSelector(selectSavedItems)
   const savedItemsCount = savedItems.length
-  const {data: conversations = []} = useGetConversationsQuery()
-    const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
+  const {data: conversations = []} = useGetConversationsByEquipmentQuery()
+  const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
 
   return (
     <div className="fixed bottom-0 left-0 z-40 w-full font-sans border-t bg-white md:hidden">

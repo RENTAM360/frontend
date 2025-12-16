@@ -1,21 +1,36 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { MessageList } from "@/components/message-list"
-import { MessageView } from "@/components/message-view"
-import { ArrowLeft, Flag, MessageCircle, MoreVertical, Search, User } from "lucide-react"
-import { useMessagingContext } from "@/context/messaging-context"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ReportModal } from "@/components/report-modal"
-import Link from "next/link"
-import { timeAgo } from "@/app/utils/timeAgo"
+import Image from "next/image";
+import { MessageList } from "@/components/message-list";
+import { MessageView } from "@/components/message-view";
+import {
+  ArrowLeft,
+  Flag,
+  MessageCircle,
+  MoreVertical,
+  Search,
+  User,
+} from "lucide-react";
+import { useMessagingContext } from "@/context/messaging-context";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ReportModal } from "@/components/report-modal";
+import Link from "next/link";
+import { timeAgo } from "@/app/utils/timeAgo";
+import type { ConversationId } from "@/types/messaging";
 
 export default function MessagesPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] =
+    useState<ConversationId | null>(null);
+  const isNavigatingBackRef = useRef(false);
 
   const {
     conversations,
@@ -28,320 +43,435 @@ export default function MessagesPage() {
     isConnected,
     connectionError,
     setActiveConversationId,
-  } = useMessagingContext()
+  } = useMessagingContext();
 
-  const router = useRouter()
-  const pathname = usePathname()
-  // console.log(activeConversation)
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const searchParams = useSearchParams()
-  const convId = searchParams.get("conversation")
+  const searchParams = useSearchParams();
+  const receiverId = searchParams.get("receiver");
+  const equipmentId = searchParams.get("equipment");
 
-  const [userStatus, setUserStatus] = useState<{ lastActive?: number; isOnlinr?: boolean }>({})
+  const [userStatus, setUserStatus] = useState<{
+    lastActive?: number;
+    isOnlinr?: boolean;
+  }>({});
 
   useEffect(() => {
     const handleStorageUpdate = () => {
-      const users = JSON.parse(localStorage.getItem("activeUsers") || "{}")
-      let status = {}
-      if (activeConversation?.userId) {
-        status = users[activeConversation.userId] || {}
+      const users = JSON.parse(localStorage.getItem("activeUsers") || "{}");
+      let status = {};
+      if (activeConversation?.participant.userId) {
+        status = users[activeConversation.participant.userId] || {};
       }
-      setUserStatus(status)
-    }
+      setUserStatus(status);
+    };
 
     // Load once
-    handleStorageUpdate()
+    handleStorageUpdate();
 
     // Optional: update automatically if socket events update localStorage
-    window.addEventListener("storage", handleStorageUpdate)
-    return () => window.removeEventListener("storage", handleStorageUpdate)
-  }, [activeConversation?.userId])
+    window.addEventListener("storage", handleStorageUpdate);
+    return () => window.removeEventListener("storage", handleStorageUpdate);
+  }, [activeConversation?.participant.userId]);
 
-  // Handle URL conversation parameter
+  
+
+  // Handle URL conversation parameters (receiver + equipment)
   useEffect(() => {
-    if (!convId) {
-      setSelectedConversationId(null)
-      return
+    // Don't process URL params if user just clicked back button
+    if (isNavigatingBackRef.current) {
+      return;
     }
 
-    setSelectedConversationId(convId)
-
-    if (activeConversationId === convId) {
-      return
+    if (!receiverId || !equipmentId) {
+      setSelectedConversationId(null);
+      return;
     }
 
-    const existing = conversations.find((c) => c.userId === convId)
+    const urlConvId: ConversationId = { receiverId, equipmentId };
+    setSelectedConversationId(urlConvId);
+
+    // Check if this conversation is already active
+    if (
+      activeConversationId?.receiverId === receiverId &&
+      activeConversationId?.equipmentId === equipmentId
+    ) {
+      return;
+    }
+
+    // Find existing conversation
+    const existing = conversations.find(
+      (c) =>
+        c.participant.userId === receiverId && c.equipmentId === equipmentId
+    );
 
     if (existing) {
-      joinConversation(existing.userId, existing)
+      joinConversation(receiverId, equipmentId, existing);
     } else if (!isLoadingConversations) {
-      console.warn("[Messaging] Conversation not found:", convId)
+      console.warn("[Messaging] Conversation not found:", {
+        receiverId,
+        equipmentId,
+      });
+      // Even if conversation not in list, try to join it (for new conversations)
+      joinConversation(receiverId, equipmentId);
     }
-  }, [convId, activeConversationId, joinConversation, conversations, isLoadingConversations])
+  }, [
+    receiverId,
+    equipmentId,
+    activeConversationId,
+    joinConversation,
+    conversations,
+    isLoadingConversations,
+  ]);
+
+  // Reset back navigation flag when URL params are actually cleared
+  useEffect(() => {
+    if (isNavigatingBackRef.current && !receiverId && !equipmentId) {
+      isNavigatingBackRef.current = false;
+    }
+  }, [receiverId, equipmentId]);
 
   useEffect(() => {
     if (activeConversationId) {
-      setSelectedConversationId(activeConversationId)
+      setSelectedConversationId(activeConversationId);
     }
-  }, [activeConversationId])
+  }, [activeConversationId]);
 
-  const desiredConversationId = selectedConversationId ?? convId ?? activeConversationId ?? null
-  const activeListId = desiredConversationId ?? ""
+  // Determine active conversation from state first, then URL params
+  // Priority: selectedConversationId (local state) > URL params > activeConversationId
+  // This ensures local state changes (like back button) take immediate effect
+  const desiredConversationId =
+    selectedConversationId ??
+    (receiverId && equipmentId ? { receiverId, equipmentId } : null) ??
+    activeConversationId;
+
   const conversationForView =
-    activeConversation && desiredConversationId && activeConversation.userId === desiredConversationId
+    activeConversation &&
+    desiredConversationId &&
+    activeConversation.participant.userId ===
+      desiredConversationId.receiverId &&
+    activeConversation.equipmentId === desiredConversationId.equipmentId
       ? activeConversation
-      : null
-  const isConversationPending = !!desiredConversationId && !conversationForView
+      : null;
+  const isConversationPending = !!desiredConversationId && !conversationForView;
 
-  // Format conversations for MessageList component
-  const formattedConversations = useMemo(() => {
-    const formatTime = (timestamp?: string) => {
-      if (!timestamp) return ""
+  // Conversations are already in the correct format for MessageList
+  // CRITICAL: Ensure we're showing ALL conversations, including multiple per receiver with different equipment
+  const sortedConversations = useMemo(() => {
+    // Log conversations to debug
+    console.log("[MessagesPage] Conversations received:", {
+      total: conversations.length,
+      conversations: conversations.map((c) => ({
+        receiverId: c.receiverId || c.participant?.userId,
+        equipmentId: c.equipmentId,
+        equipmentName: c.equipment?.name,
+        key: `${c.receiverId || c.participant?.userId}::${c.equipmentId}`,
+      })),
+    });
 
-      const date = new Date(timestamp)
-      const now = new Date()
-      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    // Ensure uniqueness by receiverId + equipmentId (in case backend returns duplicates)
+    const uniqueConversations = Array.from(
+      new Map(
+        conversations.map((c) => {
+          const key = `${c.receiverId || c.participant?.userId}::${
+            c.equipmentId
+          }`;
+          return [key, c];
+        })
+      ).values()
+    );
 
-      if (diffInHours < 1) {
-        return "now"
-      } else if (diffInHours < 24) {
-        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      } else if (diffInHours < 168) {
-        return date.toLocaleDateString([], { weekday: "short" })
-      } else {
-        return date.toLocaleDateString([], { month: "short", day: "numeric" })
-      }
+    if (uniqueConversations.length !== conversations.length) {
+      console.warn(
+        "[MessagesPage] Removed duplicate conversations:",
+        conversations.length - uniqueConversations.length
+      );
     }
 
-    return conversations.map((conv) => ({
-      userId: conv.userId,
-      name: conv.name,
-      lastMessage: conv.lastMessage || "No messages yet",
-      time: formatTime(conv.lastMessageTime),
-      lastMessageTime: conv.lastMessageTime,
-      avatar: conv.avatar,
-      isActive: conv.userId === activeListId,
-      unreadCount: conv.unreadCount,
-    }))
-    .sort((a, b) => new Date(b.lastMessageTime ?? 0).getTime() - new Date(a.lastMessageTime ?? 0).getTime())
-  }, [conversations, activeListId])
+    return uniqueConversations.sort(
+      (a, b) =>
+        new Date(b.lastMessageTime ?? 0).getTime() -
+        new Date(a.lastMessageTime ?? 0).getTime()
+    );
+  }, [conversations]);
 
   const handleSelectConversation = useCallback(
-    (conversationId: string) => {
-      setSelectedConversationId(conversationId)
+    (conversationKey: string) => {
+      // Parse the conversation key (receiverId::equipmentId)
+      const [receiverId, equipmentId] = conversationKey.split("::");
+      if (!receiverId || !equipmentId) return;
 
-      const params = new URLSearchParams(searchParams.toString())
-      params.set("conversation", conversationId)
-      const nextPath = params.toString() ? `${pathname}?${params.toString()}` : pathname
-      router.replace(nextPath, { scroll: false })
+      const convId: ConversationId = { receiverId, equipmentId };
 
-      const targetConversation = conversations.find((c) => c.userId === conversationId)
-      joinConversation(conversationId, targetConversation)
+      // Update state immediately for instant UI response
+      setSelectedConversationId(convId);
+
+      // Find and join conversation immediately (don't wait for URL update)
+      const targetConversation = conversations.find(
+        (c) =>
+          c.participant.userId === receiverId && c.equipmentId === equipmentId
+      );
+      joinConversation(receiverId, equipmentId, targetConversation);
+
+      // Update URL asynchronously (this is just for bookmarking/sharing, not for UI)
+      // Use startTransition to make it non-blocking
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("receiver", receiverId);
+      params.set("equipment", equipmentId);
+      const nextPath = params.toString()
+        ? `${pathname}?${params.toString()}`
+        : pathname;
+      router.replace(nextPath, { scroll: false });
     },
-    [conversations, joinConversation, pathname, router, searchParams],
-  )
+    [conversations, joinConversation, pathname, router, searchParams]
+  );
 
   const handleSendMessage = async (message: string) => {
-    const targetConversation = conversationForView ?? activeConversation
-    if (!targetConversation) {
-      throw new Error("No active conversation")
+    const targetConversation = conversationForView ?? activeConversation;
+    if (!targetConversation || !activeConversationId) {
+      throw new Error("No active conversation");
     }
 
-    await sendMessage(targetConversation.userId, message)
-  }
+    await sendMessage(
+      activeConversationId.receiverId,
+      activeConversationId.equipmentId,
+      message
+    );
+  };
 
   // const handleOpenReportModal = () => {
   //   setIsReportModalOpen(true)
   // }
 
   const handleCloseReportModal = () => {
-    setIsReportModalOpen(false)
-  }
+    setIsReportModalOpen(false);
+  };
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery) return formattedConversations
-    return formattedConversations.filter((conv) =>
-    (conv.name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [formattedConversations, searchQuery])
-
+    if (!searchQuery) return sortedConversations;
+    return sortedConversations.filter(
+      (conv) =>
+        (conv.participant.name ?? "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        (conv.equipment.name ?? "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+    );
+  }, [sortedConversations, searchQuery]);
 
   return (
     <div className="flex h-[calc(100vh-8rem)] -mx-4 md:-mx-6 font-sans relative overflow-hidden">
-        {/* Messages list */}
-        <div 
-          className={`
+      {/* Messages list */}
+      <div
+        className={`
           flex flex-col md:border-r bg-white
           transition-transform duration-300 ease-in-out
           w-full md:w-[30%]
-          ${desiredConversationId ? "translate-x-[-100%] md:translate-x-0" : "translate-x-0"}
+          ${
+            desiredConversationId
+              ? "translate-x-[-100%] md:translate-x-0"
+              : "translate-x-0"
+          }
         `}
-        >
-          {/* Header */}
-          <div className="sticky top-0 z-20 bg-white border-b">
-            <div className="flex h-16 items-center justify-between px-4 border-b">
-              <h1 className="text-xl font-bold">Messages</h1>
-            </div>
-
-            {/* Search */}
-            <div className="p-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="I am looking for..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </div>
-            </div>
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-white border-b">
+          <div className="flex h-16 items-center justify-between px-4 border-b">
+            <h1 className="text-xl font-bold">Messages</h1>
           </div>
 
-          {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto">
-            {isLoadingConversations ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-gray-300">
-                <MessageCircle className="w-8 h-8 mb-2" />
-                <p className="text-sm">{searchQuery ? "No conversations found" : "No conversations yet"}</p>
-              </div>
-            ) : (
-              <MessageList
-                conversations={filteredConversations}
-                activeId={activeListId}
-                onSelect={handleSelectConversation}
+          {/* Search */}
+          <div className="p-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="I am looking for..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
-            )}
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            </div>
           </div>
         </div>
 
-        {/* Active conversation */}
-        <div 
-          className={`
+        {/* Conversations List */}
+        <div className="flex-1 overflow-y-auto">
+          {isLoadingConversations ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+            </div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-32 text-gray-300">
+              <MessageCircle className="w-8 h-8 mb-2" />
+              <p className="text-sm">
+                {searchQuery
+                  ? "No conversations found"
+                  : "No conversations yet"}
+              </p>
+            </div>
+          ) : (
+            <MessageList
+              conversations={filteredConversations}
+              activeId={
+                desiredConversationId
+                  ? `${desiredConversationId.receiverId}::${desiredConversationId.equipmentId}`
+                  : ""
+              }
+              onSelect={handleSelectConversation}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Active conversation */}
+      <div
+        className={`
           absolute top-0 left-0 w-full h-full bg-white flex flex-col
           transition-transform duration-300 ease-in-out
           md:static md:flex-1
-          ${desiredConversationId ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+          ${
+            desiredConversationId
+              ? "translate-x-0"
+              : "translate-x-full md:translate-x-0"
+          }
         `}
-        >
-          {conversationForView ? (
-            <>
-              {/* Conversation Header */}
-              <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
-                <div className="flex items-center space-x-3">
-                  {/* Back button (mobile only) */}
-                  <button
-                    onClick={() => {
-                      setSelectedConversationId(null)
-                      setActiveConversationId(null)
-                      const params = new URLSearchParams(searchParams.toString())
-                      params.delete("conversation")
-                      const nextPath = params.toString() ? `${pathname}?${params.toString()}` : pathname
-                      router.replace(nextPath, { scroll: false })
-                    }}
-                    className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
-                  >
-                    <ArrowLeft className="h-5 w-5 text-gray-600" />
-                  </button>
-                  <Link href={`/dashboard/user/owner/${conversationForView.userId}`} className="flex items-center space-x-3">
-                    <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-100">
-                      <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                        <User className="h-5 w-5" />
-                      </div>
-                      {conversationForView.avatar && (
-                        <Image
-                          src={conversationForView.avatar || "/placeholder.svg"}
-                          alt={conversationForView.name}
-                          fill
-                          className="object-cover z-10"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.style.display = "none"
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div>
-                      <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">{conversationForView.name}</h2>
-                      <p className="text-xs text-[#B3B3B3]">
-                        {userStatus?.isOnlinr ? (
-                          <span className="text-[#12B76A]">Online</span>
-                        ) : userStatus?.lastActive ? (
-                          `Last active ${timeAgo(userStatus.lastActive)}`
-                        ) : (
-                          "Offline"
-                        )}
-                      </p>
-                    </div>
-                  </Link>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
-                    <Flag className="h-5 w-5" fill="#12B76A" />
-                  </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
-                        <MoreVertical className="h-5 w-5" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          setIsReportModalOpen(true);
-                        }}
-                      >
-                        <Flag className="h-4 w-4 mr-2" />
-                        Report User
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+      >
+        {conversationForView ? (
+          <>
+            {/* Conversation Header */}
+            <div className="sticky top-0 z-30 bg-white h-16 flex items-center justify-between p-4 border-b">
+              <div className="flex items-center space-x-3">
+                {/* Back button (mobile only) */}
+                <button
+                  onClick={() => {
+                    // Set flag to prevent URL params from overriding our state change
+                    isNavigatingBackRef.current = true;
 
-              {/* Message View */}
-              {isLoadingMessages || isConversationPending ? (
-                <div className="flex-1 flex items-center overflow-y-auto justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
-                </div>
-              ) : (
-                <div className="flex-1 overflow-hidden">
-                  <MessageView
-                    conversation={conversationForView}
-                    showProductCard={true}
-                    onSendMessage={handleSendMessage}
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <div className="text-center">
-                <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-2">Select a conversation to start messaging</p>
-                <p className="text-sm text-gray-400">
-                  {isConnected ? "Choose from your conversations on the left" : "Connecting to messaging service..."}
-                </p>
-                {connectionError && <p className="text-sm text-red-500 mt-2">Connection failed: {connectionError}</p>}
+                    // Clear local state immediately - this takes precedence over URL params
+                    setSelectedConversationId(null);
+                    setActiveConversationId(null);
+
+                    // Clear URL params (this happens asynchronously, but state change is immediate)
+                    router.replace(pathname, { scroll: false });
+                  }}
+                  className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
+                >
+                  <ArrowLeft className="h-5 w-5 text-gray-600" />
+                </button>
+                <Link
+                  href={`/dashboard/user/owner/${conversationForView.participant.userId}`}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-100">
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                      <User className="h-5 w-5" />
+                    </div>
+                    {conversationForView.participant.avatar && (
+                      <Image
+                        src={
+                          conversationForView.participant.avatar ||
+                          "/placeholder.svg"
+                        }
+                        alt={conversationForView.participant.name}
+                        fill
+                        className="object-cover z-10"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-sm md:text-base truncate whitespace-nowrap font-semibold text-[#5A5555]">
+                      {conversationForView.participant.name}
+                    </h2>
+                    <p className="text-xs text-[#B3B3B3]">
+                      {userStatus?.isOnlinr ? (
+                        <span className="text-[#12B76A]">Online</span>
+                      ) : userStatus?.lastActive ? (
+                        `Last active ${timeAgo(userStatus.lastActive)}`
+                      ) : (
+                        "Offline"
+                      )}
+                    </p>
+                  </div>
+                </Link>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
+                  <Flag className="h-5 w-5" fill="#12B76A" />
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setIsReportModalOpen(true);
+                      }}
+                    >
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report User
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-          )}
-        </div>
 
-      {conversationForView && conversationForView.equipment && (
+            {/* Message View */}
+            {isLoadingMessages || isConversationPending ? (
+              <div className="flex-1 flex items-center overflow-y-auto justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+              </div>
+            ) : (
+              <div className="flex-1 overflow-hidden">
+                <MessageView
+                  conversation={conversationForView}
+                  showProductCard={true}
+                  onSendMessage={handleSendMessage}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-2">
+                Select a conversation to start messaging
+              </p>
+              <p className="text-sm text-gray-400">
+                {isConnected
+                  ? "Choose from your conversations on the left"
+                  : "Connecting to messaging service..."}
+              </p>
+              {connectionError && (
+                <p className="text-sm text-red-500 mt-2">
+                  Connection failed: {connectionError}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {conversationForView && conversationForView.equipmentId && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={handleCloseReportModal}
-          reportedUserId={conversationForView.userId}
-          reportedUserName={conversationForView.name}
-          equipmentId={conversationForView.equipment._id}
+          reportedUserId={conversationForView.participant.userId}
+          reportedUserName={conversationForView.participant.name}
+          equipmentId={conversationForView.equipmentId}
         />
       )}
     </div>
-  )
+  );
 }

@@ -9,7 +9,7 @@ import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import NotificationsDropdown from "./notifications-dropdown"
 import { useGetNotificationsQuery } from "@/lib/redux/api/notificationsApi"
-import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api"
+import { useGetConversationsByEquipmentQuery } from "@/lib/redux/api/messaging-api"
 import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { LogOut, User } from "lucide-react"
 import { setSearchTerm } from "@/lib/redux/slices/searchSlice"
@@ -29,7 +29,7 @@ export function DashboardNavbar() {
   const profileRef = useRef<HTMLDivElement>(null);
   const handleLogout = useLogout()
 
-  const {data: conversations = []} = useGetConversationsQuery()
+  const {data: conversations = []} = useGetConversationsByEquipmentQuery()
   const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0)
 
   // console.log(conversations)

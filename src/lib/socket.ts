@@ -8,7 +8,7 @@ export interface SocketMessage {
   read: boolean
   createdAt: string
   updatedAt: string
-  equipment?: {
+  equipment?: string | {
     _id: string
     name?: string
     pricePerDay?: number
@@ -91,13 +91,11 @@ class SocketService {
     this.socket.on("lastActive", (data) => {
       console.log("User activity (disconnect/connect):", data)
       this.updateUserStatus(data)
-      console.log(data)
     })
 
     this.socket.on("lastActive1", (data) => {
       console.log("User activity (sent message):", data)
       this.updateUserStatus(data)
-      console.log(data)
     })
 
     console.log("[v0] All event listeners registered")
@@ -179,7 +177,7 @@ class SocketService {
 
     this.socket.emit("read_message", receiverUserId, (response: SocketResponse) => {
       if (response.ok) {
-        console.log("[Socket] Messages marked as read")
+        console.log("[Socket] Messages marked as read for receiver:", receiverUserId)
       } else {
         console.error("[Socket] Read error:", response.error)
       }

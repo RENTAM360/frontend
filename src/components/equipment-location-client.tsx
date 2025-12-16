@@ -138,41 +138,38 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
     }, [equipmentData]);
 
     const handleMessage = () => {
-      if (!equipmentData?.owner?.id || !equipmentData?.owner?.name) {
-        console.error("Missing owner data")
+      if (!equipmentData?.owner?.id || !equipmentData?.owner?.name || !equipmentData?.id) {
+        console.error("Missing owner or equipment data")
         return
       }
       const receiverId = equipmentData.owner.id
-      if (equipmentData) {
-        const existing = JSON.parse(localStorage.getItem("conversationProducts") || "{}")
-        existing[receiverId] = equipmentData
-        localStorage.setItem("conversationProducts", JSON.stringify(existing))
-      }
-  
+      const equipmentId = equipmentData.id
+
       socketService.joinChat(receiverId)
-  
+
+      // Create conversation object matching new Conversation type
       const conv = {
-        userId: receiverId,
-        name: equipmentData.owner.name,
-        avatar: equipmentData.owner.avatarUrl,
-        messages: [],
-        status: "Online",
+        receiverId,
+        equipmentId,
+        participant: {
+          userId: receiverId,
+          name: equipmentData.owner.name,
+          avatar: equipmentData.owner.avatarUrl || "/user.svg",
+        },
         equipment: {
-          _id: equipmentData.id,
           name: equipmentData.name,
-          pricePerDay: equipmentData.pricePerDay,
-          media: equipmentData.media,
-          category: [],
+          images: equipmentData.media || [],
         },
         lastMessage: "",
         lastMessageTime: new Date().toISOString(),
         unreadCount: 0,
       }
-      joinConversation(receiverId, conv)
-  
+      
+      joinConversation(receiverId, equipmentId, conv)
+
       console.log("Conv created:", conv)
       console.log("Owner id from equipmentData:", equipmentData?.owner.id)
-      router.push(`/dashboard/messages?conversation=${conv.userId}`)
+      router.push(`/dashboard/messages?receiver=${receiverId}&equipment=${equipmentId}`)
     }
   
     const isVerified = ownerProfile?.data.user.isVerify

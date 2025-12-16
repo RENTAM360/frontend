@@ -4,229 +4,556 @@ import type {
   Message,
   Conversation,
   MessagesPayload,
-} from "@/types/messaging"
-import { baseApi } from "./baseApi"
+  EquipmentBasic,
+} from "@/types/messaging";
+import { baseApi } from "./baseApi";
+
+type MessageWithEquipment = Message & {
+  equipment: EquipmentBasic;
+};
+
+function isMessageWithEquipment(msg: Message): msg is MessageWithEquipment {
+  return (
+    typeof (msg as unknown as Record<string, unknown>).equipment === "object"
+  );
+}
+
+export const makeConvKey = (receiverId?: string, equipmentId?: string) => {
+  if (!receiverId || !equipmentId) return undefined;
+  return `${receiverId}::${equipmentId}`;
+};
 
 export const messagingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getConversations: builder.query<Conversation[], void>({
       query: () => "/messages/conversations",
-      transformResponse: (response: { status: string; data: Conversation[] }) => {
-        console.log("[v0] Conversations API response:", response)
+      transformResponse: (response: {
+        status: string;
+        data: Conversation[];
+      }) => {
+        console.log("[v0] Conversations API response:", response);
         if (!response.data || !Array.isArray(response.data)) {
-          console.error("[v0] Invalid conversations response format:", response)
-          return []
+          console.error(
+            "[v0] Invalid conversations response format:",
+            response
+          );
+          return [];
         }
-        return response.data
+        return response.data;
       },
       providesTags: ["Conversation"],
     }),
 
-    // Get all messages with a specific receiver
-    getMessages: builder.query<MessagesPayload, { receiverId: string; currentUserId: string }>({
-      query: ({ receiverId }) => `/messages/${receiverId}`,
+    getConversationsByEquipment: builder.query<Conversation[], void>({
+      query: () => "/messages/conversations-by-equipment",
+      transformResponse: (response: {
+        status: string;
+        data: Conversation[];
+      }) => {
+        console.log("[v1] Conversations by equipment API response:", response);
+        if (!response.data || !Array.isArray(response.data)) return [];
+        
+        // Map participant.userId to receiverId for consistency
+        const mappedConversations = response.data.map((c) => ({
+          ...c,
+          receiverId: c.receiverId || c.participant?.userId || "",
+        }));
+        
+        // CRITICAL: Log conversations to verify backend is returning separate conversations per equipment
+        console.log("[v1] Processed conversations:", {
+          total: mappedConversations.length,
+          conversations: mappedConversations.map(c => ({
+            receiverId: c.receiverId || c.participant?.userId,
+            equipmentId: c.equipmentId,
+            equipmentName: c.equipment?.name,
+            key: makeConvKey(c.receiverId || c.participant?.userId, c.equipmentId)
+          })),
+          // Group by receiver to see if backend is returning multiple per receiver
+          groupedByReceiver: mappedConversations.reduce((acc, c) => {
+            const receiverId = c.receiverId || c.participant?.userId || "";
+            if (!acc[receiverId]) acc[receiverId] = [];
+            acc[receiverId].push({
+              equipmentId: c.equipmentId,
+              equipmentName: c.equipment?.name
+            });
+            return acc;
+          }, {} as Record<string, { equipmentId: string; equipmentName?: string }[]>)
+        });
+        
+        // Ensure all conversations have both receiverId and equipmentId
+        const validConversations = mappedConversations.filter(
+          (c) => (c.receiverId || c.participant?.userId) && c.equipmentId
+        );
+        
+        if (validConversations.length !== mappedConversations.length) {
+          console.warn(
+            "[v1] Filtered out conversations without receiverId or equipmentId:",
+            mappedConversations.length - validConversations.length
+          );
+        }
+        
+        return validConversations;
+      },
+      providesTags: (result) =>
+        result
+          ? result.map((c) => ({
+              type: "Conversation" as const,
+              id: makeConvKey(c.participant.userId, c.equipmentId),
+            }))
+          : ["Conversation"],
+    }),
 
-      transformResponse: (response: MessagesWithEquipmentResponse): MessagesPayload => {
-        console.log("[v0] Messages API response:", response)
+    // Get messages scoped by receiver + equipment
+    getMessagesByEquipment: builder.query<
+      MessagesPayload,
+      { receiverId: string; equipmentId: string; currentUserId: string }
+    >({
+      query: ({ receiverId, equipmentId }) => ({
+        url: `/messages/by-equipment/${receiverId}/${equipmentId}`,
+      }),
+      transformResponse: (
+        response: MessagesWithEquipmentResponse,
+        meta,
+        arg
+      ): MessagesPayload => {
+        console.log("[v1] Messages by equipment response:", response);
 
-        const payload = response.data?.messages
-        const messages = payload?.messages ?? []
+        const payload = response.data;
+        const messages = payload?.messages ?? [];
+        
+        // CRITICAL: Filter messages to ensure they match the requested equipmentId
+        // This prevents messages from other equipment being included
+        const filteredMessages = arg ? messages.filter((msg) => {
+          const msgEquipmentId = typeof msg.equipment === 'string' 
+            ? msg.equipment 
+            : (msg.equipment as any)?._id || '';
+          return msgEquipmentId === arg.equipmentId;
+        }) : messages;
+        
+        const equipment = payload?.equipment ? {
+          _id: payload.equipment._id,
+          name: payload.equipment.name,
+          pricePerDay: payload.equipment.pricePerDay,
+          rating: payload.equipment.rating,
+          media: payload.equipment.media || [],
+          category: payload.equipment.category,
+        } : undefined;
 
         if (!Array.isArray(messages)) {
-          console.error("[v0] Invalid messages response format:", response)
-          return { messages: [] }
+          console.error("[v1] Invalid messages response format:", response);
+          return { messages: [] };
         }
 
-        const equipment = payload?.equipment ?? undefined
+        console.log("[v1] Filtered messages by equipment:", {
+          requestedEquipmentId: arg?.equipmentId,
+          totalMessages: messages.length,
+          filteredCount: filteredMessages.length
+        });
+
+        return {
+          messages: filteredMessages,
+          equipment,
+        };
+      },
+      providesTags: (result, error, { receiverId, equipmentId }) => [
+        { type: "Message", id: makeConvKey(receiverId, equipmentId) },
+      ],
+    }),
+
+    // Get all messages with a specific receiver
+    getMessages: builder.query<
+      MessagesPayload,
+      { receiverId: string; currentUserId: string }
+    >({
+      query: ({ receiverId }) => `/messages/${receiverId}`,
+
+      transformResponse: (
+        response: MessagesWithEquipmentResponse
+      ): MessagesPayload => {
+        console.log("[v0] Messages API response:", response);
+
+        const payload = response.data;
+        const messages = payload.messages ?? [];
+
+        if (!Array.isArray(messages)) {
+          console.error("[v0] Invalid messages response format:", response);
+          return { messages: [] };
+        }
+
+        const equipment = payload?.equipment ?? undefined;
 
         return {
           messages,
           equipment,
-        }
+        };
       },
-      providesTags: (result, error, { receiverId }) => [{ type: "Message", id: receiverId }],
+      providesTags: (result, error, { receiverId }) => [
+        { type: "Message", id: receiverId },
+      ],
     }),
 
-    // Get recent messages with a specific receiver (with limit)
-    getRecentMessages: builder.query<
+    // Recent messages scoped by equipment
+    getRecentMessagesByEquipment: builder.query<
       Message[],
       {
-        receiverId: string
-        currentUserId: string
-        limit?: number
+        receiverId: string;
+        equipmentId: string;
+        currentUserId: string;
+        limit?: number;
       }
+    >({
+      query: ({ receiverId, equipmentId, limit = 20 }) => ({
+        url: `/messages/recent-by-equipment/${receiverId}/${equipmentId}`,
+        params: { limit },
+      }),
+      transformResponse: (
+        response: MessagesWithEquipmentResponse
+      ): Message[] => {
+        console.log("[v1] Recent messages by equipment response:", response);
+        const msgs = response.data?.messages ?? [];
+        if (!Array.isArray(msgs)) return [];
+        return msgs;
+      },
+      providesTags: (result, error, { receiverId, equipmentId }) => [
+        {
+          type: "Message",
+          id: `recent-${makeConvKey(receiverId, equipmentId)}`,
+        },
+      ],
+    }),
+
+    // Recent messages not scoped to equipment (kept for backward compatibility)
+    getRecentMessages: builder.query<
+      Message[],
+      { receiverId: string; currentUserId: string; limit?: number }
     >({
       query: ({ receiverId, limit = 20 }) => ({
         url: `/messages/recent-messages/${receiverId}`,
         params: { limit },
       }),
       transformResponse: (response: MessagesResponse): Message[] => {
-        console.log("[v0] Recent messages API response:", response)
-        if (!response.data || !Array.isArray(response.data)) {
-          console.error("[v0] Invalid recent messages response format:", response)
-          return []
-        }
-        return response.data
+        console.log("[v1] Recent messages response (legacy):", response);
+        if (!response.data || !Array.isArray(response.data)) return [];
+        return response.data;
       },
-      providesTags: (result, error, { receiverId }) => [{ type: "Message", id: `recent-${receiverId}` }],
-    }),
-
-    // Optimistic update for new messages (used with socket)
-    addMessage: builder.mutation<
-      Message,
-      {
-        receiverId: string
-        message: Message
-        currentUserId: string
-      }
-    >({
-      queryFn: async ({ message }) => {
-        // This is an optimistic update - the actual sending happens via socket
-        return { data: message }
-      },
-      onQueryStarted: async ({ receiverId, message, currentUserId }, { dispatch, queryFulfilled }) => {
-        // Optimistically update the messages cache
-        const patchResult = dispatch(
-          messagingApi.util.updateQueryData(
-            "getMessages",
-            { receiverId, currentUserId: message.sender === "user" ? "current" : receiverId },
-            (draft) => {
-              if (!Array.isArray(draft.messages)) {
-                draft.messages = []
-              }
-
-              draft.messages.push(message)
-
-              if (!draft.equipment && message.equipment && typeof message.equipment !== "string") {
-                draft.equipment = message.equipment
-              }
-            },
-          ),
-        )
-
-        // Also update recent messages cache
-        dispatch(
-          messagingApi.util.updateQueryData(
-            "getRecentMessages",
-            {
-              receiverId,
-              currentUserId: message.sender === "user" ? currentUserId : receiverId,
-            },
-            (draft) => {
-              const apiMessage: Message = {
-                _id: message._id,
-                sender: message.sender === "user" ? currentUserId : receiverId,
-                receiver: message.sender === "user" ? receiverId : currentUserId,
-                content: message.content,
-                read: message.read ?? false,
-                createdAt: message.createdAt,
-                updatedAt: message.updatedAt,
-                __v: message.__v
-              }
-
-              draft.push(apiMessage)
-
-              // Keep only 20 most recent
-              if (draft.length > 20) {
-                draft.splice(0, draft.length - 20)
-              }
-            },
-          ),
-        )
-        try {
-          await queryFulfilled
-        } catch {
-          // Revert optimistic update on failure
-          patchResult.undo()
-        }
-      },
-      invalidatesTags: (result, error, { receiverId }) => [
-        { type: "Message", id: receiverId },
-        { type: "Message", id: `recent-${receiverId}` },
-        "Conversation", // Update conversation list to show new last message
+      providesTags: (result, error, { receiverId }) => [
+        { type: "Message", id: `recent-legacy-${receiverId}` },
       ],
     }),
 
-    // Mark messages as read (optimistic update)
-    markMessagesAsRead: builder.mutation<null, { receiverId: string; currentUserId: string }>({
-      queryFn: async () => {
-        // The actual marking happens via socket
-        return { data: null }
+    // Get recent messages with a specific receiver (with limit)
+    // getRecentMessages: builder.query<
+    //   Message[],
+    //   {
+    //     receiverId: string;
+    //     currentUserId: string;
+    //     limit?: number;
+    //   }
+    // >({
+    //   query: ({ receiverId, limit = 20 }) => ({
+    //     url: `/messages/recent-messages/${receiverId}`,
+    //     params: { limit },
+    //   }),
+    //   transformResponse: (response: MessagesResponse): Message[] => {
+    //     console.log("[v0] Recent messages API response:", response);
+    //     if (!response.data || !Array.isArray(response.data)) {
+    //       console.error(
+    //         "[v0] Invalid recent messages response format:",
+    //         response
+    //       );
+    //       return [];
+    //     }
+    //     return response.data;
+    //   },
+    //   providesTags: (result, error, { receiverId }) => [
+    //     { type: "Message", id: `recent-${receiverId}` },
+    //   ],
+    // }),
+
+    addMessageOptimistic: builder.mutation<
+      Message,
+      {
+        receiverId: string;
+        equipmentId: string;
+        message: Message;
+        currentUserId: string;
+      }
+    >({
+      queryFn: async ({ message }) => ({ data: message }),
+      onQueryStarted: async (
+        { receiverId, equipmentId, message, currentUserId },
+        { dispatch, queryFulfilled }
+      ) => {
+        // update messages query cache for this equipment-scoped conversation
+        const patchResult = dispatch(
+          messagingApi.util.updateQueryData(
+            "getMessagesByEquipment",
+            { receiverId, equipmentId, currentUserId },
+            (draft) => {
+              if (!draft.messages) draft.messages = [];
+              draft.messages.push(message);
+              if (!draft.equipment && isMessageWithEquipment(message)) {
+                draft.equipment = message.equipment;
+              }
+            }
+          )
+        );
+        // Update recent messages
+        dispatch(
+          messagingApi.util.updateQueryData(
+            "getRecentMessagesByEquipment",
+            { receiverId, equipmentId, currentUserId },
+            (draft) => {
+              draft.push(message);
+              if (draft.length > 20) draft.splice(0, draft.length - 20);
+            }
+          )
+        );
+
+        // Update conversations list lastMessage/time optimistically
+        dispatch(
+          messagingApi.util.updateQueryData(
+            "getConversationsByEquipment",
+            undefined,
+            (draft) => {
+              const conv = draft.find(
+                (c) =>
+                  c.participant.userId === receiverId &&
+                  c.equipmentId === equipmentId
+              );
+              if (conv) {
+                conv.lastMessage = message.content;
+                conv.lastMessageTime = message.createdAt;
+              }
+            }
+          )
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
       },
-      onQueryStarted: async ({ receiverId, currentUserId }, { dispatch, queryFulfilled }) => {
-        // Optimistically update messages to mark them as read
-        const patchResults = [
+      invalidatesTags: (result, error, { receiverId, equipmentId }) => [
+        { type: "Message", id: makeConvKey(receiverId, equipmentId) },
+        {
+          type: "Message",
+          id: `recent-${makeConvKey(receiverId, equipmentId)}`,
+        },
+        "Conversation",
+      ],
+    }),
+    // Optimistic update for new messages (used with socket)
+    // addMessage: builder.mutation<
+    //   Message,
+    //   {
+    //     receiverId: string;
+    //     message: Message;
+    //     currentUserId: string;
+    //   }
+    // >({
+    //   queryFn: async ({ message }) => {
+    //     // This is an optimistic update - the actual sending happens via socket
+    //     return { data: message };
+    //   },
+    //   onQueryStarted: async (
+    //     { receiverId, message, currentUserId },
+    //     { dispatch, queryFulfilled }
+    //   ) => {
+    //     // Optimistically update the messages cache
+    //     const patchResult = dispatch(
+    //       messagingApi.util.updateQueryData(
+    //         "getMessages",
+    //         {
+    //           receiverId,
+    //           currentUserId: message.sender === "user" ? "current" : receiverId,
+    //         },
+    //         (draft) => {
+    //           if (!Array.isArray(draft.messages)) {
+    //             draft.messages = [];
+    //           }
+
+    //           draft.messages.push(message);
+
+    //           if (
+    //             !draft.equipment &&
+    //             message.equipment &&
+    //             typeof message.equipment !== "string"
+    //           ) {
+    //             draft.equipment = message.equipment;
+    //           }
+    //         }
+    //       )
+    //     );
+
+    //     // Also update recent messages cache
+    //     dispatch(
+    //       messagingApi.util.updateQueryData(
+    //         "getRecentMessages",
+    //         {
+    //           receiverId,
+    //           currentUserId:
+    //             message.sender === "user" ? currentUserId : receiverId,
+    //         },
+    //         (draft) => {
+    //           const apiMessage: Message = {
+    //             _id: message._id,
+    //             sender: message.sender === "user" ? currentUserId : receiverId,
+    //             receiver:
+    //               message.sender === "user" ? receiverId : currentUserId,
+    //             content: message.content,
+    //             read: message.read ?? false,
+    //             createdAt: message.createdAt,
+    //             updatedAt: message.updatedAt,
+    //             __v: message.__v,
+    //           };
+
+    //           draft.push(apiMessage);
+
+    //           // Keep only 20 most recent
+    //           if (draft.length > 20) {
+    //             draft.splice(0, draft.length - 20);
+    //           }
+    //         }
+    //       )
+    //     );
+    //     try {
+    //       await queryFulfilled;
+    //     } catch {
+    //       // Revert optimistic update on failure
+    //       patchResult.undo();
+    //     }
+    //   },
+    //   invalidatesTags: (result, error, { receiverId }) => [
+    //     { type: "Message", id: receiverId },
+    //     { type: "Message", id: `recent-${receiverId}` },
+    //     "Conversation", // Update conversation list to show new last message
+    //   ],
+    // }),
+
+    // Mark messages as read (optimistic update + socket event)
+    // Note: No HTTP endpoint exists, so we use socket events and optimistic updates
+    // The backend should update unreadCount when processing the socket event
+    markMessagesAsRead: builder.mutation<
+      null,
+      { receiverId: string; equipmentId: string; currentUserId: string }
+    >({
+      queryFn: async () => ({ data: null }),
+      onQueryStarted: async (
+        { receiverId, equipmentId, currentUserId },
+        { dispatch, queryFulfilled }
+      ) => {
+        // Optimistic updates for immediate UI feedback
+        const patches = [
           dispatch(
-            messagingApi.util.updateQueryData("getMessages", { receiverId, currentUserId }, (draft) => {
-              draft.messages?.forEach((message) => {
-                if (message.sender === "other") {
-                  message.read = true
-                }
-              })
-            }),
+            messagingApi.util.updateQueryData(
+              "getMessagesByEquipment",
+              { receiverId, equipmentId, currentUserId },
+              (draft) => {
+                draft.messages?.forEach((m) => {
+                  if (m.sender !== currentUserId) m.read = true;
+                });
+              }
+            )
           ),
           dispatch(
             messagingApi.util.updateQueryData(
-              "getRecentMessages",
-              { receiverId, currentUserId: "current" },
+              "getRecentMessagesByEquipment",
+              { receiverId, equipmentId, currentUserId },
               (draft) => {
-                draft.forEach((message) => {
-                  if (message.sender === "other") {
-                    message.read = true
-                  }
-                })
-              },
-            ),
+                draft.forEach((m) => {
+                  if (m.sender !== currentUserId) m.read = true;
+                });
+              }
+            )
           ),
-        ]
+          // Update unreadCount in conversations list for this specific equipment
+          dispatch(
+            messagingApi.util.updateQueryData(
+              "getConversationsByEquipment",
+              undefined,
+              (draft) => {
+                const conv = draft.find(
+                  (c) =>
+                    c.participant.userId === receiverId &&
+                    c.equipmentId === equipmentId
+                );
+                if (conv) {
+                  conv.unreadCount = 0;
+                }
+              }
+            )
+          ),
+        ];
 
         try {
-          await queryFulfilled
-        } catch {
-          // Revert optimistic updates on failure
-          patchResults.forEach((patch) => patch.undo())
+          await queryFulfilled;
+          // Invalidate conversations to trigger refetch and get updated unreadCount from backend
+          // The backend should have updated unreadCount when processing the socket event
+          // Use a small delay to ensure backend has processed the socket event
+          setTimeout(() => {
+            dispatch(messagingApi.util.invalidateTags(["Conversation"]));
+          }, 500);
+        } catch (error) {
+          console.error("[Messaging] ❌ Failed to mark messages as read:", error);
+          patches.forEach((p) => p.undo());
         }
       },
-      invalidatesTags: ["Conversation"], // Update unread counts
+      invalidatesTags: ["Conversation"],
     }),
 
-    // Update conversation last message (used when receiving new messages)
+    // Update conversation last message (used when socket receives new message)
     updateConversationLastMessage: builder.mutation<
       null,
       {
-        conversationId: string
-        lastMessage: string
-        lastMessageTime: string
+        receiverId: string;
+        equipmentId: string;
+        lastMessage: string;
+        lastMessageTime: string;
       }
     >({
       queryFn: async () => ({ data: null }),
-      onQueryStarted: async ({ conversationId, lastMessage, lastMessageTime }, { dispatch }) => {
+      onQueryStarted: async (
+        { receiverId, equipmentId, lastMessage, lastMessageTime },
+        { dispatch }
+      ) => {
         dispatch(
-          messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
-            const conversation = draft.find((conv) => conv.userId === conversationId)
-            if (conversation) {
-              conversation.lastMessage = lastMessage
-              conversation.lastMessageTime = lastMessageTime
-              // Move conversation to top of list
-              const index = draft.indexOf(conversation)
-              if (index > 0) {
-                draft.splice(index, 1)
-                draft.unshift(conversation)
+          messagingApi.util.updateQueryData(
+            "getConversationsByEquipment",
+            undefined,
+            (draft) => {
+              const conv = draft.find(
+                (c) =>
+                  c.participant.userId === receiverId &&
+                  c.equipmentId === equipmentId
+              );
+              if (conv) {
+                conv.lastMessage = lastMessage;
+                conv.lastMessageTime = lastMessageTime;
+                const idx = draft.indexOf(conv);
+                if (idx > 0) {
+                  draft.splice(idx, 1);
+                  draft.unshift(conv);
+                }
               }
             }
-          }),
-        )
+          )
+        );
       },
     }),
   }),
-})
+});
 
 // Export hooks for usage in components
 export const {
   useGetConversationsQuery,
   useGetMessagesQuery,
   useGetRecentMessagesQuery,
-  useAddMessageMutation,
+  useGetConversationsByEquipmentQuery,
+  useGetMessagesByEquipmentQuery,
+  useGetRecentMessagesByEquipmentQuery,
+  useAddMessageOptimisticMutation,
   useMarkMessagesAsReadMutation,
   useUpdateConversationLastMessageMutation,
-} = messagingApi
+} = messagingApi;

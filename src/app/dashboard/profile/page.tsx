@@ -14,6 +14,7 @@ import { OtherUserProfile, useDeleteAccountMutation, useGetProfileQuery, useUpda
 import { VerifyNinModal } from "@/components/verify-nin-modal"
 import { useGetEquipmentsQuery, useUploadEquipmentImagesMutation } from "@/lib/redux/api/equipmentApi"
 import { VerifyPhoneModal } from "@/components/verifyPhoneNumber"
+import { ChangePasswordModal } from "@/components/change-password-modal"
 import { enqueueSnackbar } from "notistack"
 import { useLogout } from "@/app/utils/handleLogout"
 
@@ -27,6 +28,7 @@ export default function ProfilePage() {
     const { data: profileData } = useGetProfileQuery()
     const [verifyType, setVerifyType] = useState<"NIN" | "BVN" | null>(null);
     const [showVerifyPhone, setShowVerifyPhone] = useState(false)
+    const [showChangePassword, setShowChangePassword] = useState(false)
     const [uploadEquipmentImages] = useUploadEquipmentImagesMutation()
     const [updateProfile] = useUpdateProfileMutation()
     const [deleteAccount, { isLoading }] = useDeleteAccountMutation();
@@ -384,6 +386,18 @@ export default function ProfilePage() {
                   </div>
                   {viewMode === "edit" ? "View listed items" : "Edit profile details"}
               </button>
+              <button
+                  onClick={() => setShowChangePassword(true)}
+                  className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
+                >
+                  <div className="rounded-full bg-[#F6FEF9] p-2">
+                    <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.6667 6.83333H12V5.16667C12 3.32667 10.5067 1.83333 8.66667 1.83333C6.82667 1.83333 5.33333 3.32667 5.33333 5.16667V6.83333H4.66667C4.3 6.83333 4 7.13333 4 7.5V13.1667C4 13.5333 4.3 13.8333 4.66667 13.8333H12.6667C13.0333 13.8333 13.3333 13.5333 13.3333 13.1667V7.5C13.3333 7.13333 13.0333 6.83333 12.6667 6.83333ZM8.66667 2.83333C9.77333 2.83333 10.6667 3.72667 10.6667 4.83333V6.83333H6.66667V4.83333C6.66667 3.72667 7.56 2.83333 8.66667 2.83333ZM12.6667 13.1667H4.66667V7.5H12.6667V13.1667Z" fill="#12B76A"/>
+                      <path d="M8.66667 10.1667C9.03333 10.1667 9.33333 9.86667 9.33333 9.5C9.33333 9.13333 9.03333 8.83333 8.66667 8.83333C8.3 8.83333 8 9.13333 8 9.5C8 9.86667 8.3 10.1667 8.66667 10.1667Z" fill="#12B76A"/>
+                    </svg>
+                  </div>
+                  Change password
+              </button>
               {!profile?.isNinVerify && <button
                   onClick={() => setVerifyType("NIN")}
                   className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
@@ -620,6 +634,11 @@ export default function ProfilePage() {
       <VerifyPhoneModal
         isOpen={showVerifyPhone}
         onClose={() => setShowVerifyPhone(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
       />
     </div>
   )
