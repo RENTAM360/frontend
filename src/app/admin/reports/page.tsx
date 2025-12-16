@@ -1,36 +1,52 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input"
-import { ArrowLeft, MapPin, Phone, CreditCard, Mail, Trash2, ChevronRight } from "lucide-react"
-import { PageHeader } from "@/context/page-header-context"
-import Image from "next/image"
-import { Report, useDeleteUserMutation, useGetReportByIdQuery, useGetReportsQuery, useResolveReportMutation, useSuspendUserMutation, useUnsuspendUserMutation } from "@/lib/redux/api/adminApi"
-import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
-import { enqueueSnackbar } from "notistack"
-import Lottie from "lottie-react"
-import successAnimation from "@/assets/animations/Success.json"
-import { useMessagingContext } from "@/context/messaging-context"
-import { socketService } from "@/lib/socket"
-import { useRouter } from "next/navigation"
+import {
+  ArrowLeft,
+  MapPin,
+  Phone,
+  CreditCard,
+  Mail,
+  Trash2,
+  ChevronRight,
+} from "lucide-react";
+import { PageHeader } from "@/context/page-header-context";
+import Image from "next/image";
+import {
+  Report,
+  useDeleteUserMutation,
+  useGetReportByIdQuery,
+  useGetReportsQuery,
+  useResolveReportMutation,
+  useSuspendUserMutation,
+  useUnsuspendUserMutation,
+} from "@/lib/redux/api/adminApi";
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi";
+import { enqueueSnackbar } from "notistack";
+import Lottie from "lottie-react";
+import successAnimation from "@/assets/animations/Success.json";
+import { useMessagingContext } from "@/context/messaging-context";
+import { socketService } from "@/lib/socket";
+import { useRouter } from "next/navigation";
+import { Conversation } from "@/types/messaging";
 
- 
 export default function ReportsPage() {
   // const [searchQuery] = useState("")
-  const router = useRouter()
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
+  const router = useRouter();
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   // const [setReporterId] = useState<string | null>(null);
   const [reportedId, setReportedId] = useState<string | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const {
-    joinConversation,
-  } = useMessagingContext()
+  const { joinConversation } = useMessagingContext();
 
-
-  const { data: reportsData, refetch: refetchReports } = useGetReportsQuery({ page: 1, limit: 10 });
+  const { data: reportsData, refetch: refetchReports } = useGetReportsQuery({
+    page: 1,
+    limit: 10,
+  });
   const reports = reportsData?.data?.reports ?? [];
 
   const { data: reportDetails } = useGetReportByIdQuery(selectedReportId!, {
@@ -50,31 +66,35 @@ export default function ReportsPage() {
     }
   }, [reportDetail]);
 
-  const { data: reportedProfile, refetch } = useGetOtherUserProfileQuery(reportedId!, {
-    skip: !reportedId,
-  });
+  const { data: reportedProfile, refetch } = useGetOtherUserProfileQuery(
+    reportedId!,
+    {
+      skip: !reportedId,
+    }
+  );
 
-  const user = reportedProfile?.data?.user
+  const user = reportedProfile?.data?.user;
 
-  const [resolveReport] = useResolveReportMutation()
-  const [suspendUser, { isLoading: isSuspending }] = useSuspendUserMutation()
-  const [unSuspendUser, { isLoading: isUnsuspending }] = useUnsuspendUserMutation();
-  const [deleteUser] = useDeleteUserMutation()
+  const [resolveReport] = useResolveReportMutation();
+  const [suspendUser, { isLoading: isSuspending }] = useSuspendUserMutation();
+  const [unSuspendUser, { isLoading: isUnsuspending }] =
+    useUnsuspendUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
   // console.log("Reporter:", reporterProfile);
   // console.log("Reported:", reportedProfile);
 
-
   // Filter reports based on search and status
   const filteredReports = reports?.filter((report: Report) => {
     const matchesStatus =
-      statusFilter === "all" || report.status?.toLowerCase() === statusFilter.toLowerCase()
-    return matchesStatus
-  })
+      statusFilter === "all" ||
+      report.status?.toLowerCase() === statusFilter.toLowerCase();
+    return matchesStatus;
+  });
 
   const handleViewDetails = (reportId: string) => {
-    setSelectedReportId(reportId)
-  }
+    setSelectedReportId(reportId);
+  };
 
   const handleCloseDetails = () => {
     setIsClosing(true);
@@ -82,20 +102,20 @@ export default function ReportsPage() {
       setSelectedReportId(null);
       setIsClosing(false);
     }, 300);
-  }
+  };
 
   const handleResolve = async () => {
-    if (!selectedReportId) return
-    await resolveReport(selectedReportId).unwrap()
-    setShowSuccessModal(true)
-    refetchReports()
-  }
+    if (!selectedReportId) return;
+    await resolveReport(selectedReportId).unwrap();
+    setShowSuccessModal(true);
+    refetchReports();
+  };
 
   const handleSuspend = async (userId: string) => {
     try {
       await suspendUser(userId).unwrap();
       enqueueSnackbar("User suspended successfully", { variant: "success" });
-      refetch()
+      refetch();
     } catch {
       enqueueSnackbar("Failed to suspend user", { variant: "error" });
     }
@@ -105,7 +125,7 @@ export default function ReportsPage() {
     try {
       await unSuspendUser(userId).unwrap();
       enqueueSnackbar("User unsuspended successfully", { variant: "success" });
-      refetch()
+      refetch();
     } catch {
       enqueueSnackbar("Failed to unsuspend user", { variant: "error" });
     }
@@ -127,48 +147,51 @@ export default function ReportsPage() {
     }
   };
 
-
   const handleMessage = () => {
     if (!user?._id || !user?.firstName) {
-      console.error("Missing user data")
-      return
+      console.error("Missing user data");
+      return;
     }
 
-    const receiverId = user._id
+    const receiverId = user._id;
 
     // Optional: store user data locally (similar to user-side)
-    const existing = JSON.parse(localStorage.getItem("conversationUsers") || "{}")
-    existing[receiverId] = user
-    localStorage.setItem("conversationUsers", JSON.stringify(existing))
+    const existing = JSON.parse(
+      localStorage.getItem("conversationUsers") || "{}"
+    );
+    existing[receiverId] = user;
+    localStorage.setItem("conversationUsers", JSON.stringify(existing));
 
     // Join socket room
-    socketService.joinChat(receiverId)
+    socketService.joinChat(receiverId);
 
     // Construct conversation object
-    const conv = {
-      userId: receiverId,
-      name: `${user.firstName} ${user.lastName}`,
-      avatar: user.avatar || "/user.svg",
-      messages: [],
-      status: "Online",
+    const conv: Conversation = {
+      receiverId,
+      equipmentId: "",
+      equipment: { name: "", media: [] },
+      participant: {
+        userId: receiverId,
+        name: `${user.firstName} ${user.lastName}`,
+        avatar: user.avatar || "/user.svg",
+      },
       lastMessage: "",
       lastMessageTime: new Date().toISOString(),
       unreadCount: 0,
-      role: "user",
-    }
+    };
 
-    joinConversation(receiverId, conv)
+    joinConversation(receiverId, "", conv);
 
-    console.log("Admin started conversation:", conv)
+    console.log("Admin started conversation:", conv);
 
     // Redirect to admin message thread
-    router.push(`/admin/messages?conversation=${conv.userId}`)
-  }
+    router.push(`/admin/messages?conversation=${conv.receiverId}`);
+  };
 
   const handleSuccessModalClose = () => {
-    setShowSuccessModal(false)
-    setSelectedReportId(null)
-  }
+    setShowSuccessModal(false);
+    setSelectedReportId(null);
+  };
 
   return (
     <>
@@ -211,21 +234,33 @@ export default function ReportsPage() {
               {/* Table Rows */}
               {filteredReports.length > 0 ? (
                 filteredReports.map((report) => (
-                  <ReportRow key={report._id} report={report} onViewDetails={() => handleViewDetails(report._id)} />
+                  <ReportRow
+                    key={report._id}
+                    report={report}
+                    onViewDetails={() => handleViewDetails(report._id)}
+                  />
                 ))
               ) : (
-                <div className="p-8 text-center text-gray-500">No reports found matching your criteria</div>
+                <div className="p-8 text-center text-gray-500">
+                  No reports found matching your criteria
+                </div>
               )}
 
               {/* Pagination */}
               {filteredReports.length > 0 && (
                 <div className="flex justify-end items-center p-4 border-t">
-                  <div className="text-sm text-gray-500 mr-4">Page 1 of {Math.ceil(filteredReports.length / 10)}</div>
+                  <div className="text-sm text-gray-500 mr-4">
+                    Page 1 of {Math.ceil(filteredReports.length / 10)}
+                  </div>
                   <div className="flex space-x-1">
                     <Button variant="outline" size="sm" className="px-2">
                       &lt; Prev
                     </Button>
-                    <Button variant="outline" size="sm" className="px-2 bg-gray-100">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="px-2 bg-gray-100"
+                    >
                       1
                     </Button>
                     <Button variant="outline" size="sm" className="px-2">
@@ -237,9 +272,8 @@ export default function ReportsPage() {
                   </div>
                 </div>
               )}
-                </div>
-              </div>
-              
+            </div>
+          </div>
         </div>
       </div>
 
@@ -247,7 +281,13 @@ export default function ReportsPage() {
       {selectedReportId && (
         <>
           {/* Overlay - only covers the left side */}
-          <div onClick={handleCloseDetails} className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`} style={{ right: "400px" }} />
+          <div
+            onClick={handleCloseDetails}
+            className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+              isClosing ? "opacity-0" : "opacity-100"
+            }`}
+            style={{ right: "400px" }}
+          />
 
           {/* Slide-in Panel */}
           <div
@@ -257,22 +297,35 @@ export default function ReportsPage() {
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
                 {/* Back Button */}
-                <button onClick={handleCloseDetails} className="mb-4 hover:bg-gray-100 p-1 rounded">
+                <button
+                  onClick={handleCloseDetails}
+                  className="mb-4 hover:bg-gray-100 p-1 rounded"
+                >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
 
                 {/* Cover Image and Profile */}
                 <div className="relative mb-10">
                   <div className="h-38 rounded-t-2xl rounded-b-[35px] overflow-hidden">
-                    <Image src="/report-coverImg.svg" alt="Cover" width={100} height={100} className="w-full h-full object-cover" />
+                    <Image
+                      src="/report-coverImg.svg"
+                      alt="Cover"
+                      width={100}
+                      height={100}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-10">
                     <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-white">
                       <Image
-                        src={reportedProfile?.data?.user?.avatar || "/placeholder.svg"}
+                        src={
+                          reportedProfile?.data?.user?.avatar ||
+                          "/placeholder.svg"
+                        }
                         alt={reportedProfile?.data?.user?.firstName || "User"}
                         className="w-full h-full object-cover"
-                        width={100} height={100}
+                        width={100}
+                        height={100}
                       />
                     </div>
                   </div>
@@ -280,13 +333,18 @@ export default function ReportsPage() {
 
                 {/* User Info */}
                 <div className="text-center mb-6 mt-8">
-                  <h3 className="text-xl font-bold">{reportedProfile?.data?.user?.firstName} {reportedProfile?.data?.user?.lastName}</h3>
+                  <h3 className="text-xl font-bold">
+                    {reportedProfile?.data?.user?.firstName}{" "}
+                    {reportedProfile?.data?.user?.lastName}
+                  </h3>
                   {reportedProfile?.data?.user?.isVerify && (
                     <div className="inline-block bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded mt-1">
                       Verified
                     </div>
                   )}
-                  <p className="text-gray-600 mt-3 text-sm">{reportedProfile?.data?.user?.bio}</p>
+                  <p className="text-gray-600 mt-3 text-sm">
+                    {reportedProfile?.data?.user?.bio}
+                  </p>
 
                   <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
@@ -296,7 +354,9 @@ export default function ReportsPage() {
                     <div className="flex items-center gap-1">
                       <span>
                         {reportedProfile?.data?.user?.createdAt
-                          ? new Date(reportedProfile.data.user.createdAt).toLocaleDateString("en-US", {
+                          ? new Date(
+                              reportedProfile.data.user.createdAt
+                            ).toLocaleDateString("en-US", {
                               year: "numeric",
                               month: "short",
                               day: "numeric",
@@ -320,7 +380,9 @@ export default function ReportsPage() {
                           const userId = reportedProfile.data.user._id;
                           if (!userId) return;
 
-                          if (reportedProfile.data.user.status === "suspended") {
+                          if (
+                            reportedProfile.data.user.status === "suspended"
+                          ) {
                             handleUnsuspend(userId);
                           } else {
                             handleSuspend(userId);
@@ -335,7 +397,10 @@ export default function ReportsPage() {
                       </Button>
                     )}
 
-                    <Button className="bg-[#12B76A] hover:bg-[#149655] text-white" onClick={handleMessage}>
+                    <Button
+                      className="bg-[#12B76A] hover:bg-[#149655] text-white"
+                      onClick={handleMessage}
+                    >
                       Message
                     </Button>
                     {reportDetails?.data?.report?.status !== "resolved" && (
@@ -353,8 +418,12 @@ export default function ReportsPage() {
                 {/* Report Message - Only show if not resolved */}
                 {reportDetails?.data?.report?.status !== "resolved" && (
                   <div className="bg-[#FFF7F6] border border-[#FFB1AB] rounded-lg p-4 mb-6">
-                    <h4 className="text-[#F04438] font-medium mb-2">Report message</h4>
-                    <p className="text-[#F04438] text-sm">{reportDetails?.data?.report?.reason}</p>
+                    <h4 className="text-[#F04438] font-medium mb-2">
+                      Report message
+                    </h4>
+                    <p className="text-[#F04438] text-sm">
+                      {reportDetails?.data?.report?.reason}
+                    </p>
                   </div>
                 )}
 
@@ -363,7 +432,8 @@ export default function ReportsPage() {
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                     <h4 className="text-[#12B76A] font-medium mb-2">Status</h4>
                     <p className="text-[#12B76A] text-sm">
-                      This report has been resolved and appropriate actions have been completed.
+                      This report has been resolved and appropriate actions have
+                      been completed.
                     </p>
                   </div>
                 )}
@@ -372,27 +442,38 @@ export default function ReportsPage() {
                 <div className="space-y-4 pb-6">
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <MapPin className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-[#000000]">{reportedProfile?.data?.user?.address}</span>
+                    <span className="text-[#000000]">
+                      {reportedProfile?.data?.user?.address}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Phone className="w-5 h-5 text-[#17b266]" />
-                    {reportedProfile?.data?.user?.address && <span className="text-[#000000]">{reportedProfile?.data?.user?.phone}</span>}
+                    {reportedProfile?.data?.user?.address && (
+                      <span className="text-[#000000]">
+                        {reportedProfile?.data?.user?.phone}
+                      </span>
+                    )}
                   </div>
-                  {
-                    reportDetails?.data?.bank && reportDetails.data.bank.length > 0 && (
+                  {reportDetails?.data?.bank &&
+                    reportDetails.data.bank.length > 0 && (
                       <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                         <CreditCard className="w-5 h-5 text-[#17b266]" />
                         <div>
-                          <span className="text-[#000000]">{ reportDetails?.data?.bank}</span>
+                          <span className="text-[#000000]">
+                            {reportDetails?.data?.bank}
+                          </span>
                           <br />
-                          <span className="text-gray-500 text-sm">{ reportDetails?.data?.bank}</span>
+                          <span className="text-gray-500 text-sm">
+                            {reportDetails?.data?.bank}
+                          </span>
                         </div>
                       </div>
-                    )
-                  }
+                    )}
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Mail className="w-5 h-5 text-[#17b266]" />
-                    <span className="text-[#000000]">{reportedProfile?.data?.user?.email}</span>
+                    <span className="text-[#000000]">
+                      {reportedProfile?.data?.user?.email}
+                    </span>
                   </div>
                   <div
                     className="flex items-center justify-between py-4 hover:bg-gray-50 rounded cursor-pointer"
@@ -400,18 +481,23 @@ export default function ReportsPage() {
                       const userId = reportedProfile?.data?.user?._id;
                       if (!userId) return;
 
-                      if (window.confirm("Are you sure you want to permanently delete this account? This action cannot be undone.")) {
+                      if (
+                        window.confirm(
+                          "Are you sure you want to permanently delete this account? This action cannot be undone."
+                        )
+                      ) {
                         handleDelete(userId);
                       }
                     }}
                   >
                     <div className="flex ml-2 items-center gap-3">
                       <Trash2 className="w-5 h-5 text-[#17b266]" />
-                      <span className="text-[#000000]">Delete account permanently</span>
+                      <span className="text-[#000000]">
+                        Delete account permanently
+                      </span>
                     </div>
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                   </div>
-
                 </div>
               </div>
             </div>
@@ -426,13 +512,18 @@ export default function ReportsPage() {
             {/* Success Icon */}
             <div className="mb-6 flex justify-center">
               <div className="w-24 h-24 rounded-full flex items-center justify-center relative">
-               <Lottie animationData={successAnimation} loop={false} autoplay={true} />
+                <Lottie
+                  animationData={successAnimation}
+                  loop={false}
+                  autoplay={true}
+                />
               </div>
             </div>
 
             {/* Success Message */}
             <p className="text-[#000000] text-base mb-8 leading-relaxed">
-              The reported case has been reviewed and appropriate actions have been completed.
+              The reported case has been reviewed and appropriate actions have
+              been completed.
             </p>
 
             {/* Done Button */}
@@ -446,35 +537,49 @@ export default function ReportsPage() {
         </div>
       )}
     </>
-  )
+  );
 }
 
 // Component for report rows
-function ReportRow({ report, onViewDetails }: { report: Report; onViewDetails: () => void }) {
+function ReportRow({
+  report,
+  onViewDetails,
+}: {
+  report: Report;
+  onViewDetails: () => void;
+}) {
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "pending":
-        return "text-orange-600 bg-orange-100"
+        return "text-orange-600 bg-orange-100";
       case "resolved":
-        return "text-green-600 bg-green-100"
+        return "text-green-600 bg-green-100";
       default:
-        return "text-gray-600 bg-gray-100"
+        return "text-gray-600 bg-gray-100";
     }
-  }
+  };
 
   return (
     <div className="grid grid-cols-12 gap-4 p-4 bg-white my-1 border border-[#ECECEC] hover:bg-gray-50 text-xs">
       <div className="col-span-2 flex items-center">
-        <span className="font-medium">{report?.reporter?.firstName} {report?.reporter?.firstName}</span>
+        <span className="font-medium">
+          {report?.reporter?.firstName} {report?.reporter?.firstName}
+        </span>
       </div>
       <div className="col-span-2 flex items-center">
-        <span>{report?.reported?.firstName} {report?.reported?.lastName}</span>
+        <span>
+          {report?.reported?.firstName} {report?.reported?.lastName}
+        </span>
       </div>
       <div className="col-span-2 flex items-center">
         <span>{report?.reason}</span>
       </div>
       <div className="col-span-2 flex items-center">
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report?.status)}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+            report?.status
+          )}`}
+        >
           {report.status}
         </span>
       </div>
@@ -488,10 +593,13 @@ function ReportRow({ report, onViewDetails }: { report: Report; onViewDetails: (
         </span>
       </div>
       <div className="col-span-2 flex items-center">
-        <Button className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1" onClick={onViewDetails}>
+        <Button
+          className="bg-[#17b266] hover:bg-[#149655] text-white text-xs px-3 py-1"
+          onClick={onViewDetails}
+        >
           View details
         </Button>
       </div>
     </div>
-  )
+  );
 }
