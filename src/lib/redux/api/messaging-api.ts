@@ -52,21 +52,24 @@ export const messagingApi = baseApi.injectEndpoints({
       }) => {
         console.log("[v1] Conversations by equipment API response:", response);
         if (!response.data || !Array.isArray(response.data)) return [];
-        
+
         // Map participant.userId to receiverId for consistency
         const mappedConversations = response.data.map((c) => ({
           ...c,
           receiverId: c.receiverId || c.participant?.userId || "",
         }));
-        
+
         // CRITICAL: Log conversations to verify backend is returning separate conversations per equipment
         console.log("[v1] Processed conversations:", {
           total: mappedConversations.length,
-          conversations: mappedConversations.map(c => ({
+          conversations: mappedConversations.map((c) => ({
             receiverId: c.receiverId || c.participant?.userId,
             equipmentId: c.equipmentId,
             equipmentName: c.equipment?.name,
-            key: makeConvKey(c.receiverId || c.participant?.userId, c.equipmentId)
+            key: makeConvKey(
+              c.receiverId || c.participant?.userId,
+              c.equipmentId
+            ),
           })),
           // Group by receiver to see if backend is returning multiple per receiver
           groupedByReceiver: mappedConversations.reduce((acc, c) => {
@@ -74,24 +77,24 @@ export const messagingApi = baseApi.injectEndpoints({
             if (!acc[receiverId]) acc[receiverId] = [];
             acc[receiverId].push({
               equipmentId: c.equipmentId,
-              equipmentName: c.equipment?.name
+              equipmentName: c.equipment?.name,
             });
             return acc;
-          }, {} as Record<string, { equipmentId: string; equipmentName?: string }[]>)
+          }, {} as Record<string, { equipmentId: string; equipmentName?: string }[]>),
         });
-        
+
         // Ensure all conversations have both receiverId and equipmentId
         const validConversations = mappedConversations.filter(
           (c) => (c.receiverId || c.participant?.userId) && c.equipmentId
         );
-        
+
         if (validConversations.length !== mappedConversations.length) {
           console.warn(
             "[v1] Filtered out conversations without receiverId or equipmentId:",
             mappedConversations.length - validConversations.length
           );
         }
-        
+
         return validConversations;
       },
       providesTags: (result) =>
@@ -120,24 +123,29 @@ export const messagingApi = baseApi.injectEndpoints({
 
         const payload = response.data;
         const messages = payload?.messages ?? [];
-        
+
         // CRITICAL: Filter messages to ensure they match the requested equipmentId
         // This prevents messages from other equipment being included
-        const filteredMessages = arg ? messages.filter((msg) => {
-          const msgEquipmentId = typeof msg.equipment === 'string' 
-            ? msg.equipment 
-            : (msg.equipment as any)?._id || '';
-          return msgEquipmentId === arg.equipmentId;
-        }) : messages;
-        
-        const equipment = payload?.equipment ? {
-          _id: payload.equipment._id,
-          name: payload.equipment.name,
-          pricePerDay: payload.equipment.pricePerDay,
-          rating: payload.equipment.rating,
-          media: payload.equipment.media || [],
-          category: payload.equipment.category,
-        } : undefined;
+        const filteredMessages = arg
+          ? messages.filter((msg) => {
+              const msgEquipmentId =
+                typeof msg.equipment === "string"
+                  ? msg.equipment
+                  : (msg.equipment as Message)?._id || "";
+              return msgEquipmentId === arg.equipmentId;
+            })
+          : messages;
+
+        const equipment = payload?.equipment
+          ? {
+              _id: payload.equipment._id,
+              name: payload.equipment.name,
+              pricePerDay: payload.equipment.pricePerDay,
+              rating: payload.equipment.rating,
+              media: payload.equipment.media || [],
+              category: payload.equipment.category,
+            }
+          : undefined;
 
         if (!Array.isArray(messages)) {
           console.error("[v1] Invalid messages response format:", response);
@@ -147,7 +155,7 @@ export const messagingApi = baseApi.injectEndpoints({
         console.log("[v1] Filtered messages by equipment:", {
           requestedEquipmentId: arg?.equipmentId,
           totalMessages: messages.length,
-          filteredCount: filteredMessages.length
+          filteredCount: filteredMessages.length,
         });
 
         return {
@@ -496,7 +504,10 @@ export const messagingApi = baseApi.injectEndpoints({
             dispatch(messagingApi.util.invalidateTags(["Conversation"]));
           }, 500);
         } catch (error) {
-          console.error("[Messaging] ❌ Failed to mark messages as read:", error);
+          console.error(
+            "[Messaging] ❌ Failed to mark messages as read:",
+            error
+          );
           patches.forEach((p) => p.undo());
         }
       },
