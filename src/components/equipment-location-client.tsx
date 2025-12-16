@@ -1,16 +1,16 @@
-"use client"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
-import Link from "next/link"
-import Map from "@/components/map"
-import { useEffect, useState } from "react"
-import { getAddress } from "./address-converter"
-import { useMessagingContext } from "@/context/messaging-context"
-import { socketService } from "@/lib/socket"
-import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi"
-import { getInitials } from "@/app/utils/getInitials"
-import { useGetUserFeedbacksQuery } from "@/lib/redux/api/feedbackApi"
+"use client";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi";
+import Link from "next/link";
+import Map from "@/components/map";
+import { useEffect, useState } from "react";
+import { getAddress } from "./address-converter";
+import { useMessagingContext } from "@/context/messaging-context";
+import { socketService } from "@/lib/socket";
+import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi";
+import { getInitials } from "@/app/utils/getInitials";
+import { useGetUserFeedbacksQuery } from "@/lib/redux/api/feedbackApi";
 
 // const mockEquipmentData = {
 //   id: "1",
@@ -96,94 +96,103 @@ import { useGetUserFeedbacksQuery } from "@/lib/redux/api/feedbackApi"
 // }
 
 interface LocationPageProps {
- equipmentId: string
+  equipmentId: string;
 }
 
-export default function EquipmentLocationClient({ equipmentId }: LocationPageProps) {
-  const router = useRouter()
+export default function EquipmentLocationClient({
+  equipmentId,
+}: LocationPageProps) {
+  const router = useRouter();
   const [address, setAddress] = useState("");
-  const {
-    joinConversation,
-  } = useMessagingContext()
+  const { joinConversation } = useMessagingContext();
 
-  const { data: equipmentData, isLoading, isError } = useGetEquipmentByIdQuery(equipmentId)
+  const {
+    data: equipmentData,
+    isLoading,
+    isError,
+  } = useGetEquipmentByIdQuery(equipmentId);
   const ownerId = equipmentData?.owner?.id ?? "";
 
   const { data: ownerProfile } = useGetOtherUserProfileQuery(ownerId, {
     skip: !ownerId,
   });
 
-  const { data: feedbackData } = useGetUserFeedbacksQuery({ userId: ownerId })
-  
-  const feedbacks = feedbackData?.data || []
+  const { data: feedbackData } = useGetUserFeedbacksQuery({ userId: ownerId });
+
+  const feedbacks = feedbackData?.data || [];
 
   // const { data: profileData } = useGetProfileQuery()
   // const profile = profileData?.data?.user
 
   const handleBookNow = () => {
-    window.location.href = `/dashboard/checkout?id=${equipmentId}`
-  }
+    window.location.href = `/dashboard/checkout?id=${equipmentId}`;
+  };
 
-    useEffect(() => {
-        const fetchAddress = async () => {
-        if (!equipmentData?.location?.coordinates?.coordinates) return;
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!equipmentData?.location?.coordinates?.coordinates) return;
 
-        // Your coordinates are stored [lon, lat]
-        const [lon, lat] = equipmentData.location.coordinates.coordinates;
-        const addr = await getAddress(lat, lon); 
-        setAddress(addr);
-        };
+      // Your coordinates are stored [lon, lat]
+      const [lon, lat] = equipmentData.location.coordinates.coordinates;
+      const addr = await getAddress(lat, lon);
+      setAddress(addr);
+    };
 
-        fetchAddress();
-    }, [equipmentData]);
+    fetchAddress();
+  }, [equipmentData]);
 
-    const handleMessage = () => {
-      if (!equipmentData?.owner?.id || !equipmentData?.owner?.name || !equipmentData?.id) {
-        console.error("Missing owner or equipment data")
-        return
-      }
-      const receiverId = equipmentData.owner.id
-      const equipmentId = equipmentData.id
-
-      socketService.joinChat(receiverId)
-
-      // Create conversation object matching new Conversation type
-      const conv = {
-        receiverId,
-        equipmentId,
-        participant: {
-          userId: receiverId,
-          name: equipmentData.owner.name,
-          avatar: equipmentData.owner.avatarUrl || "/user.svg",
-        },
-        equipment: {
-          name: equipmentData.name,
-          images: equipmentData.media || [],
-        },
-        lastMessage: "",
-        lastMessageTime: new Date().toISOString(),
-        unreadCount: 0,
-      }
-      
-      joinConversation(receiverId, equipmentId, conv)
-
-      console.log("Conv created:", conv)
-      console.log("Owner id from equipmentData:", equipmentData?.owner.id)
-      router.push(`/dashboard/messages?receiver=${receiverId}&equipment=${equipmentId}`)
+  const handleMessage = () => {
+    if (
+      !equipmentData?.owner?.id ||
+      !equipmentData?.owner?.name ||
+      !equipmentData?.id
+    ) {
+      console.error("Missing owner or equipment data");
+      return;
     }
-  
-    const isVerified = ownerProfile?.data.user.isVerify
+    const receiverId = equipmentData.owner.id;
+    const equipmentId = equipmentData.id;
 
-    // const feedbackCount = profile?.feedbacks?.length ?? 0;
-    const feedbackCount = feedbacks.length;
+    socketService.joinChat(receiverId);
 
-    const latestFeedback = feedbacks?.at(-1);
+    // Create conversation object matching new Conversation type
+    const conv = {
+      receiverId,
+      equipmentId,
+      participant: {
+        userId: receiverId,
+        name: equipmentData.owner.name,
+        avatar: equipmentData.owner.avatarUrl || "/user.svg",
+      },
+      equipment: {
+        name: equipmentData.name,
+        media: equipmentData.media || [],
+      },
+      lastMessage: "",
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0,
+    };
 
+    joinConversation(receiverId, equipmentId, conv);
 
-    let reviewText: string;
-    if (feedbackCount === 0) reviewText = "No reviews yet";
-    else if (feedbackCount === 1) reviewText = "View review";
-    else reviewText = `View all ${feedbackCount} reviews`;
+    console.log("Conv created:", conv);
+    console.log("Owner id from equipmentData:", equipmentData?.owner.id);
+    router.push(
+      `/dashboard/messages?receiver=${receiverId}&equipment=${equipmentId}`
+    );
+  };
+
+  const isVerified = ownerProfile?.data.user.isVerify;
+
+  // const feedbackCount = profile?.feedbacks?.length ?? 0;
+  const feedbackCount = feedbacks.length;
+
+  const latestFeedback = feedbacks?.at(-1);
+
+  let reviewText: string;
+  if (feedbackCount === 0) reviewText = "No reviews yet";
+  else if (feedbackCount === 1) reviewText = "View review";
+  else reviewText = `View all ${feedbackCount} reviews`;
 
   // Loading state
   if (isLoading) {
@@ -194,7 +203,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
           <h2 className="text-xl font-semibold">Loading location...</h2>
         </div>
       </div>
-    )
+    );
   }
 
   // Error state
@@ -203,7 +212,9 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Error loading location</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-2">
+            Error loading location
+          </h2>
           <button
             onClick={() => router.back()}
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
@@ -212,7 +223,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   // If no data, return null
@@ -223,7 +234,7 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
           <h2 className="text-xl font-semibold">No location data found</h2>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -255,7 +266,12 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
         <div className="w-full bg-white p-4 rounded-lg lg:flex-2">
           <div className="relative h-[500px] z-0 w-full rounded-lg">
             {typeof window !== "undefined" && (
-                <Map imageUrl={equipmentData.media[0]} title={equipmentData.title} lat={equipmentData.location.coordinates.coordinates[1]} long={equipmentData.location.coordinates.coordinates[0]}/>
+              <Map
+                imageUrl={equipmentData.media[0]}
+                title={equipmentData.title}
+                lat={equipmentData.location.coordinates.coordinates[1]}
+                long={equipmentData.location.coordinates.coordinates[0]}
+              />
             )}
             {/* {typeof window !== "undefined" && (
               <MapContainer
@@ -294,7 +310,13 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
           {/* Top Block - Location and Price */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <div className="flex items-start gap-2 text-[#979797] mb-4">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M7.7142 9.34384C6.34503 9.34384 5.22656 8.2318 5.22656 6.85621C5.22656 5.48061 6.34503 4.375 7.7142 4.375C9.08336 4.375 10.2018 5.48704 10.2018 6.86263C10.2018 8.23822 9.08336 9.34384 7.7142 9.34384ZM7.7142 5.3392C6.87856 5.3392 6.19076 6.02057 6.19076 6.86263C6.19076 7.7047 6.87213 8.38607 7.7142 8.38607C8.55626 8.38607 9.23763 7.7047 9.23763 6.86263C9.23763 6.02057 8.54983 5.3392 7.7142 5.3392Z"
                   fill="#979797"
@@ -318,14 +340,25 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              {equipmentData.owner.phone && <a
-                href={`tel:${equipmentData.owner.phone}`}
-                className="flex-1 text-base flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-white font-medium hover:bg-green-600"
+              {equipmentData.owner.phone && (
+                <a
+                  href={`tel:${equipmentData.owner.phone}`}
+                  className="flex-1 text-base flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-white font-medium hover:bg-green-600"
+                >
+                  Call Rental
+                </a>
+              )}
+              <button
+                onClick={handleMessage}
+                className="flex-1 whitespace-nowrap text-base flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-primary font-medium hover:bg-green-50"
               >
-                Call Rental
-              </a>}
-              <button onClick={handleMessage} className="flex-1 whitespace-nowrap text-base flex items-center justify-center gap-2 rounded-md border border-primary px-4 py-3 text-primary font-medium hover:bg-green-50">
-                <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  width="21"
+                  height="21"
+                  viewBox="0 0 21 21"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path
                     d="M3.5 15.75H5.25V19.3209L9.71338 15.75H14C14.9651 15.75 15.75 14.9651 15.75 14V7C15.75 6.03487 14.9651 5.25 14 5.25H3.5C2.53487 5.25 1.75 6.03487 1.75 7V14C1.75 14.9651 2.53487 15.75 3.5 15.75Z"
                     fill="#12B76A"
@@ -349,14 +382,19 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
               <div className="flex items-center gap-4">
                 <div className="relative h-10 w-10 overflow-hidden rounded-full">
                   <Image
-                    src={equipmentData.owner.avatarUrl || "/user.svg?height=64&width=64&query=person"}
+                    src={
+                      equipmentData.owner.avatarUrl ||
+                      "/user.svg?height=64&width=64&query=person"
+                    }
                     alt={equipmentData.owner.name}
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div>
-                  <h3 className="text-base font-medium">{equipmentData.owner.name}</h3>
+                  <h3 className="text-base font-medium">
+                    {equipmentData.owner.name}
+                  </h3>
                   {isVerified && (
                     <span className="inline-block rounded-full bg-[#E8F8F1] px-3 py-1 text-[12px] text-green-600">
                       Verified
@@ -382,7 +420,9 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
 
             {/* Feedback Header */}
             <div className="flex items-center justify-between p-6">
-              <h3 className="text-[12.03px] text-[#979797]">Latest feedback on Renter</h3>
+              <h3 className="text-[12.03px] text-[#979797]">
+                Latest feedback on Renter
+              </h3>
               <Link
                 href={`/dashboard/user/owner/${equipmentData.owner.id}/reviews`}
                 className="flex items-center text-[12.03px] text-primary"
@@ -407,7 +447,10 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
 
             {/* Feedback Item */}
             {latestFeedback && (
-              <div key={latestFeedback._id} className="p-4 m-4 rounded-lg bg-[#F2F4F7]">
+              <div
+                key={latestFeedback._id}
+                className="p-4 m-4 rounded-lg bg-[#F2F4F7]"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex gap-3">
                     <div className="relative h-8 w-8 overflow-hidden rounded-full flex-shrink-0">
@@ -419,7 +462,9 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                             "/user.svg" ||
                             "/user.svg"
                           }
-                          alt={latestFeedback.feedbackBy.avatar || "User Avatar"}
+                          alt={
+                            latestFeedback.feedbackBy.avatar || "User Avatar"
+                          }
                           fill
                           className="object-cover"
                         />
@@ -428,12 +473,22 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                       )}
                     </div>
                     <div>
-                      <h4 className="font-[500] text-[14.04px]">{latestFeedback.feedbackBy.firstName}</h4>
-                      <p className="mt-1 text-[12.03px]">{latestFeedback.comment}</p>
+                      <h4 className="font-[500] text-[14.04px]">
+                        {latestFeedback.feedbackBy.firstName}
+                      </h4>
+                      <p className="mt-1 text-[12.03px]">
+                        {latestFeedback.comment}
+                      </p>
                     </div>
                   </div>
                   <div className="text-primary">
-                    <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 17 17"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
                       <path
                         d="M16.9287 8.29651C16.9287 6.16921 16.0836 4.12904 14.5794 2.62481C13.0752 1.12058 11.035 0.275513 8.90772 0.275513C6.78042 0.275513 4.74024 1.12058 3.23601 2.62481C1.73179 4.12904 0.886719 6.16921 0.886719 8.29651C0.886719 10.4238 1.73179 12.464 3.23601 13.9682C4.74024 15.4724 6.78042 16.3175 8.90772 16.3175C11.035 16.3175 13.0752 15.4724 14.5794 13.9682C16.0836 12.464 16.9287 10.4238 16.9287 8.29651ZM1.88934 8.29651C1.88934 7.37484 2.07088 6.4622 2.42359 5.61069C2.77629 4.75919 3.29326 3.98549 3.94498 3.33377C4.59669 2.68205 5.37039 2.16509 6.2219 1.81238C7.07341 1.45967 7.98605 1.27814 8.90772 1.27814C9.82938 1.27814 10.742 1.45967 11.5935 1.81238C12.445 2.16509 13.2187 2.68205 13.8705 3.33377C14.5222 3.98549 15.0391 4.75919 15.3918 5.61069C15.7446 6.4622 15.9261 7.37484 15.9261 8.29651C15.9261 10.1579 15.1867 11.943 13.8705 13.2592C12.5543 14.5754 10.7691 15.3149 8.90772 15.3149C7.04633 15.3149 5.26118 14.5754 3.94498 13.2592C2.62878 11.943 1.88934 10.1579 1.88934 8.29651ZM12.4169 6.79257C12.4169 6.52666 12.3113 6.27164 12.1232 6.08361C11.9352 5.89558 11.6802 5.78995 11.4143 5.78995C11.1484 5.78995 10.8933 5.89558 10.7053 6.08361C10.5173 6.27164 10.4117 6.52666 10.4117 6.79257C10.4117 7.05849 10.5173 7.31351 10.7053 7.50154C10.8933 7.68956 11.1484 7.7952 11.4143 7.7952C11.6802 7.7952 11.9352 7.68956 12.1232 7.50154C12.3113 7.31351 12.4169 7.05849 12.4169 6.79257ZM7.40378 6.79257C7.40378 6.52666 7.29815 6.27164 7.11012 6.08361C6.92209 5.89558 6.66707 5.78995 6.40115 5.78995C6.13524 5.78995 5.88022 5.89558 5.69219 6.08361C5.50416 6.27164 5.39853 6.52666 5.39853 6.79257C5.39853 7.05849 5.50416 7.31351 5.69219 7.50154C5.88022 7.68956 6.13524 7.7952 6.40115 7.7952C6.66707 7.7952 6.92209 7.68956 7.11012 7.50154C7.29815 7.31351 7.40378 7.05849 7.40378 6.79257ZM5.78855 10.8181C5.74714 10.7669 5.69605 10.7243 5.63819 10.6929C5.58033 10.6614 5.51684 10.6416 5.45135 10.6347C5.38585 10.6277 5.31963 10.6338 5.25646 10.6524C5.1933 10.6711 5.13442 10.702 5.0832 10.7434C5.03199 10.7848 4.98943 10.8359 4.95795 10.8938C4.92648 10.9516 4.90671 11.0151 4.89977 11.0806C4.89284 11.1461 4.89887 11.2123 4.91753 11.2755C4.93618 11.3387 4.9671 11.3975 5.00851 11.4488C5.47857 12.03 6.07269 12.4988 6.74736 12.8208C7.42202 13.1428 8.16016 13.3098 8.90772 13.3096C10.4818 13.3096 11.8885 12.5827 12.8069 11.4488C12.8484 11.3975 12.8794 11.3387 12.8981 11.2755C12.9168 11.2123 12.9229 11.146 12.916 11.0805C12.9091 11.0149 12.8894 10.9514 12.8579 10.8935C12.8265 10.8355 12.7839 10.7844 12.7327 10.7429C12.6815 10.7014 12.6226 10.6705 12.5594 10.6517C12.4962 10.633 12.43 10.6269 12.3644 10.6338C12.2989 10.6407 12.2353 10.6604 12.1774 10.6919C12.1195 10.7233 12.0684 10.7659 12.0269 10.8171C11.651 11.2823 11.1758 11.6576 10.6361 11.9154C10.0964 12.1732 9.50583 12.307 8.90772 12.307C8.30969 12.3071 7.71921 12.1734 7.17951 11.9158C6.63981 11.6582 6.16456 11.2831 5.78855 10.8181Z"
                         fill="#12B76A"
@@ -476,14 +531,22 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
                 </div>
               </div> */}
               <button className="flex items-center pb-4 my-4 gap-2 w-full text-left hover:bg-gray-50">
-                <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 17 17"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path
                     d="M4.53314 6.59741C4.57826 6.30164 4.87303 6.02091 5.28912 6.02091C5.70521 6.02091 5.99998 6.30164 6.0451 6.59741C6.05275 6.66437 6.07383 6.72909 6.10706 6.78771C6.14029 6.84633 6.18501 6.89765 6.23852 6.9386C6.29204 6.97955 6.35327 7.00929 6.41854 7.02604C6.48381 7.0428 6.55179 7.04622 6.61841 7.0361C6.68504 7.02599 6.74894 7.00254 6.80629 6.96717C6.86365 6.9318 6.91329 6.88523 6.95224 6.83024C6.99119 6.77525 7.01866 6.71298 7.033 6.64713C7.04734 6.58129 7.04825 6.51323 7.03569 6.44702C6.90836 5.60983 6.14736 5.01828 5.28912 5.01828C4.43087 5.01828 3.66988 5.60983 3.54255 6.44702C3.52998 6.51323 3.5309 6.58129 3.54524 6.64713C3.55958 6.71298 3.58704 6.77525 3.62599 6.83024C3.66494 6.88523 3.71458 6.9318 3.77194 6.96717C3.8293 7.00254 3.8932 7.02599 3.95982 7.0361C4.02645 7.04622 4.09443 7.0428 4.1597 7.02604C4.22497 7.00929 4.28619 6.97955 4.33971 6.9386C4.39323 6.89765 4.43794 6.84633 4.47118 6.78771C4.50441 6.72909 4.52548 6.66437 4.53314 6.59741ZM10.8036 6.02091C10.3875 6.02091 10.0937 6.30164 10.0476 6.59741C10.0234 6.7249 9.95071 6.83804 9.84482 6.91305C9.73893 6.98805 9.60809 7.01908 9.4798 6.9996C9.35151 6.98012 9.23577 6.91166 9.15692 6.80861C9.07806 6.70555 9.04224 6.57594 9.05698 6.44702C9.18431 5.60983 9.94531 5.01828 10.8036 5.01828C11.6618 5.01828 12.4228 5.60983 12.5501 6.44702C12.5649 6.57594 12.529 6.70555 12.4502 6.80861C12.3713 6.91166 12.2556 6.98012 12.1273 6.9996C11.999 7.01908 11.8682 6.98805 11.7623 6.91305C11.6564 6.83804 11.5837 6.7249 11.5595 6.59741C11.5134 6.30164 11.2196 6.02091 10.8036 6.02091ZM3.53152 8.52747C3.46159 8.52755 3.39246 8.54226 3.32855 8.57065C3.26465 8.59905 3.2074 8.6405 3.16047 8.69234C3.11354 8.74417 3.07797 8.80526 3.05606 8.87166C3.03414 8.93806 3.02636 9.00832 3.03321 9.07791C3.27184 11.5273 5.19487 13.5406 8.04333 13.5406C10.8918 13.5406 12.8158 11.5273 13.0544 9.07791C13.0613 9.00823 13.0535 8.9379 13.0315 8.87142C13.0095 8.80495 12.9739 8.74382 12.9269 8.69196C12.8798 8.64011 12.8224 8.59868 12.7584 8.57035C12.6944 8.54202 12.6251 8.52741 12.5551 8.52747H3.53152ZM8.04333 12.538C5.95687 12.538 4.5181 11.2315 4.12106 9.53009H11.9666C11.5686 11.2315 10.1308 12.538 8.04333 12.538ZM8.04834 0.50647C5.92104 0.50647 3.88087 1.35154 2.37664 2.85577C0.872411 4.35999 0.0273438 6.40017 0.0273438 8.52747C0.0273438 10.6548 0.872411 12.6949 2.37664 14.1992C3.88087 15.7034 5.92104 16.5485 8.04834 16.5485C10.1756 16.5485 12.2158 15.7034 13.72 14.1992C15.2243 12.6949 16.0693 10.6548 16.0693 8.52747C16.0693 6.40017 15.2243 4.35999 13.72 2.85577C12.2158 1.35154 10.1756 0.50647 8.04834 0.50647ZM1.02997 8.52747C1.02997 7.6058 1.2115 6.69316 1.56421 5.84165C1.91692 4.99014 2.43389 4.21644 3.0856 3.56473C3.73732 2.91301 4.51102 2.39604 5.36253 2.04334C6.21403 1.69063 7.12668 1.50909 8.04834 1.50909C8.97001 1.50909 9.88265 1.69063 10.7342 2.04334C11.5857 2.39604 12.3594 2.91301 13.0111 3.56473C13.6628 4.21644 14.1798 4.99014 14.5325 5.84165C14.8852 6.69316 15.0667 7.6058 15.0667 8.52747C15.0667 10.3889 14.3273 12.174 13.0111 13.4902C11.6949 14.8064 9.90973 15.5458 8.04834 15.5458C6.18695 15.5458 4.4018 14.8064 3.0856 13.4902C1.7694 12.174 1.02997 10.3889 1.02997 8.52747Z"
                     fill="#FF5F00"
                   />
                 </svg>
 
-                <span className="text-black text-[12.03px]">Leave feedback about the renter</span>
+                <span className="text-black text-[12.03px]">
+                  Leave feedback about the renter
+                </span>
               </button>
             </div>
           </div>
@@ -500,5 +563,5 @@ export default function EquipmentLocationClient({ equipmentId }: LocationPagePro
         </div>
       </div>
     </div>
-  )
+  );
 }
