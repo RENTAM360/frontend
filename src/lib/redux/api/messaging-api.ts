@@ -65,6 +65,8 @@ export const messagingApi = baseApi.injectEndpoints({
           conversations: mappedConversations.map((c) => ({
             receiverId: c.receiverId || c.participant?.userId,
             equipmentId: c.equipmentId,
+            conversationId: c.conversationId,
+            lastMessageRead: c.lastMessageRead,
             equipmentName: c.equipment?.name,
             key: makeConvKey(
               c.receiverId || c.participant?.userId,

@@ -43,6 +43,8 @@ export interface Conversation {
   equipment: { name: string; media: string[] };
   participant: { userId: string; name: string; avatar: string };
   lastMessage: string;
+  lastMessageRead: boolean;
+  conversationId: string;
   lastMessageTime: string;
   unreadCount: number;
   messages?: Message[];

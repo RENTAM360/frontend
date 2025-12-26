@@ -1,103 +1,91 @@
-"use client"
+"use client";
 
-import { useGetAdminEquipmentChartQuery } from "@/lib/redux/api/adminApi"
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
-import { AnimatedLogo } from "./loading-logo"
+import { useState } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { AnimatedLogo } from "./loading-logo";
+import { useGetAdminUserChartQuery } from "@/lib/redux/api/adminApi";
 
-// const data = [
-//   { name: "SignUp Users", value: 500 },
-//   { name: "Active Users", value: 500 },
-//   { name: "Inactive Users", value: 500 },
-// ]
+export function UserReportPieChart() {
+  const { data, isLoading, isError } = useGetAdminUserChartQuery();
+  // State to track which month index we are looking at
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(
+    null
+  );
 
-const COLORS = ["#17b266", "#000000"]
+  if (isLoading) return <AnimatedLogo />;
+  if (isError)
+    return (
+      <p className="text-sm text-red-500 text-center">Error loading chart</p>
+    );
 
-export function EquipmentReportChart() {
-  const { data, isLoading, isError } = useGetAdminEquipmentChartQuery()
+  const rawData = data?.data?.chartData || [];
 
-   if (isLoading) return <AnimatedLogo />
-  if (isError) return <p>Error loading chart</p>
+  // Set default to the latest month if no month is selected yet
+  const currentIndex =
+    selectedMonthIndex !== null ? selectedMonthIndex : rawData.length - 1;
+  const selectedData = rawData[currentIndex];
 
-  const latestMonthIndex = (data?.data?.labels?.length ?? 0) - 1
-  const datasets = data?.data?.datasets ?? [];
-  const chartData = datasets.map((ds) => ({
-    name: ds.label,
-    value: ds.data?.[latestMonthIndex] ?? 0,
-  }));
+  const chartData = [
+    { name: selectedData?.month, value: selectedData?.count || 0 },
+  ];
 
-  const total = chartData.reduce((sum, item) => sum + item.value, 0)
-  const hasOnlyActive = chartData[0]?.value === total;
-
-  // const normalizedData =
-  //   total > 0
-  //     ? chartData.map((d) => ({
-  //         ...d,
-  //         percentage: ((d.value / total) * 100).toFixed(1),
-  //       }))
-  //     : []
   return (
-    <div className="relative w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={100}
-            paddingAngle={0}
-            dataKey="value"
-            startAngle={90}
-            endAngle={-270}
-            stroke="none"
-          >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={
-                  hasOnlyActive
-                    ? "#17b266"
-                    : COLORS[index % COLORS.length]
-                }
-              />
-            ))}
-          </Pie>
-          <Pie
-            dataKey="value"
-            data={[{ value: 100 }]}
-            cx="50%"
-            cy="50%"
-            innerRadius={40}
-            outerRadius={60}
-            fill="#ffffff"
-            stroke="#e0e0e0"
-            strokeWidth={1}
-            strokeDasharray="3 3"
-          />
-        </PieChart>
-      </ResponsiveContainer>
-
-      {/* Labels for each segment */}
-      {chartData.map((item, i) => (
-        <div
-          key={i}
-          className={`absolute text-xs font-medium ${
-            i === 0
-              ? "top-[35%] right-[20%] text-white"
-              : i === 1
-              ? "bottom-[20%] right-[46%] text-white"
-              : "top-[35%] left-[27%] text-white"
-          }`}
+    <div className="flex flex-col w-full h-full">
+      {/* Month Selector Dropdown */}
+      <div className="flex justify-end mb-4">
+        <select
+          className="text-[11px] border rounded-md px-2 py-1 bg-white outline-none focus:ring-1 focus:ring-green-500"
+          value={currentIndex}
+          onChange={(e) => setSelectedMonthIndex(parseInt(e.target.value))}
         >
-          <span>{item.value}</span>
-        </div>
-      ))}
+          {rawData.map((item, index) => (
+            <option key={item.month} value={index}>
+              {item.month}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      {/* Center label */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="text-xl font-bold">{total}</p>
-        <p className="text-[10px] text-gray-500">Total</p>
+      <div className="relative flex-1 min-h-[250px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={65}
+              outerRadius={90}
+              dataKey="value"
+              startAngle={90}
+              endAngle={-270}
+              stroke="none"
+            >
+              <Cell fill="#17b266" />
+            </Pie>
+            <Pie
+              dataKey="value"
+              data={[{ value: 1 }]}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={65}
+              fill="#f3f4f6"
+              stroke="none"
+              isAnimationActive={false}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+
+        {/* Center label */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <p className="text-3xl font-bold text-gray-900">
+            {selectedData?.count || 0}
+          </p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            Users Created
+          </p>
+        </div>
       </div>
     </div>
-  )
+  );
 }

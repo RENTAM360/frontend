@@ -133,6 +133,8 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
         avatar: user.avatar || "/user.svg",
       },
       lastMessage: "",
+      conversationId: "",
+      lastMessageRead: false,
       lastMessageTime: new Date().toISOString(),
       unreadCount: 0,
       messages: [],
@@ -200,9 +202,9 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
               {user?.bio}
             </p>
 
-            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
+            <div className="flex items-center flex-col justify-center gap-4 mt-4 text-sm text-gray-500">
               {user?.address && (
-                <div className="flex items-center gap-1">
+                <div className="flex gap-1">
                   <MapPin className="w-3 h-3" />
                   <span className="text-xs">{user?.address}</span>
                 </div>
@@ -500,9 +502,9 @@ function WalletContent({ userId }: UserProfileClientProps) {
             <h2 className="text-2xl font-bold mb-2">₦100,000</h2>
             <p className="text-white/60 text-xs">₦100,000 (Total balance)</p>
           </div>
-          <Button className="bg-white text-black hover:bg-gray-100 px-6">
+          {/* <Button className="bg-white text-black hover:bg-gray-100 px-6">
             Withdraw
-          </Button>
+          </Button> */}
         </div>
       </div>
 

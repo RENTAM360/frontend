@@ -1,21 +1,29 @@
-// NotificationContext.tsx
 import { useAppSelector } from "@/lib/redux/hooks";
 import { socketService } from "@/lib/socket";
 import { Notification } from "@/types/notifications";
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
 interface NotificationContextType {
   latestNotif: Notification | null;
-  
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
 
 interface NotificationProviderProps {
   children: ReactNode;
 }
 
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({
+  children,
+}) => {
   const [latestNotif, setLatestNotif] = useState<Notification | null>(null);
   const user = useAppSelector((state) => state.auth);
 
@@ -36,7 +44,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     socketService.connect(user.data);
 
     const handleNotification = (notif: Notification) => {
-      console.log("🔔 New notification:", notif);
+      console.log("New notification:", notif);
       setLatestNotif(notif);
       sessionStorage.setItem("latestNotif", JSON.stringify(notif));
     };

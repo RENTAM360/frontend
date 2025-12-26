@@ -42,6 +42,7 @@ export default function MessagesPage() {
     isLoadingMessages,
     isConnected,
     connectionError,
+    markAsRead,
     setActiveConversationId,
   } = useMessagingContext();
 
@@ -74,8 +75,6 @@ export default function MessagesPage() {
     window.addEventListener("storage", handleStorageUpdate);
     return () => window.removeEventListener("storage", handleStorageUpdate);
   }, [activeConversation?.participant.userId]);
-
-  
 
   // Handle URL conversation parameters (receiver + equipment)
   useEffect(() => {
@@ -198,33 +197,50 @@ export default function MessagesPage() {
 
   const handleSelectConversation = useCallback(
     (conversationKey: string) => {
-      // Parse the conversation key (receiverId::equipmentId)
+      // 1. Parse the conversation key (receiverId::equipmentId)
       const [receiverId, equipmentId] = conversationKey.split("::");
       if (!receiverId || !equipmentId) return;
 
       const convId: ConversationId = { receiverId, equipmentId };
 
-      // Update state immediately for instant UI response
-      setSelectedConversationId(convId);
-
-      // Find and join conversation immediately (don't wait for URL update)
+      // 2. Find the specific conversation object to extract the conversationId
       const targetConversation = conversations.find(
         (c) =>
-          c.participant.userId === receiverId && c.equipmentId === equipmentId
+          (c.participant?.userId === receiverId ||
+            c.receiverId === receiverId) &&
+          c.equipmentId === equipmentId
       );
+
+      // 3. Update local state immediately for instant UI response
+      setSelectedConversationId(convId);
+
+      // 4. Join the socket room and update context state
       joinConversation(receiverId, equipmentId, targetConversation);
 
-      // Update URL asynchronously (this is just for bookmarking/sharing, not for UI)
-      // Use startTransition to make it non-blocking
+      // 5. Trigger markAsRead using the explicit conversationId from the API
+      if (targetConversation?.conversationId) {
+        markAsRead(receiverId, equipmentId, targetConversation.conversationId);
+      }
+
+      // 6. Update URL asynchronously for bookmarking/navigation
       const params = new URLSearchParams(searchParams.toString());
       params.set("receiver", receiverId);
       params.set("equipment", equipmentId);
+
       const nextPath = params.toString()
         ? `${pathname}?${params.toString()}`
         : pathname;
+
       router.replace(nextPath, { scroll: false });
     },
-    [conversations, joinConversation, pathname, router, searchParams]
+    [
+      conversations,
+      joinConversation,
+      pathname,
+      router,
+      markAsRead,
+      searchParams,
+    ]
   );
 
   const handleSendMessage = async (message: string) => {

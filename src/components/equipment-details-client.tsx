@@ -108,7 +108,7 @@ const mockEquipmentData = {
         image: "/david.svg",
       },
       text: "Good guy... helped follow up with installation",
-      rating: "positive", // positive, neutral, negative
+      rating: "positive",
       timeAgo: "2 d",
       likes: 0,
       replies: 1,
@@ -238,6 +238,8 @@ export default function EquipmentDetailsClient({
         media: equipmentData.media || [],
       },
       lastMessage: "",
+      lastMessageRead: false,
+      conversationId: "",
       lastMessageTime: new Date().toISOString(),
       unreadCount: 0,
     };
