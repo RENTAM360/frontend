@@ -175,6 +175,8 @@ export default function ReportsPage() {
         name: `${user.firstName} ${user.lastName}`,
         avatar: user.avatar || "/user.svg",
       },
+      conversationId: "",
+      lastMessageRead: false,
       lastMessage: "",
       lastMessageTime: new Date().toISOString(),
       unreadCount: 0,
