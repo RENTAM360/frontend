@@ -168,6 +168,8 @@ export default function EquipmentLocationClient({
         name: equipmentData.name,
         media: equipmentData.media || [],
       },
+      conversationId: "",
+      lastMessageRead: false,
       lastMessage: "",
       lastMessageTime: new Date().toISOString(),
       unreadCount: 0,
