@@ -66,6 +66,9 @@ export function MessagingProvider({
   const [activeConversationId, setActiveConversationId] =
     useState<ConversationId | null>(null);
   const incomingMessagesRef = useRef<Map<string, Message[]>>(new Map());
+  const [tempConversation, setTempConversation] = useState<Conversation | null>(
+    null
+  );
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -258,12 +261,11 @@ export function MessagingProvider({
 
   const joinConversation = useCallback(
     (receiverId: string, equipmentId: string, conv?: Conversation) => {
-      console.log("[Messaging] Joining conversation:", {
-        receiverId,
-        equipmentId,
-      });
-
       setActiveConversationId({ receiverId, equipmentId });
+
+      if (conv) {
+        setTempConversation(conv);
+      }
 
       if (isConnected) {
         socketService.joinChat(receiverId);
@@ -332,16 +334,31 @@ export function MessagingProvider({
     socketService.disconnect();
   }, []);
 
-  const activeConversation = useMemo(
-    () =>
-      conversations.find(
+  const activeConversation = useMemo(() => {
+    if (!activeConversationId) return null;
+
+    const found = conversations.find(
+      (c) =>
+        (c.participant?.userId === activeConversationId.receiverId ||
+          c.receiverId === activeConversationId.receiverId) &&
+        c.equipmentId === activeConversationId.equipmentId
+    );
+
+    return found || tempConversation;
+  }, [conversations, activeConversationId, tempConversation]);
+
+  useEffect(() => {
+    if (
+      activeConversationId &&
+      conversations.some(
         (c) =>
-          (c.participant?.userId === activeConversationId?.receiverId ||
-            c.receiverId === activeConversationId?.receiverId) &&
-          c.equipmentId === activeConversationId?.equipmentId
-      ) || null,
-    [conversations, activeConversationId]
-  );
+          c.participant?.userId === activeConversationId.receiverId &&
+          c.equipmentId === activeConversationId.equipmentId
+      )
+    ) {
+      setTempConversation(null);
+    }
+  }, [activeConversationId, conversations]);
 
   return (
     <MessagingContext.Provider

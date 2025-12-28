@@ -224,7 +224,6 @@ export default function EquipmentDetailsClient({
 
     socketService.joinChat(receiverId);
 
-    // Create conversation object matching new Conversation type
     const conv = {
       receiverId,
       equipmentId,
@@ -245,9 +244,6 @@ export default function EquipmentDetailsClient({
     };
 
     joinConversation(receiverId, equipmentId, conv);
-
-    console.log("Conv created:", conv);
-    console.log("Owner id from equipmentData:", equipmentData?.owner.id);
     router.push(
       `/dashboard/messages?receiver=${receiverId}&equipment=${equipmentId}`
     );

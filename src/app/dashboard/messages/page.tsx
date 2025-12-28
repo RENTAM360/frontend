@@ -93,8 +93,8 @@ export default function MessagesPage() {
 
     // Check if this conversation is already active
     if (
-      activeConversationId?.receiverId === receiverId &&
-      activeConversationId?.equipmentId === equipmentId
+      activeConversationId?.receiverId == receiverId ||
+      activeConversationId?.equipmentId == equipmentId
     ) {
       return;
     }
@@ -102,16 +102,13 @@ export default function MessagesPage() {
     // Find existing conversation
     const existing = conversations.find(
       (c) =>
-        c.participant.userId === receiverId && c.equipmentId === equipmentId
+        (c.participant?.userId === receiverId || c.receiverId === receiverId) &&
+        c.equipmentId === equipmentId
     );
 
     if (existing) {
       joinConversation(receiverId, equipmentId, existing);
     } else if (!isLoadingConversations) {
-      console.warn("[Messaging] Conversation not found:", {
-        receiverId,
-        equipmentId,
-      });
       // Even if conversation not in list, try to join it (for new conversations)
       joinConversation(receiverId, equipmentId);
     }
@@ -137,37 +134,34 @@ export default function MessagesPage() {
     }
   }, [activeConversationId]);
 
-  // Determine active conversation from state first, then URL params
-  // Priority: selectedConversationId (local state) > URL params > activeConversationId
-  // This ensures local state changes (like back button) take immediate effect
   const desiredConversationId =
     selectedConversationId ??
     (receiverId && equipmentId ? { receiverId, equipmentId } : null) ??
     activeConversationId;
 
-  const conversationForView =
-    activeConversation &&
-    desiredConversationId &&
-    activeConversation.participant.userId ===
-      desiredConversationId.receiverId &&
-    activeConversation.equipmentId === desiredConversationId.equipmentId
-      ? activeConversation
-      : null;
+  const conversationForView = activeConversation;
+
+  // const conversationForView =
+  //   activeConversation &&
+  //   desiredConversationId &&
+  //   activeConversation.participant.userId ===
+  //     desiredConversationId.receiverId &&
+  //   activeConversation.equipmentId === desiredConversationId.equipmentId
+  //     ? activeConversation
+  //     : null;
   const isConversationPending = !!desiredConversationId && !conversationForView;
 
-  // Conversations are already in the correct format for MessageList
-  // CRITICAL: Ensure we're showing ALL conversations, including multiple per receiver with different equipment
   const sortedConversations = useMemo(() => {
     // Log conversations to debug
-    console.log("[MessagesPage] Conversations received:", {
-      total: conversations.length,
-      conversations: conversations.map((c) => ({
-        receiverId: c.receiverId || c.participant?.userId,
-        equipmentId: c.equipmentId,
-        equipmentName: c.equipment?.name,
-        key: `${c.receiverId || c.participant?.userId}::${c.equipmentId}`,
-      })),
-    });
+    // console.log("[MessagesPage] Conversations received:", {
+    //   total: conversations.length,
+    //   conversations: conversations.map((c) => ({
+    //     receiverId: c.receiverId || c.participant?.userId,
+    //     equipmentId: c.equipmentId,
+    //     equipmentName: c.equipment?.name,
+    //     key: `${c.receiverId || c.participant?.userId}::${c.equipmentId}`,
+    //   })),
+    // });
 
     // Ensure uniqueness by receiverId + equipmentId (in case backend returns duplicates)
     const uniqueConversations = Array.from(
