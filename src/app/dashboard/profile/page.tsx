@@ -6,7 +6,7 @@ import { Phone, ChevronRight, Info } from "lucide-react";
 import { EquipmentCard } from "@/components/equipment-card";
 import { getUserProfile } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfileEditForm } from "@/components/profile-edit-form";
 import { WalletView } from "@/components/wallet-view";
 import { SuccessModal } from "@/components/success-modal";
@@ -26,6 +26,7 @@ import { ChangePasswordModal } from "@/components/change-password-modal";
 import { enqueueSnackbar } from "notistack";
 import { useLogout } from "@/app/utils/handleLogout";
 import BookingsModal from "@/components/Bookings-Modal";
+import { useSearchParams } from "next/navigation";
 
 type ViewMode = "items" | "edit" | "wallet";
 type StageStatus = "gray" | "green" | "orange";
@@ -36,6 +37,8 @@ export default function ProfilePage() {
   const [isBookingsOpen, setIsBookingsOpen] = useState(false);
   const user = getUserProfile();
   const { data: profileData } = useGetProfileQuery();
+  const searchParams = useSearchParams();
+  const hasWallet = searchParams.has("wallet");
   const [verifyType, setVerifyType] = useState<"NIN" | "BVN" | null>(null);
   const [showVerifyPhone, setShowVerifyPhone] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -50,7 +53,11 @@ export default function ProfilePage() {
     "cover" | "avatar" | null
   >(null);
 
-  // console.log(profileData)
+  useEffect(() => {
+    if (hasWallet) {
+      setViewMode("wallet");
+    }
+  }, [hasWallet]);
   const profile = profileData?.data?.user;
   const userId = profile?._id;
 
@@ -453,9 +460,10 @@ export default function ProfilePage() {
                 </div>
               )}
               <button
-                onClick={() =>
-                  setViewMode(viewMode === "edit" ? "items" : "edit")
-                }
+                onClick={() => {
+                  setViewMode(viewMode === "edit" ? "items" : "edit");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 className="flex items-center gap-2 text-primary text-sm hover:text-green-600"
               >
                 <div className="rounded-full bg-[#F6FEF9] p-2">
@@ -719,9 +727,10 @@ export default function ProfilePage() {
           {/* Account Actions */}
           <div className="bg-white rounded-lg overflow-hidden">
             <button
-              onClick={() =>
-                setViewMode(viewMode === "wallet" ? "items" : "wallet")
-              }
+              onClick={() => {
+                setViewMode(viewMode === "wallet" ? "items" : "wallet");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               className="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50 text-left"
             >
               <div className="flex items-center gap-3">

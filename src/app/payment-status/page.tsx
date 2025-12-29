@@ -47,7 +47,7 @@ export default function PaymentStatusPage() {
 
   const handleModalAction = () => {
     setShowModal(false);
-    router.push("/profile");
+    router.push("/dashboard/profile?wallet");
   };
 
   const amountToDisplay = paymentAmount ? parseFloat(paymentAmount) : 0;
