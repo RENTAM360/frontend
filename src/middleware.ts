@@ -31,10 +31,10 @@ export default function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // if ((isUserProtected || isAdminProtected) && !token) {
-  //   const redirectTo = isAdminProtected ? "/admin/login" : "/login";
-  //   return NextResponse.redirect(new URL(redirectTo, req.url));
-  // }
+  if ((isUserProtected || isAdminProtected) && !token) {
+    const redirectTo = isAdminProtected ? "/admin/login" : "/login";
+    return NextResponse.redirect(new URL(redirectTo, req.url));
+  }
 
   if (
     isAdminProtected &&
