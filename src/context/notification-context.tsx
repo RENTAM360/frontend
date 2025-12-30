@@ -1,11 +1,11 @@
-import { useAppSelector } from "@/lib/redux/hooks";
-import { socketService } from "@/lib/socket";
+// import { useAppSelector } from "@/lib/redux/hooks";
+// import { socketService } from "@/lib/socket";
 import { Notification } from "@/types/notifications";
 import React, {
   createContext,
   useContext,
-  useEffect,
-  useState,
+  // useEffect,
+  // useState,
   ReactNode,
 } from "react";
 
@@ -24,37 +24,36 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
 }) => {
-  const [latestNotif, setLatestNotif] = useState<Notification | null>(null);
-  const user = useAppSelector((state) => state.auth);
+  // const [latestNotif, setLatestNotif] = useState<Notification | null>(null);
+  // const user = useAppSelector((state) => state.auth);
 
-  useEffect(() => {
-    const stored = sessionStorage.getItem("latestNotif");
-    if (stored) {
-      try {
-        setLatestNotif(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse stored notification:", e);
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   const stored = sessionStorage.getItem("latestNotif");
+  //   if (stored) {
+  //     try {
+  //       setLatestNotif(JSON.parse(stored));
+  //     } catch (e) {
+  //       console.error("Failed to parse stored notification:", e);
+  //     }
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    if (!user?.data) return;
+  // useEffect(() => {
+  //   if (!user?.data) return;
 
-    socketService.connect(user.data);
+  //   socketService.connect(user.data);
 
-    const handleNotification = (notif: Notification) => {
-      console.log("New notification:", notif);
-      setLatestNotif(notif);
-      sessionStorage.setItem("latestNotif", JSON.stringify(notif));
-    };
+  //   // const handleNotification = (notif: Notification) => {
+  //   //   setLatestNotif(notif);
+  //   //   sessionStorage.setItem("latestNotif", JSON.stringify(notif));
+  //   // };
 
-    socketService.on("notification", handleNotification);
-    return () => socketService.off("notification", handleNotification);
-  }, [user?.data]);
+  //   socketService.on("notification", handleNotification);
+  //   return () => socketService.off("notification", handleNotification);
+  // }, [user?.data]);
 
   return (
-    <NotificationContext.Provider value={{ latestNotif }}>
+    <NotificationContext.Provider value={{ latestNotif: null }}>
       {children}
     </NotificationContext.Provider>
   );

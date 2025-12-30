@@ -1,66 +1,90 @@
 "use client";
 import { useNotifications } from "@/context/notification-context";
-import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/lib/redux/api/notificationsApi";
+import {
+  useGetNotificationsQuery,
+  useMarkAllAsReadMutation,
+  useMarkAsReadMutation,
+} from "@/lib/redux/api/notificationsApi";
 import { useGetProfileQuery } from "@/lib/redux/api/authApi";
-import { useGetBookingByIdQuery, useConfirmBookingMutation } from "@/lib/redux/api/equipmentApi";
+import {
+  useGetBookingByIdQuery,
+  useConfirmBookingMutation,
+} from "@/lib/redux/api/equipmentApi";
 import { Notification } from "@/types/notifications";
 import { ReportModal } from "@/components/report-modal";
 import { ArrowLeft, Bell, ClipboardCheck } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react"
+import { motion, AnimatePresence } from "motion/react";
 import { enqueueSnackbar } from "notistack";
 import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 
 export default function NotificationsDropdown() {
   const { latestNotif } = useNotifications();
-  const { data, isLoading, refetch } = useGetNotificationsQuery({ page: 1, limit: 10 });
+  const { data, isLoading, refetch } = useGetNotificationsQuery({
+    page: 1,
+    limit: 10,
+  });
   const { data: profileData } = useGetProfileQuery();
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [confirmBooking, { isLoading: isConfirming }] = useConfirmBookingMutation();
+  const [confirmBooking, { isLoading: isConfirming }] =
+    useConfirmBookingMutation();
 
   const currentUserId = profileData?.data?.user?._id;
 
   const notifications = data?.data || [];
 
-  const handleOpenReportModal = () => setIsReportModalOpen(true)
-  const handleCloseReportModal = () => setIsReportModalOpen(false)
+  const handleOpenReportModal = () => setIsReportModalOpen(true);
+  const handleCloseReportModal = () => setIsReportModalOpen(false);
 
   // Get booking ID directly from the payment success notification's meta field
   const selectedBookingId = useMemo(() => {
-    if (!selectedNotif || selectedNotif.title !== "payment success") return null;
+    if (!selectedNotif || selectedNotif.title !== "payment success")
+      return null;
     return selectedNotif.meta?.bookingId || null;
   }, [selectedNotif]);
 
   // Fetch booking details using the booking ID
-  const { data: bookingData, isLoading: isLoadingBooking } = useGetBookingByIdQuery(
-    selectedBookingId || "",
-    { skip: !selectedBookingId }
-  );
+  const { data: bookingData, isLoading: isLoadingBooking } =
+    useGetBookingByIdQuery(selectedBookingId || "", {
+      skip: !selectedBookingId,
+    });
 
-  const equipment = bookingData?.equipment;
-  const customer = bookingData?.customer;
-  const rentalStart = bookingData?.startDate ? new Date(bookingData.startDate) : null;
-  const rentalEnd = bookingData?.endDate ? new Date(bookingData.endDate) : null;
+  const equipment = bookingData?.booking?.equipment;
+  const customer = bookingData?.booking?.customer;
+  const rentalStart = bookingData?.booking?.startDate
+    ? new Date(bookingData.booking.startDate)
+    : null;
+  const rentalEnd = bookingData?.booking?.endDate
+    ? new Date(bookingData.booking.endDate)
+    : null;
   const totalDays =
     rentalStart && rentalEnd
-      ? Math.max(1, Math.ceil((rentalEnd.getTime() - rentalStart.getTime()) / (1000 * 60 * 60 * 24)))
+      ? Math.max(
+          1,
+          Math.ceil(
+            (rentalEnd.getTime() - rentalStart.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        )
       : null;
   const totalAmount =
     equipment?.pricePerDay && totalDays
-      ? equipment.pricePerDay * (bookingData?.quantity ?? 1) * totalDays
+      ? equipment.pricePerDay *
+        (bookingData?.booking?.quantity ?? 1) *
+        totalDays
       : null;
 
   // Check if current user is the customer who made the payment
   const isPaymentCustomer = (notif: Notification): boolean => {
     if (!currentUserId || notif.title !== "payment success") return false;
-    
+
     // Check if the notification belongs to the current user
     if (notif.user !== currentUserId) return false;
-    
+
     return true;
   };
 
@@ -72,35 +96,36 @@ export default function NotificationsDropdown() {
     }
   }, [latestNotif, refetch]);
 
-function formatTimeAgo(timestamp: string) {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  function formatTimeAgo(timestamp: string) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
 
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const weeks = Math.floor(days / 7);
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
 
-  if (seconds < 60) return "Just now";
-  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
-  if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
-  if (days < 7) return `${days} day${days !== 1 ? "s" : ""} ago`;
-  if (weeks < 4) return `${weeks} week${weeks !== 1 ? "s" : ""} ago`;
+    if (seconds < 60) return "Just now";
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+    if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+    if (days < 7) return `${days} day${days !== 1 ? "s" : ""} ago`;
+    if (weeks < 4) return `${weeks} week${weeks !== 1 ? "s" : ""} ago`;
 
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
-const handleMarkAsRead = async (id: string) => {
-  try {
-    const res = await markAsRead(id).unwrap();
-     if (res.status === 200) enqueueSnackbar("Marked as read", {variant: "success"})
-    refetch();
-  } catch (err) {
-    console.error("Failed to mark as read:", err);
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
   }
-};
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      const res = await markAsRead(id).unwrap();
+      if (res.status === 200)
+        enqueueSnackbar("Marked as read", { variant: "success" });
+      refetch();
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+    }
+  };
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -112,23 +137,22 @@ const handleMarkAsRead = async (id: string) => {
   };
 
   const handleConfirmBooking = async () => {
-    if (!bookingData?._id) {
-      enqueueSnackbar("No booking selected", { variant: "error" })
-      return
+    if (!bookingData?.booking?._id) {
+      enqueueSnackbar("No booking selected", { variant: "error" });
+      return;
     }
-   try {
-      await confirmBooking(bookingData._id).unwrap()
-      enqueueSnackbar("Booking confirmed", { variant: "success" })
+    try {
+      await confirmBooking(bookingData?.booking?._id).unwrap();
+      enqueueSnackbar("Booking confirmed", { variant: "success" });
       // refresh notifications/booking state
-      refetch()
-      setShowReceipt(false)
-      setSelectedNotif(null)
+      refetch();
+      setShowReceipt(false);
+      setSelectedNotif(null);
     } catch (err) {
-      console.error("Confirm booking failed:", err)
-      enqueueSnackbar("Failed to confirm booking", { variant: "error" })
+      console.error("Confirm booking failed:", err);
+      enqueueSnackbar("Failed to confirm booking", { variant: "error" });
     }
- }
-
+  };
 
   return (
     <div className="relative overflow-hidden">
@@ -140,65 +164,74 @@ const handleMarkAsRead = async (id: string) => {
             exit={{ x: "-100%", opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-      <div className="flex justify-between px-4 items-center mb-3">
-        <h3 className="font-semibold text-black text-lg">All Notifications</h3>
-        <button
-          className="text-[#12B76A] text-sm"
-          onClick={handleMarkAllAsRead}
-        >
-          Mark all as read
-        </button>
-      </div>
+            <div className="flex justify-between px-4 items-center mb-3">
+              <h3 className="font-semibold text-black text-lg">
+                All Notifications
+              </h3>
+              <button
+                className="text-[#12B76A] text-sm"
+                onClick={handleMarkAllAsRead}
+              >
+                Mark all as read
+              </button>
+            </div>
 
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : notifications?.length === 0 ? (
-        <p className="text-gray-500 ml-3">No notification</p>
-      ) : (
-        <ul className="">
-          {notifications?.map((notif: Notification) => (
-            <li
-              key={notif._id}
-              className={`p-3 border-t cursor-pointer border-[#EBEBEB] ${
-                notif.isRead ? "bg-white" : "bg-[#F2FEF8]"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                notif.isRead ? "bg-[#F2FEF8]" : "bg-white"
-              }`}>
-                  <Bell className="w-4 h-4 text-[#12B76A]" />
-                </div>
-                <div className="flex-1">
-                  {/* <h4 className="font-medium">{notif.title}</h4> */}
-                  <p className="text-sm text-gray-600"
-                  onClick={() => handleMarkAsRead(notif._id)}
+            {isLoading ? (
+              <p>Loading...</p>
+            ) : notifications?.length === 0 ? (
+              <p className="text-gray-500 ml-3">No notification</p>
+            ) : (
+              <ul className="">
+                {notifications?.map((notif: Notification) => (
+                  <li
+                    key={notif._id}
+                    className={`p-3 border-t cursor-pointer border-[#EBEBEB] ${
+                      notif.isRead ? "bg-white" : "bg-[#F2FEF8]"
+                    }`}
                   >
-                    {notif.title}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-[#979797] mt-1">{formatTimeAgo(notif.createdAt ?? new Date().toISOString())}</p>
-                      {isPaymentCustomer(notif) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedNotif(notif);
-                            setShowReceipt(true);
-                          }}
-                          className="text-[9px] text-white cursor-pointer bg-[#12B76A] p-1 rounded-sm mt-1"
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          notif.isRead ? "bg-[#F2FEF8]" : "bg-white"
+                        }`}
+                      >
+                        <Bell className="w-4 h-4 text-[#12B76A]" />
+                      </div>
+                      <div className="flex-1">
+                        {/* <h4 className="font-medium">{notif.title}</h4> */}
+                        <p
+                          className="text-sm text-gray-600"
+                          onClick={() => handleMarkAsRead(notif._id)}
                         >
-                          View details
-                        </button>
-                      )}
-                  </div>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      </motion.div>
-      ) : (
+                          {notif.title}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-[#979797] mt-1">
+                            {formatTimeAgo(
+                              notif.createdAt ?? new Date().toISOString()
+                            )}
+                          </p>
+                          {isPaymentCustomer(notif) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedNotif(notif);
+                                setShowReceipt(true);
+                              }}
+                              className="text-[9px] text-white cursor-pointer bg-[#12B76A] p-1 rounded-sm mt-1"
+                            >
+                              View details
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        ) : (
           <motion.div
             key="receipt"
             initial={{ x: "100%", opacity: 0 }}
@@ -232,14 +265,16 @@ const handleMarkAsRead = async (id: string) => {
                     "You made a successful payment transaction."}
                 </p>
                 {isLoadingBooking ? (
-                  <p className="text-sm text-gray-500 mt-3">Loading details...</p>
+                  <p className="text-sm text-gray-500 mt-3">
+                    Loading details...
+                  </p>
                 ) : bookingData ? (
                   <>
                     {equipment?.media?.[0] && (
                       <div className="relative w-20 h-20 rounded-lg overflow-hidden mt-3 mb-2">
-                        <Image 
-                          src={equipment.media[0]} 
-                          alt={equipment.name || "Equipment"} 
+                        <Image
+                          src={equipment.media[0]}
+                          alt={equipment.name || "Equipment"}
                           fill
                           className="object-cover"
                         />
@@ -260,7 +295,9 @@ const handleMarkAsRead = async (id: string) => {
                     </h1>
                   </>
                 ) : selectedBookingId ? (
-                  <p className="text-sm text-gray-500 mt-3">Unable to load booking details.</p>
+                  <p className="text-sm text-gray-500 mt-3">
+                    Unable to load booking details.
+                  </p>
                 ) : (
                   <h1 className="text-2xl font-bold mt-3 text-black">
                     {selectedNotif?.details || "₦0.00"}
@@ -271,29 +308,38 @@ const handleMarkAsRead = async (id: string) => {
               <div className="mt-5 border-t border-dashed border-gray-300 pt-4 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Transaction ID</span>
-                  <span className="text-xs break-all text-black">{selectedNotif?._id ?? "—"}</span>
+                  <span className="text-xs break-all text-black">
+                    {selectedNotif?._id ?? "—"}
+                  </span>
                 </div>
                 {bookingData && (
                   <>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Booking ID</span>
-                      <span className="text-xs break-all text-black">{bookingData._id}</span>
+                      <span className="text-xs break-all text-black">
+                        {bookingData.booking._id}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Booking Status</span>
-                      <span className={`font-medium capitalize ${
-                        bookingData.status === "initilized" || bookingData.status === "initialized" 
-                          ? "text-blue-600" 
-                          : bookingData.isCompleted 
-                            ? "text-[#12B76A]" 
+                      <span
+                        className={`font-medium capitalize ${
+                          bookingData.booking.status === "initilized" ||
+                          bookingData.booking.status === "initialized"
+                            ? "text-blue-600"
+                            : bookingData.booking.isCompleted
+                            ? "text-[#12B76A]"
                             : "text-orange-600"
-                      }`}>
-                        {bookingData.status}
+                        }`}
+                      >
+                        {bookingData.booking.status}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Equipment</span>
-                      <span className="font-medium text-black">{equipment?.name ?? "—"}</span>
+                      <span className="font-medium text-black">
+                        {equipment?.name ?? "—"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Price per day</span>
@@ -305,7 +351,9 @@ const handleMarkAsRead = async (id: string) => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Quantity</span>
-                      <span className="text-black">{bookingData.quantity ?? "—"}</span>
+                      <span className="text-black">
+                        {bookingData.booking.quantity ?? "—"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Rental period</span>
@@ -317,27 +365,39 @@ const handleMarkAsRead = async (id: string) => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Total days</span>
-                      <span className="text-black">{totalDays ? `${totalDays} day(s)` : "—"}</span>
+                      <span className="text-black">
+                        {totalDays ? `${totalDays} day(s)` : "—"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Customer</span>
                       <span className="font-medium text-black">
-                        {customer ? `${customer.firstName} ${customer.lastName || ""}` : "—"}
+                        {customer
+                          ? `${customer.firstName} ${customer.lastName || ""}`
+                          : "—"}
                       </span>
                     </div>
                   </>
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-500">Payment Status</span>
-                  <span className={bookingData?.payment ? "text-[#12B76A] font-medium" : "text-orange-600 font-medium"}>
-                    {bookingData?.payment ? "Paid" : "Pending"}
+                  <span
+                    className={
+                      bookingData?.booking?.payment
+                        ? "text-[#12B76A] font-medium"
+                        : "text-orange-600 font-medium"
+                    }
+                  >
+                    {bookingData?.booking?.payment ? "Paid" : "Pending"}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Date</span>
                   <span className="text-black">
                     {new Date(
-                      selectedNotif?.createdAt ?? bookingData?.createdAt ?? new Date()
+                      selectedNotif?.createdAt ??
+                        bookingData?.booking?.createdAt ??
+                        new Date()
                     ).toLocaleString()}
                   </span>
                 </div>
@@ -357,20 +417,25 @@ const handleMarkAsRead = async (id: string) => {
             {/* Buttons */}
             <div className="flex gap-3">
               <button
-               className="flex-1 bg-[#12B76A] text-white font-semibold py-3 rounded-full disabled:opacity-60"
-               onClick={handleConfirmBooking}
-               disabled={!bookingData?._id || isConfirming}
-             >
+                className="flex-1 bg-[#12B76A] text-white font-semibold py-3 rounded-full disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
+                onClick={handleConfirmBooking}
+                disabled={
+                  !bookingData?.booking?._id ||
+                  isConfirming ||
+                  !bookingData?.isCustomer
+                }
+              >
                 {isConfirming ? "Confirming..." : "Confirm"}
-             </button>
+              </button>
+
               <button
                 className="flex-1 border border-[#12B76A] text-[#12B76A] font-semibold py-3 rounded-full"
                 onClick={() => {
-                 handleOpenReportModal()
-               }}
-             >
+                  handleOpenReportModal();
+                }}
+              >
                 Send report
-             </button>
+              </button>
             </div>
           </motion.div>
         )}
@@ -380,7 +445,9 @@ const handleMarkAsRead = async (id: string) => {
         isOpen={isReportModalOpen}
         onClose={handleCloseReportModal}
         reportedUserId={customer?._id ?? ""}
-        reportedUserName={customer ? `${customer.firstName} ${customer.lastName ?? ""}` : ""}
+        reportedUserName={
+          customer ? `${customer.firstName} ${customer.lastName ?? ""}` : ""
+        }
         equipmentId={equipment?._id ?? ""}
       />
     </div>

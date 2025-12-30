@@ -1,39 +1,54 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAppDispatch } from "@/lib/redux/hooks"
-import { setCredentials, clearError } from "@/lib/redux/slices/authSlice"
-import { AnimatedLogo } from "@/components/loading-logo"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { setCredentials, clearError } from "@/lib/redux/slices/authSlice";
+import { AnimatedLogo } from "@/components/loading-logo";
 
 export default function AuthCallback() {
-  const router = useRouter()
-  const dispatch = useAppDispatch()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const token = params.get("token")
-    const errorParam = params.get("error")
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const errorParam = params.get("error");
 
     if (errorParam) {
-      setError(errorParam || "Google sign-in failed. Please try again later.")
-      setLoading(false)
-      return
+      setError(errorParam || "Google sign-in failed. Please try again later.");
+      setLoading(false);
+      return;
     }
 
     if (!token) {
-      setError("No token found")
-      setLoading(false)
-      return
+      setError("No token found");
+      setLoading(false);
+      return;
     }
 
-    dispatch(clearError())
-    dispatch(setCredentials({ user: null, data: token }))
-    sessionStorage.setItem("auth_token", token)
-    router.replace("/dashboard")
-  }, [dispatch, router])
+    const finalizeLogin = async () => {
+      try {
+        // 1. Update Redux state
+        dispatch(clearError());
+        dispatch(setCredentials({ user: null, data: token }));
+
+        await fetch("/api/set-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+      } catch (err) {
+        console.error("Session sync failed", err);
+        setError("Failed to establish session. Please try again.");
+      }
+    };
+
+    finalizeLogin();
+    router.replace("/dashboard");
+  }, [dispatch, router]);
 
   return (
     <main className="flex items-center justify-center min-h-screen font-sans">
@@ -53,5 +68,5 @@ export default function AuthCallback() {
         )}
       </div>
     </main>
-  )
+  );
 }
