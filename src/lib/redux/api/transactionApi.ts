@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi';
+import { baseApi } from "./baseApi";
 
 export interface TransactionMetric {
   thisMonth: number;
@@ -28,6 +28,7 @@ export interface TransactionItem {
   userEmail: string;
   userAvatar: string;
   userName: string;
+  type?: string;
 }
 
 export interface TransactionListData {
@@ -45,12 +46,12 @@ export interface TransactionListResponse {
 
 export interface TransactionDetailResponse {
   message: string;
-  data: Record<string, unknown>; 
+  data: Record<string, unknown>;
 }
 
 export interface WithdrawalActionRequest {
   transactionId: string;
-  action: 'completed' | 'declined';
+  action: "completed" | "declined";
 }
 
 export interface WithdrawalActionResponse {
@@ -58,15 +59,14 @@ export interface WithdrawalActionResponse {
   data: Record<string, unknown>;
 }
 
-
 export const transactionsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTransactionOverview: builder.query<TransactionOverviewResponse, void>({
       query: () => ({
-        url: '/admin/transaction/overview',
-        method: 'GET',
+        url: "/admin/transaction/overview",
+        method: "GET",
       }),
-      providesTags: ['Transactions'],
+      providesTags: ["Transactions"],
     }),
 
     getTransactions: builder.query<
@@ -91,37 +91,37 @@ export const transactionsApi = baseApi.injectEndpoints({
         amountFilter,
       }) => {
         const params = new URLSearchParams();
-        if (page) params.append('page', String(page));
-        if (limit) params.append('limit', String(limit));
-        if (status) params.append('status', status);
-        if (startDate) params.append('startDate', startDate);
-        if (endDate) params.append('endDate', endDate);
-        if (sort) params.append('sort', sort);
-        if (amountFilter) params.append('amountFilter', amountFilter);
+        if (page) params.append("page", String(page));
+        if (limit) params.append("limit", String(limit));
+        if (status) params.append("status", status);
+        if (startDate) params.append("startDate", startDate);
+        if (endDate) params.append("endDate", endDate);
+        if (sort) params.append("sort", sort);
+        if (amountFilter) params.append("amountFilter", amountFilter);
 
         return {
           url: `/admin/transaction/list?${params.toString()}`,
-          method: 'GET',
+          method: "GET",
         };
       },
       providesTags: (result) =>
         result?.data?.history
           ? [
               ...result.data.history.map((t) => ({
-                type: 'Transaction' as const,
+                type: "Transaction" as const,
                 id: t._id,
               })),
-              { type: 'Transactions', id: 'LIST' },
+              { type: "Transactions", id: "LIST" },
             ]
-          : [{ type: 'Transactions', id: 'LIST' }],
+          : [{ type: "Transactions", id: "LIST" }],
     }),
 
     getTransactionById: builder.query<TransactionDetailResponse, string>({
       query: (transactionId) => ({
         url: `/admin/transaction/${transactionId}`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: (_result, _error, id) => [{ type: 'Transaction', id }],
+      providesTags: (_result, _error, id) => [{ type: "Transaction", id }],
     }),
 
     actOnWithdrawal: builder.mutation<
@@ -130,19 +130,18 @@ export const transactionsApi = baseApi.injectEndpoints({
     >({
       query: ({ transactionId, action }) => ({
         url: `/admin/transaction/withdraw/${transactionId}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { action },
       }),
       invalidatesTags: (_result, _error, { transactionId }) => [
-        { type: 'Transaction', id: transactionId },
-        { type: 'Transactions', id: 'LIST' },
+        { type: "Transaction", id: transactionId },
+        { type: "Transactions", id: "LIST" },
       ],
     }),
   }),
 
   overrideExisting: false,
 });
-
 
 export const {
   useGetTransactionOverviewQuery,

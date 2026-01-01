@@ -2,10 +2,10 @@
 
 import type React from "react";
 import { ComponentType, Suspense, useEffect, useState } from "react";
-import { Bell, X, Menu } from "lucide-react";
+import { Bell, X, Menu, LogOut } from "lucide-react";
 // import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PageHeaderProvider } from "@/context/page-header-context";
@@ -15,6 +15,7 @@ import {
   useNotifications,
 } from "@/context/notification-context";
 import NotificationsDropdown from "@/components/notifications-dropdown";
+import { useLogout } from "../utils/handleLogout";
 
 const TransactionsIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -178,6 +179,7 @@ export default function AdminLayout({
   const { latestNotif } = useNotifications();
   const pathname = usePathname();
   const isMessagesPage = pathname === "/admin/messages";
+  const handleLogout = useLogout();
 
   const hasUnread = !!latestNotif;
 
@@ -266,13 +268,13 @@ export default function AdminLayout({
             </nav>
 
             <div className="p-4 border-t border-gray-800 mt-auto">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src="/diverse-group.png" alt="Agba" />
-                  <AvatarFallback>AG</AvatarFallback>
-                </Avatar>
+              <div
+                onClick={handleLogout}
+                className="flex cursor-pointer items-center gap-3"
+              >
+                <LogOut className="w-4 text-red-300 h-4" />
                 <div>
-                  <p className="text-sm text-gray-300">Admin</p>
+                  <p className="text-sm text-gray-300">Logout</p>
                 </div>
               </div>
             </div>

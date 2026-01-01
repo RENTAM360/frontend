@@ -10,7 +10,6 @@ import { formatCurrency, formatNumber } from "../utils/formatters";
 
 export default function Dashboard() {
   const { data, isLoading, isError } = useGetAdminDashboardQuery();
-  // console.log(data)
 
   if (isLoading) return <AnimatedLogo />;
   if (isError) return <p>Error loading dashboard</p>;

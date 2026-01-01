@@ -97,9 +97,9 @@ export default function ProfilePage() {
     };
   }, [profile]);
 
-  const handleDeleteAccount = async (userId: string) => {
+  const handleDeleteAccount = async () => {
     try {
-      const response = await deleteAccount(userId).unwrap();
+      const response = await deleteAccount().unwrap();
       enqueueSnackbar(response.message || "Account deleted successfully", {
         variant: "success",
       });
@@ -270,7 +270,10 @@ export default function ProfilePage() {
   else reviewText = `View all ${feedbackCount} reviews`;
 
   return (
-    <div className="container font-sans mx-auto md:px-4 py-8">
+    <div
+      id="container-scroll"
+      className="container font-sans mx-auto md:px-4 py-8"
+    >
       <input
         type="file"
         accept="image/*"
@@ -729,7 +732,11 @@ export default function ProfilePage() {
             <button
               onClick={() => {
                 setViewMode(viewMode === "wallet" ? "items" : "wallet");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                requestAnimationFrame(() => {
+                  document
+                    .getElementById("dashboard-scroll")
+                    ?.scrollTo({ top: 0, behavior: "smooth" });
+                });
               }}
               className="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50 text-left"
             >
@@ -895,7 +902,7 @@ export default function ProfilePage() {
         icon="warning"
         actionLabel={isLoading ? "Deleting..." : "Delete"}
         cancelLabel="Cancel"
-        onAction={() => handleDeleteAccount(userId!)}
+        onAction={() => handleDeleteAccount()}
       />
 
       <VerifyNinModal
