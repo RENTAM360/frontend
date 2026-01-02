@@ -747,7 +747,10 @@ export default function EquipmentDetailsClient({
                   {mockEquipmentData.feedback[0].replies}
                 </div>
               </div> */}
-              <button className="flex items-center pb-4 mt-4 gap-2 w-full text-left hover:bg-gray-50">
+              <Link
+                href={`/dashboard/user/owner/${equipmentData.owner.id}/reviews`}
+                className="flex items-center pb-4 mt-4 gap-2 w-full cursor-pointer text-left hover:bg-gray-50"
+              >
                 <svg
                   width="17"
                   height="17"
@@ -764,7 +767,7 @@ export default function EquipmentDetailsClient({
                 <span className="text-black text-[12.03px]">
                   Leave feedback about the renter
                 </span>
-              </button>
+              </Link>
             </div>
           </div>
 
