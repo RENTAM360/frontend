@@ -166,8 +166,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
               <Image
                 src={user?.coverPhoto || "/cover1.jpg"}
                 alt="Cover"
-                width={100}
-                height={100}
+                fill
                 className="w-full rounded-t-[20px] rounded-b-[30px] h-full object-cover"
               />
             </div>

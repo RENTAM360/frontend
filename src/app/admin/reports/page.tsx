@@ -225,8 +225,8 @@ export default function ReportsPage() {
             <div className="min-w-[700px] w-full">
               {/* Table Header */}
               <div className="grid grid-cols-12 gap-4 p-4 border-b font-medium text-[#97A2AC] text-xs">
-                <div className="col-span-2">Reporter name</div>
-                <div className="col-span-2">Reported User/Item</div>
+                <div className="col-span-2">Reporter&apos;s name</div>
+                <div className="col-span-2">Reported User</div>
                 <div className="col-span-2">Reason</div>
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2">Date</div>
@@ -310,20 +310,16 @@ export default function ReportsPage() {
                 <div className="relative mb-10">
                   <div className="h-38 rounded-t-2xl rounded-b-[35px] overflow-hidden">
                     <Image
-                      src="/report-coverImg.svg"
+                      src="/cover1.jpg"
                       alt="Cover"
-                      width={100}
-                      height={100}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="w-full h-full rounded-2xl object-cover"
                     />
                   </div>
                   <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-10">
                     <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-white">
                       <Image
-                        src={
-                          reportedProfile?.data?.user?.avatar ||
-                          "/placeholder.svg"
-                        }
+                        src={reportedProfile?.data?.user?.avatar || "/user.svg"}
                         alt={reportedProfile?.data?.user?.firstName || "User"}
                         className="w-full h-full object-cover"
                         width={100}
@@ -348,8 +344,8 @@ export default function ReportsPage() {
                     {reportedProfile?.data?.user?.bio}
                   </p>
 
-                  <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center flex-col justify-center gap-4 mt-4 text-sm text-gray-500">
+                    <div className="flex gap-1">
                       <MapPin className="w-4 h-4" />
                       <span>{reportedProfile?.data?.user?.address}</span>
                     </div>
