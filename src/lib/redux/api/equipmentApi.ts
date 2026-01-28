@@ -46,7 +46,8 @@ export interface EquipmentQueryParams {
   categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
-  search?: string;
+  /** Search equipment by name (maps to `name` query param) */
+  name?: string;
   location?: string;
   userId?: string;
 }
@@ -417,16 +418,18 @@ export const equipmentApi = baseApi.injectEndpoints({
           searchParams.append("minPrice", params.minPrice.toString());
         if (params?.maxPrice)
           searchParams.append("maxPrice", params.maxPrice.toString());
-        if (params?.search) searchParams.append("search", params.search);
+        if (params?.name !== undefined && params?.name !== null) {
+          searchParams.append("name", params.name);
+        }
         if (params?.location) searchParams.append("location", params.location);
         if (params?.userId) searchParams.append("userId", params.userId);
 
         const queryString = searchParams.toString();
-        return `equipment${queryString ? `?${queryString}` : ""}`;
+        const url = `equipment${queryString ? `?${queryString}` : ""}`;
+        return url;
       },
       providesTags: ["Equipment"],
       transformResponse: (response: EquipmentResponse) => {
-        console.log("🔄 Raw API Response:", response);
 
         const transformedEquipments = response.data.equipments.map(
           (item: Equipment) => ({
@@ -448,8 +451,6 @@ export const equipmentApi = baseApi.injectEndpoints({
           })
         );
 
-        console.log("✅ Transformed Equipment:", transformedEquipments);
-
         return {
           equipments: transformedEquipments,
           totalCount: response.data.totalCount,
@@ -470,16 +471,13 @@ export const equipmentApi = baseApi.injectEndpoints({
       },
       providesTags: (result, error, id) => [{ type: "Equipment", id }],
       transformResponse: (response: EquipmentDetailResponse) => {
-        console.log("🔄 Equipment Detail Response:", response);
-
         // Check if response has the expected structure
         if (!response || !response.data || !response.data.equipent) {
-          console.error("❌ Invalid response structure:", response);
+          console.error("Invalid response structure:", response);
           throw new Error("Invalid response structure - missing data.equipent");
         }
 
         const item = response.data.equipent;
-        console.log("🔄 Equipment detail item from API:", item);
 
         const transformed: TransformedEquipmentDetail = {
           id: item._id,
@@ -509,8 +507,6 @@ export const equipmentApi = baseApi.injectEndpoints({
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         };
-
-        console.log("✅ Transformed Equipment Detail:", transformed);
         return transformed;
       },
       transformErrorResponse: (response: { status: number; data: unknown }) => {
@@ -530,13 +526,13 @@ export const equipmentApi = baseApi.injectEndpoints({
       }),
     }),
 
-    // Search equipment
+    // Search equipment by name (uses `name` query param)
     searchEquipments: builder.query<
       { equipments: TransformedEquipment[]; totalCount: number },
       string
     >({
       query: (searchTerm) =>
-        `equipment?search=${encodeURIComponent(searchTerm)}`,
+        `equipment?name=${encodeURIComponent(searchTerm)}`,
       providesTags: ["Equipment"],
       transformResponse: (response: EquipmentResponse) => {
         const transformedEquipments = response.data.equipments.map(

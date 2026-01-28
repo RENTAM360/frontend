@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useMemo, useEffect } from "react"
-import { useGetCategoriesQuery, useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
+import { useGetCategoriesQuery, useGetEquipmentsQuery, useSearchEquipmentsQuery } from "@/lib/redux/api/equipmentApi"
 import { EquipmentCard } from "@/components/equipment-card"
 import { Button } from "@/components/ui/button"
 import { skipToken } from "@reduxjs/toolkit/query"
@@ -14,57 +14,83 @@ interface EquipmentCategoryProps {
 
 export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
   const searchTerm = useAppSelector((state)=>state.search.term)
+  const isSearching = !!searchTerm
+
   const {
     data: categoryResponse,
   } = useGetCategoriesQuery()
   const [page, setPage] = useState(1)
 
-  // console.log(categoryResponse)
+  // Reset to first page whenever search term changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   const categories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse])
-  // console.log(categories)
 
-  
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
   useEffect(() => {
-   setPage(1)
- }, [selectedCategoryId])
+    setPage(1)
+  }, [selectedCategoryId])
 
-   useEffect(() => {
+  useEffect(() => {
     if (!selectedCategoryId && categories.length > 0) {
       setSelectedCategoryId("all")
     }
   }, [categories, selectedCategoryId])
 
-   const {
+  // Base listing (with optional category filter)
+  const {
     data: equipmentResponse,
     isLoading: isLoadingEquipments,
   } = useGetEquipmentsQuery(
-    selectedCategoryId && selectedCategoryId !== "all" ? { categoryId: selectedCategoryId, page, limit } : skipToken
+    selectedCategoryId && selectedCategoryId !== "all"
+      ? {
+          categoryId: selectedCategoryId,
+          page,
+          limit,
+        }
+      : skipToken
   )
 
   const allEquipments = useGetEquipmentsQuery(
-    selectedCategoryId === "all" ? { page, limit } : skipToken
+    selectedCategoryId === "all"
+      ? {
+          page,
+          limit,
+        }
+      : skipToken
   )
 
-  // console.log(allEquipments)
-  // console.log(equipmentResponse)
+  // Server-side search by name (uses `name` query param under the hood)
+  const {
+    data: searchResponse,
+    isLoading: isLoadingSearch,
+  } = useSearchEquipmentsQuery(isSearching ? searchTerm : (skipToken as any))
 
   const equipments = useMemo(() => {
+    if (isSearching) {
+      return searchResponse?.equipments ?? []
+    }
+
     return selectedCategoryId === "all"
       ? allEquipments.data?.equipments ?? []
       : equipmentResponse?.equipments ?? []
-  }, [selectedCategoryId, allEquipments.data, equipmentResponse])
+  }, [isSearching, searchResponse, selectedCategoryId, allEquipments.data, equipmentResponse])
 
-  // console.log(equipments)
-  const totalCount =
-    selectedCategoryId === "all"
+  const totalCount = isSearching
+    ? searchResponse?.totalCount ?? 0
+    : selectedCategoryId === "all"
       ? allEquipments.data?.totalCount ?? 0
       : equipmentResponse?.totalCount ?? 0
   
-  const totalPages = Math.ceil(totalCount / limit!)
-  const isLoading = selectedCategoryId === "all" ? allEquipments.isLoading : isLoadingEquipments
+  const totalPages = Math.ceil(totalCount / (limit || 1))
+  const isLoading = isSearching
+    ? isLoadingSearch
+    : selectedCategoryId === "all"
+      ? allEquipments.isLoading
+      : isLoadingEquipments
 
   const selectedCategoryName =
     selectedCategoryId === "all"
@@ -82,13 +108,6 @@ export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
     }
   }, [page])
 
-
-  const filteredEquipments = useMemo(() => {
-    if (!searchTerm) return equipments
-    return equipments.filter((eq) =>
-      eq.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [equipments, searchTerm])
 
   return (
     <div ref={topContainerRef} className="space-y-4 mb-8">
@@ -125,9 +144,8 @@ export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
               </div>
             ))}
           </div>
-        ) : filteredEquipments.length === 0 ? (
+        ) : equipments.length === 0 ? (
           <div className="space-y-4">
-            {/* <h2 className="text-2xl font-bold">{title}</h2> */}
             <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
               No item found {searchTerm ? `for "${searchTerm}"` : "in this category"}.
             </div>
@@ -138,10 +156,8 @@ export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
             ref={containerRef}
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2"
           >
-            {filteredEquipments.map((equipment) => {
-              // console.log(equipment)
+            {equipments.map((equipment) => {
               return (
-             
                 <EquipmentCard
                   key={equipment.id}
                   id={equipment.id}

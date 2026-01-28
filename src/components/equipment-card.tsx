@@ -29,7 +29,6 @@ export function EquipmentCard({
   imageUrl,
   variant = "default",
 }: EquipmentCardProps) {
-  console.log(ownerId)
 
   const dispatch = useAppDispatch()
   const isSaved = useAppSelector((state) => selectIsSaved(state, id))
