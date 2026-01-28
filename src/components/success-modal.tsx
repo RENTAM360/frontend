@@ -60,17 +60,10 @@ export function SuccessModal({
           </div>
 
           <div className="text-center text-[#5A5555] text-[17px] mb-10">
-            {amount ? (
-              <DialogTitle className="max-w-60 mb-2">
-                {title} <span className="font-bold">₦{amount.toLocaleString()}</span>{" "}
-                {description}
-              </DialogTitle>
-            ) : (
-              <>
-                <DialogTitle className="font-normal leading-6 text-gray-700 max-w-md mx-auto">{title}</DialogTitle>
-                {description && <p className="text-gray-600 mt-2">{description}</p>}
-              </>
-            )}
+            <DialogTitle className="font-normal leading-6 text-gray-700 max-w-md mx-auto">
+              {title}
+            </DialogTitle>
+            {description && <p className="text-gray-600 mt-2">{description}</p>}
           </div>
 
           <div className="w-full space-y-3">

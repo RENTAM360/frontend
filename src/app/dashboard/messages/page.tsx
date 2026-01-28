@@ -412,10 +412,10 @@ export default function MessagesPage() {
                 </Link>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
+                <button onClick={() => setIsReportModalOpen(true)} className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
                   <Flag className="h-5 w-5" fill="#12B76A" />
                 </button>
-                <DropdownMenu>
+                {/* <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
                       <MoreVertical className="h-5 w-5" />
@@ -432,7 +432,7 @@ export default function MessagesPage() {
                       Report User
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
               </div>
             </div>
 

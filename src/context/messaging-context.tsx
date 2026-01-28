@@ -57,8 +57,8 @@ const MessagingContext = createContext<MessagingContextType | null>(null);
 export function MessagingProvider({
   children,
   currentUserId,
-}: // authToken,
-{
+  authToken,
+}: {
   children: React.ReactNode;
   currentUserId?: string | null;
   authToken?: string | null;
@@ -167,6 +167,12 @@ export function MessagingProvider({
 
   // Socket event handling
   useEffect(() => {
+    // Ensure socket is connected when we have an auth token
+    if (!socketService.rawSocket && authToken) {
+      console.log("[Messaging] Connecting socket from MessagingProvider");
+      socketService.connect(authToken);
+    }
+
     if (!socketService.rawSocket) return;
 
     const socket = socketService.rawSocket;
@@ -240,7 +246,7 @@ export function MessagingProvider({
       socket.off("connect_error", handleError);
       socket.off("chat", handleMessage);
     };
-  }, [currentUserId]);
+  }, [currentUserId, authToken]);
 
   // Auto-trigger mark as read when conversation becomes active
   useEffect(() => {
@@ -298,7 +304,17 @@ export function MessagingProvider({
 
   const sendMessage = useCallback(
     async (receiverId: string, equipmentId: string, content: string) => {
-      if (!currentUserId || !socketService.rawSocket?.connected) {
+      if (!currentUserId) {
+        throw new Error("Not connected");
+      }
+
+      // If socket isn't created yet but we have a token, try to connect on demand
+      if (!socketService.rawSocket && authToken) {
+        console.log("[Messaging] sendMessage: connecting socket on demand");
+        socketService.connect(authToken);
+      }
+
+      if (!socketService.rawSocket) {
         throw new Error("Not connected");
       }
 
@@ -317,13 +333,13 @@ export function MessagingProvider({
               });
               resolve();
             } else {
-              reject(new Error(response.error));
+              reject(new Error(response.error ?? "Failed to send message"));
             }
           }
         );
       });
     },
-    [currentUserId, addMessageOptimistic]
+    [currentUserId, addMessageOptimistic, authToken]
   );
 
   const connect = useCallback(async (authToken: string) => {

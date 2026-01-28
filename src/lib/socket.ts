@@ -142,9 +142,9 @@ class SocketService {
     equipment?: string,
     callback?: (response: SocketResponse) => void,
   ) {
-    if (!this.socket?.connected) {
-      console.error("[Socket] Not connected")
-      callback?.({ ok: false, error: "Socket not connected" })
+    if (!this.socket) {
+      console.error("[Socket] Socket instance not available")
+      callback?.({ ok: false, error: "Socket not available" })
       return
     }
 

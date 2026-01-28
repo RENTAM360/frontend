@@ -86,11 +86,23 @@ const calculateTotalDays = () => {
      if (result.status === 200 && result.data?.paymentInitialization?.data?.authorization_url) {
         window.location.href = result.data.paymentInitialization.data.authorization_url
       } else {
-        enqueueSnackbar(`Booking failed: ${result.message || "Unknown error"}`, {variant: "error"})
+        enqueueSnackbar(`Booking failed: ${result.message || "Unknown error"}`, { variant: "error" })
       }
-    } catch (error) {
-      console.error("Booking error:", error)
-      enqueueSnackbar("An error occurred while booking. Please try again.", {variant: "error"})
+    } catch (err: unknown) {
+      console.error("Booking error:", err);
+    
+      let message = "An error occurred while booking. Please try again.";
+    
+      if (err && typeof err === 'object' && 'data' in err) {
+        const errorData = (err as any).data;
+        if (typeof errorData?.message === 'string') {
+          message = errorData.message;
+        }
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+    
+      enqueueSnackbar(message, { variant: "error" });
     }
   }
 

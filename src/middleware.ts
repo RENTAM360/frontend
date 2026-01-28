@@ -18,6 +18,8 @@ export default function middleware(req: NextRequest) {
   const isPublic = publicRoutes.includes(path);
 
   if (isPublic) {
+    // If an admin or super-admin hits the admin login while already authenticated,
+    // send them back to the admin dashboard.
     if (
       path === "/admin/login" &&
       token &&
@@ -25,9 +27,14 @@ export default function middleware(req: NextRequest) {
     ) {
       return NextResponse.redirect(new URL("/admin", req.url));
     }
-    if (path === "/login" && token && role === "user") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+
+    // Any authenticated user should not see login/signup pages.
+    if (token && (path === "/login" || path === "/signup")) {
+      const redirectTo =
+        ["admin", "super-admin"].includes(role || "") ? "/admin" : "/dashboard";
+      return NextResponse.redirect(new URL(redirectTo, req.url));
     }
+
     return NextResponse.next();
   }
 

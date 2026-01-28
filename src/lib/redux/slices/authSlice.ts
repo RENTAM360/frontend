@@ -102,8 +102,15 @@ const authSlice = createSlice({
       }
       })
       // Handle login error
-      .addMatcher(authApi.endpoints.login.matchRejected, (state, { error }) => {
-        state.error = error.message || "Failed to login"
+      .addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
+        // Prefer the API-provided error message if available
+        const apiError = action.payload as { data?: { message?: string } } | undefined
+        const apiMessage =
+          apiError && typeof apiError.data === "object" && apiError.data && "message" in apiError.data
+            ? (apiError.data as { message?: string }).message
+            : undefined
+
+        state.error = apiMessage || action.error?.message || "Failed to login"
         state.loading = false
       })
       // Handle register success

@@ -202,7 +202,7 @@ export default function EquipmentDetailsClient({
       if (!equipmentData?.location?.coordinates?.coordinates) return;
 
       // Your coordinates are stored [lon, lat]
-      const [lon, lat] = equipmentData.location.coordinates.coordinates;
+      const [lon, lat] = equipmentData?.location?.coordinates?.coordinates;
       const addr = await getAddress(lat, lon);
       setAddress(addr);
     };
@@ -295,6 +295,13 @@ export default function EquipmentDetailsClient({
       </div>
     );
   }
+
+  const coordinates = equipmentData.location?.coordinates?.coordinates;
+  const hasValidCoordinates =
+    Array.isArray(coordinates) &&
+    coordinates.length === 2 &&
+    typeof coordinates[0] === "number" &&
+    typeof coordinates[1] === "number";
 
   return (
     <div className="space-y-8 font-sans pt-4 md:mt-10">
@@ -775,14 +782,18 @@ export default function EquipmentDetailsClient({
           <div className="bg-white rounded-lg p-6">
             <h1 className="text-base font-medium">Location</h1>
             <div className="space-y-6">
-              <div onClick={handleMapClick} className="h-[157px]">
-                {typeof window !== "undefined" && (
+              <div onClick={hasValidCoordinates ? handleMapClick : undefined} className="h-[157px]">
+                {typeof window !== "undefined" && hasValidCoordinates ? (
                   <Map
                     imageUrl={equipmentData.media[0]}
                     title={equipmentData.title}
-                    lat={equipmentData.location.coordinates.coordinates[1]}
-                    long={equipmentData.location.coordinates.coordinates[0]}
+                    lat={coordinates[1]}
+                    long={coordinates[0]}
                   />
+                ) : (
+                  <div className="flex h-full items-center justify-center rounded-md bg-gray-100 text-sm text-gray-500">
+                    Location not available
+                  </div>
                 )}
               </div>
 

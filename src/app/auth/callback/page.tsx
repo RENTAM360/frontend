@@ -31,9 +31,14 @@ export default function AuthCallback() {
 
     const finalizeLogin = async () => {
       try {
-        // 1. Update Redux state
+       
         dispatch(clearError());
-        dispatch(setCredentials({ user: null, data: token }));
+        dispatch(
+          setCredentials({
+            user: null,
+            data: { data: token },
+          })
+        );
 
         await fetch("/api/set-session", {
           method: "POST",

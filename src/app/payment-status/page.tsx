@@ -65,7 +65,7 @@ export default function PaymentStatusPage() {
         title={`Success! Your transaction of ${formattedAmount} has been completed successfully`}
         icon="success"
         amount={formattedAmount}
-        actionLabel="View My Profile"
+        actionLabel="View Transaction"
         onAction={handleModalAction}
       />
     );
