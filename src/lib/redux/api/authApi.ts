@@ -36,7 +36,9 @@ export interface AuthResponse {
     last_name: string;
     email: string;
   } | null;
-  data: string;
+  data: {
+    data: string;
+  };
 }
 
 interface ForgotPasswordResponse {

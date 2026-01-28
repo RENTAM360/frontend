@@ -63,15 +63,15 @@ export default function Navbar() {
 
         {/* Desktop navigation */}
         <nav className="hidden relative items-center gap-6 md:flex">
-          <Link href="/explore" className="text-sm font-medium transition-colors hover:text-primary">
+          <Link href="/login" className="text-sm font-medium transition-colors hover:text-primary">
             Explore
           </Link>
-          <Link href="/faq" className="text-sm font-medium transition-colors hover:text-primary">
+          <a href="#faq" className="text-sm font-medium transition-colors hover:text-primary">
             FAQ
-          </Link>
-          <Link href="/contact" className="text-sm font-medium transition-colors hover:text-primary">
+          </a>
+          <a href="mailto:info@rentam360.com" className="text-sm font-medium transition-colors hover:text-primary">
             Contact us
-          </Link>
+          </a>
         </nav>
 
         {/* Desktop auth buttons */}
@@ -110,26 +110,26 @@ export default function Navbar() {
 
           <nav className="flex flex-col items-center justify-center flex-1 gap-8 text-lg font-medium">
             <Link
-              href="/explore"
+              href="/login"
               className="transition-colors hover:text-emerald-600"
               onClick={() => setIsMenuOpen(false)}
             >
               Explore
             </Link>
-            <Link
-              href="/faq"
+            <a
+              href="#faq"
               className="transition-colors hover:text-emerald-600"
               onClick={() => setIsMenuOpen(false)}
             >
               FAQ
-            </Link>
-            <Link
-              href="/contact"
+            </a>
+            <a
+              href="mailto:info@rentam360.com"
               className="transition-colors hover:text-emerald-600"
               onClick={() => setIsMenuOpen(false)}
             >
               Contact Us
-            </Link>
+            </a>
 
             <div className="flex flex-col items-center gap-4 mt-6">
               <Link

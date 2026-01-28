@@ -54,7 +54,7 @@ export default function LoginPage() {
       };
 
       const res = await login(payload).unwrap();
-      const token = res.data;
+      const token = res.data.data;
 
       dispatch(setCredentials(res));
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer ${res.data}`,
+            Authorization: `Bearer ${res.data.data}`,
           },
         }
       );
@@ -74,7 +74,8 @@ export default function LoginPage() {
       }
 
       const profile = await profileRes.json();
-      const role = profile.data.user.role.name;
+      const role = profile.data?.user?.role?.name;
+      const accountType = profile.data.user.accountType;
       // console.log(profile)
 
       await fetch("/api/set-session", {
@@ -83,7 +84,7 @@ export default function LoginPage() {
         body: JSON.stringify({ token, role }),
       });
 
-      if (["user"].includes(role)) {
+      if (["user", undefined].includes(role) || accountType === "business") {
         router.replace("/dashboard");
       }
     } catch (err: unknown) {

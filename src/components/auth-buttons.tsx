@@ -16,7 +16,7 @@ export const AuthButtons = () => {
                 className="flex items-center gap-2 border rounded px-4 py-2 w-full justify-center"
                 onClick={handleGoogleLogin}
             >
-            <Image src="/google-play-badge.svg" alt="Google" width={20} height={20} />
+            <Image src="/google-icon.svg" alt="Google" width={20} height={20} />
             <span>Google</span>
             </button>
             {/* <button className="flex items-center gap-2 border rounded px-4 py-2 w-full justify-center">

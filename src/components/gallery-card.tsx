@@ -38,7 +38,7 @@ export default function GalleryCard({
                 <p className="text-[14px] font-medium whitespace-nowrap text-black">{name}</p>
                 <p className="text-[12px] text-[#979797]">{category}</p>
             </div>
-            <p className="bg-primary text-white p-1 text-[12px] rounded-[5px]">#{price}</p>
+            <p className="bg-primary text-white p-1 text-[12px] rounded-[5px]">₦{price}</p>
           </div>
         </div>
       </section>

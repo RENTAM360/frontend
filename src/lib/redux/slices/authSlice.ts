@@ -55,10 +55,10 @@ const authSlice = createSlice({
       if (action.payload.user) {
         state.user = action.payload.user;
       }
-      state.data = action.payload.data
+      state.data = action.payload.data.data
       if (isBrowser) {
         document.cookie =  `auth_token=${encodeURIComponent(
-          action.payload.data
+          action.payload.data.data
         )}; path=/; max-age=604800; secure; samesite=strict`
       }
     },
@@ -91,13 +91,13 @@ const authSlice = createSlice({
       // Handle login success
       .addMatcher(authApi.endpoints.login.matchFulfilled, (state, { payload }) => {
         state.user = payload.user
-        state.data = payload.data
+        state.data = payload.data.data
         state.error = null
         state.loading = false
         state.successMessage = "Login Successful"
         if (isBrowser) {
         document.cookie =  `auth_token=${encodeURIComponent(
-          payload.data
+          payload.data.data
         )}; path=/; max-age=604800; secure; samesite=strict`
       }
       })
@@ -109,7 +109,7 @@ const authSlice = createSlice({
       // Handle register success
       .addMatcher(authApi.endpoints.register.matchFulfilled, (state, { payload }) => {
         state.user = payload.user
-        state.data = payload.data
+        state.data = payload.data.data
         state.error = null
         state.loading = false
         state.successMessage = "Registration successful"

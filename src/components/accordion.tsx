@@ -8,7 +8,7 @@ import FadeInWhenVisible from "./ui/FadeInWhenVisible"
   
   export function Faqs() {
     return (
-      <section className="bg-[#F5F5F5] py-8 md:py-16 font-sans flex flex-col justify-center items-center">
+      <section id="faq" className="bg-[#F5F5F5] py-8 md:py-16 font-sans flex flex-col justify-center items-center">
         <FadeInWhenVisible>
           <h1 className="md:text-3xl text-2xl font-bold">Frequently asked questions</h1>
         </FadeInWhenVisible>
