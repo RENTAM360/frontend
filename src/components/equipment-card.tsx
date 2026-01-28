@@ -15,7 +15,6 @@ interface EquipmentCardProps {
   pricePerDay: number
   rating: number
   imageUrl: string
-  ownerId?: string
   variant?: "default" | "profile" | "saved"
 }
 
@@ -25,7 +24,6 @@ export function EquipmentCard({
   category,
   pricePerDay,
   rating,
-  ownerId,
   imageUrl,
   variant = "default",
 }: EquipmentCardProps) {

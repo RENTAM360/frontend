@@ -25,7 +25,7 @@ export function SuccessModal({
   title,
   description,
   icon = "success",
-  amount,
+  // amount,
   onConfirm,
   onAction,
   actionLabel = "Done",

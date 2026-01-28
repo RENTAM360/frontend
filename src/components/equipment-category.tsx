@@ -67,7 +67,7 @@ export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
   const {
     data: searchResponse,
     isLoading: isLoadingSearch,
-  } = useSearchEquipmentsQuery(isSearching ? searchTerm : (skipToken as any))
+  } = useSearchEquipmentsQuery(isSearching ? searchTerm : skipToken)
 
   const equipments = useMemo(() => {
     if (isSearching) {
@@ -166,7 +166,6 @@ export function EquipmentCategory({ limit }: EquipmentCategoryProps) {
                   pricePerDay={equipment.pricePerDay}
                   rating={equipment.rating}
                   imageUrl={equipment.imageUrl}
-                  ownerId={equipment.owner?.id}
                 />
     
             )})}
