@@ -93,10 +93,10 @@ const calculateTotalDays = () => {
     
       let message = "An error occurred while booking. Please try again.";
     
-      if (err && typeof err === 'object' && 'data' in err) {
-        const errorData = (err as any).data;
-        if (typeof errorData?.message === 'string') {
-          message = errorData.message;
+      if (err && typeof err === "object" && "data" in err) {
+        const errorData = (err as { data?: { message?: string } }).data
+        if (typeof errorData?.message === "string") {
+          message = errorData.message
         }
       } else if (err instanceof Error) {
         message = err.message;

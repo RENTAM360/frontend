@@ -7,19 +7,19 @@ import {
   ArrowLeft,
   Flag,
   MessageCircle,
-  MoreVertical,
+  // MoreVertical,
   Search,
   User,
 } from "lucide-react";
 import { useMessagingContext } from "@/context/messaging-context";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 import { ReportModal } from "@/components/report-modal";
 import Link from "next/link";
 import { timeAgo } from "@/app/utils/timeAgo";
