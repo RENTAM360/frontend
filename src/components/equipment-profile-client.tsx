@@ -183,7 +183,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                 </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="mt-4 flex items-center gap-6">
                   <p className="text-sm text-[#000000]">
                     Switch off to make your product unavailable.
                   </p>
