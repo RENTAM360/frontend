@@ -758,6 +758,20 @@ export const equipmentApi = baseApi.injectEndpoints({
       ],
     }),
 
+    updateEquipmentAvailability: builder.mutation<
+      { status: string; message: string; data: { message: string } },
+      { equipmentId: string; availability: boolean }
+    >({
+      query: ({ equipmentId, availability }) => ({
+        url: `equipment/${equipmentId}/availability/${availability}`,
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, { equipmentId }) => [
+        { type: "Equipment", id: equipmentId },
+        "Equipment",
+      ],
+    }),
+
     // Delete equipment mutation
     deleteEquipment: builder.mutation<DeleteEquipmentResponse, string>({
       query: (id) => ({
@@ -907,6 +921,7 @@ export const {
   useGetReviewRepliesQuery,
   useCreateReviewReplyMutation,
   useUpdateEquipmentMutation,
+  useUpdateEquipmentAvailabilityMutation,
   useDeleteEquipmentMutation,
   useBookEquipmentMutation,
   useReportUserMutation,
