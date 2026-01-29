@@ -184,7 +184,7 @@ export default function EquipmentProfileClient({ equipmentId }: EquipmentIdProps
                 </div>
 
                 <div className="mt-4 flex items-center gap-6">
-                  <p className="text-sm text-[#000000]">
+                  <p className="text-[10px] md:text-sm text-[#000000]">
                     Switch off to make your product unavailable.
                   </p>
                   <button
