@@ -5,12 +5,10 @@ import { useGetProfileQuery } from "@/lib/redux/api/authApi"
 import { MessagingProvider } from "@/context/messaging-context"
 import { AnimatedLogo } from "./loading-logo"
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query"
 import { clearCredentials } from "@/lib/redux/slices/authSlice"
+import { persistor } from "@/lib/redux/store"
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const dispatch = useAppDispatch()
   const userToken = useAppSelector((state) => state.auth.data)
   const { data: profile, isLoading, error } = useGetProfileQuery(undefined, {
@@ -18,16 +16,25 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
-    const fetchError = error as FetchBaseQueryError | undefined
-    console.log(fetchError)
-    if(fetchError?.status === 401) {
-      dispatch(clearCredentials())
-      router.push("/login")
+    if (!error) return
+    const redirectToLogin = async () => {
+      try {
+        await fetch("/api/logout", { method: "POST" })
+      } catch {
+        // Ignore; we still clear and redirect
+      } finally {
+        dispatch(clearCredentials())
+        document.cookie = "auth_token=; path=/; max-age=0"
+        document.cookie = "role=; path=/; max-age=0"
+        await persistor.purge()
+        window.location.href = "/login"
+      }
     }
-  })
+    redirectToLogin()
+  }, [error, dispatch])
 
   if (isLoading) return <AnimatedLogo />
-  if (error) return null;
+  if (error) return <AnimatedLogo />
   
   // Convert null to undefined for type compatibility
   const normalizeToUndefined = <T,>(value: T | null | undefined): T | undefined => {

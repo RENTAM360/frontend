@@ -48,17 +48,15 @@ export default function LoginPage() {
     };
 
     const res = await login(payload).unwrap();
-    const token = res.data
+    const token = res.data.data;
 
-    console.log(res.data)
-
-    dispatch(setCredentials(res))
+    dispatch(setCredentials(res));
 
     const profileRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/profile/me`, {
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        Authorization: `Bearer ${res.data}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 

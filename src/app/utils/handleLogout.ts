@@ -1,5 +1,6 @@
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { clearCredentials } from "@/lib/redux/slices/authSlice";
+import { persistor } from "@/lib/redux/store";
 
 export const useLogout = () => {
   const dispatch = useAppDispatch();
@@ -16,6 +17,7 @@ export const useLogout = () => {
       dispatch(clearCredentials());
       document.cookie = "auth_token=; path=/; max-age=0";
       document.cookie = "role=; path=/; max-age=0";
+      await persistor.purge();
       window.location.href = "/login";
     }
   };
