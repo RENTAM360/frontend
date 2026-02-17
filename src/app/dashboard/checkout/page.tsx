@@ -1,24 +1,27 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { DatePicker } from "@/components/date-picker"
-import Image from "next/image"
-import { useBookEquipmentMutation, useGetEquipmentByIdQuery } from "@/lib/redux/api/equipmentApi"
-import { useSearchParams } from "next/navigation"
-import { AnimatedLogo } from "@/components/loading-logo"
-import { enqueueSnackbar } from "notistack"
-import { useNotifications } from "@/context/notification-context"
-import { SuccessModal } from "@/components/success-modal"
+import { useEffect, useState } from "react";
+import { DatePicker } from "@/components/date-picker";
+import Image from "next/image";
+import {
+  useBookEquipmentMutation,
+  useGetEquipmentByIdQuery,
+} from "@/lib/redux/api/equipmentApi";
+import { useSearchParams } from "next/navigation";
+import { AnimatedLogo } from "@/components/loading-logo";
+import { enqueueSnackbar } from "notistack";
+import { useNotifications } from "@/context/notification-context";
+import { SuccessModal } from "@/components/success-modal";
 
 export default function CheckoutPage() {
   const { latestNotif } = useNotifications();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [notifDetails, setNotifDetails] = useState<string | null>(null);
-  const searchParams = useSearchParams()
-  const equipmentId = searchParams.get("id")
+  const searchParams = useSearchParams();
+  const equipmentId = searchParams.get("id");
 
   useEffect(() => {
-    console.log("CheckoutPage saw notification:", latestNotif);
+    // console.log("CheckoutPage saw notification:", latestNotif);
     if (latestNotif?.title?.toLowerCase() === "payment success") {
       setNotifDetails(latestNotif.details);
       setShowSuccessModal(true);
@@ -27,13 +30,17 @@ export default function CheckoutPage() {
     }
   }, [latestNotif]);
 
-  const { data: equipmentData, isLoading, error } = useGetEquipmentByIdQuery(equipmentId || "")
-  const [bookEquipment, { isLoading: isBooking }] = useBookEquipmentMutation()
+  const {
+    data: equipmentData,
+    isLoading,
+    error,
+  } = useGetEquipmentByIdQuery(equipmentId || "");
+  const [bookEquipment, { isLoading: isBooking }] = useBookEquipmentMutation();
 
-  const [startDate, setStartDate] = useState<Date | null>(null)
-  const [endDate, setEndDate] = useState<Date | null>(null)
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   // const [selectedCard, setSelectedCard] = useState<string>("card1")
-  const [showAddCard, setShowAddCard] = useState(false)
+  const [showAddCard, setShowAddCard] = useState(false);
   // const [newCardData, setNewCardData] = useState({
   //   cardNumber: "",
   //   cardName: "",
@@ -43,68 +50,77 @@ export default function CheckoutPage() {
   // const [rentDuration, setRentDuration] = useState(2)
 
   const handleDateChange = (start: Date | null, end: Date | null) => {
-    setStartDate(start)
-    setEndDate(end)
-  }
+    setStartDate(start);
+    setEndDate(end);
+  };
 
-//   const calculateTotalDays = () => {
-//     if (!startDate || !endDate) return 0
-//     const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
-//     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-//     return diffDays + 1 // Include both start and end days
-//   }
+  //   const calculateTotalDays = () => {
+  //     if (!startDate || !endDate) return 0
+  //     const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+  //     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  //     return diffDays + 1 // Include both start and end days
+  //   }
 
-const calculateTotalDays = () => {
-    if (!startDate || !endDate) return 1 
+  const calculateTotalDays = () => {
+    if (!startDate || !endDate) return 1;
 
-    const timeDiff = endDate.getTime() - startDate.getTime()
-    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
-    return daysDiff > 0 ? daysDiff : 1
-  }
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return daysDiff > 0 ? daysDiff : 1;
+  };
 
   const calculateTotalPrice = () => {
-    if (!equipmentData?.pricePerDay) return 0
-      return calculateTotalDays() * equipmentData.pricePerDay
-  }
+    if (!equipmentData?.pricePerDay) return 0;
+    return calculateTotalDays() * equipmentData.pricePerDay;
+  };
 
   const handleCheckout = async () => {
     if (!equipmentId || !startDate || !endDate) {
-      enqueueSnackbar("Please select rental dates before proceeding", {variant: "warning"})
-      return
+      enqueueSnackbar("Please select rental dates before proceeding", {
+        variant: "warning",
+      });
+      return;
     }
 
     try {
       const bookingData = {
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
-        quantity: 1, 
-        shipping: false, 
-      }
+        quantity: 1,
+        shipping: false,
+      };
 
-      const result = await bookEquipment({ equipmentId, bookingData }).unwrap()
+      const result = await bookEquipment({ equipmentId, bookingData }).unwrap();
 
-     if (result.status === 200 && result.data?.paymentInitialization?.data?.authorization_url) {
-        window.location.href = result.data.paymentInitialization.data.authorization_url
+      if (
+        result.status === 200 &&
+        result.data?.paymentInitialization?.data?.authorization_url
+      ) {
+        window.location.href =
+          result.data.paymentInitialization.data.authorization_url;
       } else {
-        enqueueSnackbar(`Booking failed: ${result.message || "Unknown error"}`, { variant: "error" })
+        enqueueSnackbar(
+          `Booking failed: ${result.message || "Unknown error"}`,
+          { variant: "error" },
+        );
       }
     } catch (err: unknown) {
       console.error("Booking error:", err);
-    
+
       let message = "An error occurred while booking. Please try again.";
-    
+
       if (err && typeof err === "object" && "data" in err) {
-        const errorData = (err as { data?: { message?: string } }).data
+        const errorData = (err as { data?: { message?: string } }).data;
         if (typeof errorData?.message === "string") {
-          message = errorData.message
+          message = errorData.message;
         }
       } else if (err instanceof Error) {
         message = err.message;
       }
-    
+
       enqueueSnackbar(message, { variant: "error" });
     }
-  }
+  };
 
   // const incrementDuration = () => {
   //   setRentDuration((prev) => prev + 1)
@@ -116,16 +132,18 @@ const calculateTotalDays = () => {
   //   }
   // }
 
-if (isLoading) {
-    return <AnimatedLogo />
+  if (isLoading) {
+    return <AnimatedLogo />;
   }
 
   if (error || !equipmentData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-red-600">Equipment not found or failed to load</div>
+        <div className="text-lg text-red-600">
+          Equipment not found or failed to load
+        </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -149,38 +167,56 @@ if (isLoading) {
               </div>
               <div>
                 <h3 className="font-medium">{equipmentData.title}</h3>
-                <p className="text-[#676767] text-xs">{equipmentData.address}</p>
-                <p className="text-primary text-sm font-medium mt-2">₦{equipmentData.pricePerDay.toLocaleString() || 0} per day</p>
+                <p className="text-[#676767] text-xs">
+                  {equipmentData.address}
+                </p>
+                <p className="text-primary text-sm font-medium mt-2">
+                  ₦{equipmentData.pricePerDay.toLocaleString() || 0} per day
+                </p>
               </div>
             </div>
 
-             {/* Title and Timestamp */ }
-          <div className="mb-4">
-            <h2 className="text-2xl font-[600]">{equipmentData.title}</h2>
-            <p className="text-[#979797] text-[12px]">Today at {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
-          </div>
+            {/* Title and Timestamp */}
+            <div className="mb-4">
+              <h2 className="text-2xl font-[600]">{equipmentData.title}</h2>
+              <p className="text-[#979797] text-[12px]">
+                Today at{" "}
+                {new Date().toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
 
-          {/* Rent Duration */}
-          <div className="border rounded-lg p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="text-base">Rent duration</span>
-              <div className="flex items-center">
-                <button
-                  onClick={() => setStartDate((prev) => (prev ? new Date(prev.getTime() - 86400000) : null))}
-                  className="h-8 w-8 flex items-center justify-center text-xl font-bold text-[#979797] hover:text-gray-700"
-                >
-                  −
-                </button>
-                <span className="mx-4 text-base">{calculateTotalDays()}</span>
-                <button
-                  onClick={() => setEndDate((prev) => (prev ? new Date(prev.getTime() + 86400000) : null))}
-                  className="h-8 w-8 flex items-center justify-center text-xl font-bold text-[#979797] hover:text-gray-700"
-                >
-                  +
-                </button>
+            {/* Rent Duration */}
+            <div className="border rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-base">Rent duration</span>
+                <div className="flex items-center">
+                  <button
+                    onClick={() =>
+                      setStartDate((prev) =>
+                        prev ? new Date(prev.getTime() - 86400000) : null,
+                      )
+                    }
+                    className="h-8 w-8 flex items-center justify-center text-xl font-bold text-[#979797] hover:text-gray-700"
+                  >
+                    −
+                  </button>
+                  <span className="mx-4 text-base">{calculateTotalDays()}</span>
+                  <button
+                    onClick={() =>
+                      setEndDate((prev) =>
+                        prev ? new Date(prev.getTime() + 86400000) : null,
+                      )
+                    }
+                    className="h-8 w-8 flex items-center justify-center text-xl font-bold text-[#979797] hover:text-gray-700"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
             <div className="border-t pt-6">
               <h3 className="font-bold mb-4">Rental Details</h3>
@@ -196,11 +232,15 @@ if (isLoading) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Duration:</span>
-                  <span className="font-medium">{calculateTotalDays()} days</span>
+                  <span className="font-medium">
+                    {calculateTotalDays()} days
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Daily Rate:</span>
-                  <span className="font-medium">₦{equipmentData.pricePerDay.toLocaleString()}</span>
+                  <span className="font-medium">
+                    ₦{equipmentData.pricePerDay.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
@@ -213,8 +253,8 @@ if (isLoading) {
             </div>
           </div>
 
-           {/* Important Notice */}
-           <div className="border mt-4 bg-white rounded-lg p-6">
+          {/* Important Notice */}
+          <div className="border mt-4 bg-white rounded-lg p-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center text-white">
                 <svg
@@ -236,16 +276,20 @@ if (isLoading) {
               </div>
               <div className="">
                 <h3 className="md:text-xl font-bold mb-2">Important Notice</h3>
-                <p className="text-xs text-[#979797] mb-2">To keep your transactions safe, please remember:</p>
                 <p className="text-xs text-[#979797] mb-2">
-                  Your money will be held securely until you have seen the product in person and confirmed that
-                  everything is okay.
+                  To keep your transactions safe, please remember:
                 </p>
                 <p className="text-xs text-[#979797] mb-2">
-                  Only after your confirmation will the payment be released to the equipment owner.
+                  Your money will be held securely until you have seen the
+                  product in person and confirmed that everything is okay.
+                </p>
+                <p className="text-xs text-[#979797] mb-2">
+                  Only after your confirmation will the payment be released to
+                  the equipment owner.
                 </p>
                 <p className="text-xs text-[#979797]">
-                  This helps protect both you and the seller from fraud or misunderstandings.
+                  This helps protect both you and the seller from fraud or
+                  misunderstandings.
                 </p>
               </div>
             </div>
@@ -261,7 +305,9 @@ if (isLoading) {
             <div className="mt-6 flex justify-between items-center">
               <span className="text-[14px] text-[#979797]">Total price</span>
               <div className="text-right">
-                <span className="text-[20px] font-bold">₦{calculateTotalPrice().toLocaleString()}</span>
+                <span className="text-[20px] font-bold">
+                  ₦{calculateTotalPrice().toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -271,7 +317,6 @@ if (isLoading) {
             <h2 className="text-base font-bold mb-6">Payment method</h2>
 
             <div className="space-y-4">
-              
               {/* <div
                 className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
                 onClick={() => setSelectedCard("card1")}
@@ -384,14 +429,46 @@ if (isLoading) {
               {/* Order Summary */}
               <h2 className="text-base font-medium">Order summary</h2>
               <div className="mt-4 rounded-xl border border-gray-200 p-4">
-                
+                {/* 1. Base Price per Day */}
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[12px] text-[#676767]">Pay per day</span>
-                  <span className="text-primary text-sm font-medium">₦{equipmentData.pricePerDay?.toLocaleString() || 0}</span>
+                  <span className="text-[12px] text-[#676767]">
+                    Pay per day
+                  </span>
+                  <span className="text-primary text-sm font-medium">
+                    ₦{equipmentData.pricePerDay?.toLocaleString() || 0}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#676767]">Sub total</span>
-                  <span className="text-primary text-sm font-medium">₦{calculateTotalPrice().toLocaleString()}</span>
+
+                {/* 2. Subtotal (Days * Price) */}
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[12px] text-[#676767]">Subtotal</span>
+                  <span className="text-primary text-sm font-medium">
+                    ₦{calculateTotalPrice().toLocaleString()}
+                  </span>
+                </div>
+
+                {/* 3. VAT (Calculated Amount) */}
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[12px] text-[#676767]">VAT</span>
+                  <span className="text-primary text-sm font-medium">
+                    {equipmentData?.taxPercentage}%
+                  </span>
+                </div>
+
+                {/* 4. Grand Total (The "I'm paying this" number) */}
+                <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
+                  <span className="text-[14px] font-semibold text-gray-900">
+                    Total Amount
+                  </span>
+                  <span className="text-primary text-lg font-bold">
+                    ₦
+                    {(
+                      calculateTotalPrice() +
+                      (calculateTotalPrice() *
+                        (equipmentData?.taxPercentage || 0)) /
+                        100
+                    ).toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -412,23 +489,46 @@ if (isLoading) {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-10 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
-             <div className="">
+              <div className="">
                 <h2 className="text-xl font-bold">Add card</h2>
-                <p className="text-[13px] text-[#5A5555]">Enter your card details, including the card number, expiry date, and CVV, to complete your transaction securely</p>
-             </div>
-              <button onClick={() => setShowAddCard(false)} className="text-[#979797] self-start hover:text-gray-700">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22.75C6.07 22.75 1.25 17.93 1.25 12C1.25 6.07 6.07 1.25 12 1.25C17.93 1.25 22.75 6.07 22.75 12C22.75 17.93 17.93 22.75 12 22.75ZM12 2.75C6.9 2.75 2.75 6.9 2.75 12C2.75 17.1 6.9 21.25 12 21.25C17.1 21.25 21.25 17.1 21.25 12C21.25 6.9 17.1 2.75 12 2.75Z" fill="#5A5555"/>
-                <path d="M9.16937 15.58C8.97937 15.58 8.78938 15.51 8.63938 15.36C8.34938 15.07 8.34938 14.59 8.63938 14.3L14.2994 8.63999C14.5894 8.34999 15.0694 8.34999 15.3594 8.63999C15.6494 8.92999 15.6494 9.40998 15.3594 9.69998L9.69937 15.36C9.55937 15.51 9.35937 15.58 9.16937 15.58Z" fill="#5A5555"/>
-                <path d="M14.8294 15.58C14.6394 15.58 14.4494 15.51 14.2994 15.36L8.63938 9.69998C8.34938 9.40998 8.34938 8.92999 8.63938 8.63999C8.92937 8.34999 9.40937 8.34999 9.69937 8.63999L15.3594 14.3C15.6494 14.59 15.6494 15.07 15.3594 15.36C15.2094 15.51 15.0194 15.58 14.8294 15.58Z" fill="#5A5555"/>
-              </svg>
-
+                <p className="text-[13px] text-[#5A5555]">
+                  Enter your card details, including the card number, expiry
+                  date, and CVV, to complete your transaction securely
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddCard(false)}
+                className="text-[#979797] self-start hover:text-gray-700"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 22.75C6.07 22.75 1.25 17.93 1.25 12C1.25 6.07 6.07 1.25 12 1.25C17.93 1.25 22.75 6.07 22.75 12C22.75 17.93 17.93 22.75 12 22.75ZM12 2.75C6.9 2.75 2.75 6.9 2.75 12C2.75 17.1 6.9 21.25 12 21.25C17.1 21.25 21.25 17.1 21.25 12C21.25 6.9 17.1 2.75 12 2.75Z"
+                    fill="#5A5555"
+                  />
+                  <path
+                    d="M9.16937 15.58C8.97937 15.58 8.78938 15.51 8.63938 15.36C8.34938 15.07 8.34938 14.59 8.63938 14.3L14.2994 8.63999C14.5894 8.34999 15.0694 8.34999 15.3594 8.63999C15.6494 8.92999 15.6494 9.40998 15.3594 9.69998L9.69937 15.36C9.55937 15.51 9.35937 15.58 9.16937 15.58Z"
+                    fill="#5A5555"
+                  />
+                  <path
+                    d="M14.8294 15.58C14.6394 15.58 14.4494 15.51 14.2994 15.36L8.63938 9.69998C8.34938 9.40998 8.34938 8.92999 8.63938 8.63999C8.92937 8.34999 9.40937 8.34999 9.69937 8.63999L15.3594 14.3C15.6494 14.59 15.6494 15.07 15.3594 15.36C15.2094 15.51 15.0194 15.58 14.8294 15.58Z"
+                    fill="#5A5555"
+                  />
+                </svg>
               </button>
             </div>
 
             <form className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="cardNumber" className="block text-sm font-medium">
+                <label
+                  htmlFor="cardNumber"
+                  className="block text-sm font-medium"
+                >
                   Card Number
                 </label>
                 <input
@@ -441,7 +541,10 @@ if (isLoading) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="expiryDate" className="block text-sm font-medium">
+                  <label
+                    htmlFor="expiryDate"
+                    className="block text-sm font-medium"
+                  >
                     Expiry Date
                   </label>
                   <input
@@ -483,11 +586,13 @@ if (isLoading) {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="Payment Successful 🎉"
-        description={notifDetails || "Your payment has been received successfully."}
+        description={
+          notifDetails || "Your payment has been received successfully."
+        }
         icon="success"
         actionLabel="Continue"
         onAction={() => setShowSuccessModal(false)}
       />
     </div>
-  )
+  );
 }

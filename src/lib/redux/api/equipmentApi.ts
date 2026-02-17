@@ -144,6 +144,7 @@ export interface EquipmentDetailResponse {
   data: {
     equipent: EquipmentDetail; // Note: API has typo "equipent" instead of "equipment"
     review: Review[] | null;
+    taxPercentage: number;
   };
 }
 
@@ -177,6 +178,7 @@ export interface TransformedEquipmentDetail {
   };
   availability: boolean;
   reviews: Review[] | null;
+  taxPercentage: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -430,7 +432,6 @@ export const equipmentApi = baseApi.injectEndpoints({
       },
       providesTags: ["Equipment"],
       transformResponse: (response: EquipmentResponse) => {
-
         const transformedEquipments = response.data.equipments.map(
           (item: Equipment) => ({
             id: item._id,
@@ -448,7 +449,7 @@ export const equipmentApi = baseApi.injectEndpoints({
             availability: item.availability,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
-          })
+          }),
         );
 
         return {
@@ -462,11 +463,6 @@ export const equipmentApi = baseApi.injectEndpoints({
     getEquipmentById: builder.query<TransformedEquipmentDetail, string>({
       query: (id) => {
         const endpoint = `equipment/${id}`;
-        console.log("🌐 Making API call for equipment ID:", id);
-        console.log(
-          "🌐 Full API URL:",
-          `http://13.247.232.234/api/v1/dev/${endpoint}`
-        );
         return endpoint;
       },
       providesTags: (result, error, id) => [{ type: "Equipment", id }],
@@ -478,6 +474,7 @@ export const equipmentApi = baseApi.injectEndpoints({
         }
 
         const item = response.data.equipent;
+        const taxPercentage = response.data.taxPercentage;
 
         const transformed: TransformedEquipmentDetail = {
           id: item._id,
@@ -504,6 +501,7 @@ export const equipmentApi = baseApi.injectEndpoints({
           },
           availability: item.availability,
           reviews: response.data.review,
+          taxPercentage: taxPercentage,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         };
@@ -531,8 +529,7 @@ export const equipmentApi = baseApi.injectEndpoints({
       { equipments: TransformedEquipment[]; totalCount: number },
       string
     >({
-      query: (searchTerm) =>
-        `equipment?name=${encodeURIComponent(searchTerm)}`,
+      query: (searchTerm) => `equipment?name=${encodeURIComponent(searchTerm)}`,
       providesTags: ["Equipment"],
       transformResponse: (response: EquipmentResponse) => {
         const transformedEquipments = response.data.equipments.map(
@@ -552,7 +549,7 @@ export const equipmentApi = baseApi.injectEndpoints({
             availability: item.availability,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
-          })
+          }),
         );
 
         return {
@@ -588,7 +585,7 @@ export const equipmentApi = baseApi.injectEndpoints({
             availability: item.availability,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
-          })
+          }),
         );
 
         return {
@@ -861,7 +858,7 @@ export const equipmentApi = baseApi.injectEndpoints({
     >({
       query: (address) => ({
         url: `equipment/autocomplete/address?address=${encodeURIComponent(
-          address
+          address,
         )}`,
         method: "GET",
       }),
