@@ -68,7 +68,7 @@ export function WalletView() {
         month: "short",
         day: "numeric",
       }),
-      amount: transaction.amount,
+      amount: transaction.totalPaid,
       status: transaction.status.toLowerCase() as string,
       type: getTransactionType(transaction.status),
     }))
