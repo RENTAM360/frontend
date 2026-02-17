@@ -178,7 +178,7 @@ export function WalletView() {
               value={activeTab}
               onChange={(e) =>
                 setActiveTab(
-                  e.target.value as "all" | "rentals" | "transactions"
+                  e.target.value as "all" | "rentals" | "transactions",
                 )
               }
               className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm"
@@ -278,30 +278,30 @@ export function WalletView() {
                       transaction.status === "withdrawn"
                         ? "text-[#F04438]"
                         : transaction.status === "successful" ||
-                          transaction.status === "deposit" ||
-                          transaction.status === "deposited"
-                        ? "text-primary"
-                        : "text-[#FA812F]"
+                            transaction.status === "deposit" ||
+                            transaction.status === "deposited"
+                          ? "text-primary"
+                          : "text-[#FA812F]"
                     }`}
                   >
                     <span className="capitalize">
                       {transaction.status === "debit"
                         ? "Debit"
                         : transaction.status === "successful"
-                        ? "Successful"
-                        : transaction.status === "pending"
-                        ? "Pending"
-                        : transaction.status === "withdrawal" ||
-                          transaction.status === "withdrawn"
-                        ? "Withdrawal"
-                        : transaction.status === "deposit" ||
-                          transaction.status === "deposited"
-                        ? "Deposit"
-                        : transaction.status}
+                          ? "Successful"
+                          : transaction.status === "pending"
+                            ? "Pending"
+                            : transaction.status === "withdrawal" ||
+                                transaction.status === "withdrawn"
+                              ? "Withdrawal"
+                              : transaction.status === "deposit" ||
+                                  transaction.status === "deposited"
+                                ? "Deposit"
+                                : transaction.status}
                     </span>
                   </p>
                   <p className="text-sm md:text-base font-regular">
-                    ₦{transaction.amount.toLocaleString()}
+                    ₦{transaction?.amount?.toLocaleString()}
                   </p>
                 </div>
               </div>
