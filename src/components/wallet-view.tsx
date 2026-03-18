@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { WithdrawView } from "@/components/withdraw-view";
 import { AddBankModal } from "@/components/add-bank-modal";
@@ -17,8 +17,16 @@ export function WalletView() {
   const [activeTab, setActiveTab] = useState<
     "all" | "rentals" | "transactions"
   >("all");
+  const topRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(1);
+  const [displayPage, setDisplayPage] = useState(1);
+
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [displayPage]);
   console.log(setPage);
+
+  const ITEMS_PER_PAGE = 10;
 
   const { data: walletSummary, isLoading: isLoadingSummary } =
     useGetWalletSummaryQuery();
@@ -50,11 +58,10 @@ export function WalletView() {
   //   return "Transaction";
   // };
 
-  const getTransactionType = (status: string): "rental" | "transaction" => {
-    console.log(status);
-    // You may need to adjust this based on your API response
-    // For now, treating all as transactions
-    return "transaction";
+  const getTransactionType = (transaction: {
+    booking?: unknown;
+  }): "rental" | "transaction" => {
+    return transaction.booking ? "rental" : "transaction";
   };
 
   const filteredTransactions = transactions
@@ -70,7 +77,8 @@ export function WalletView() {
       }),
       amount: transaction.totalPaid,
       status: transaction.status.toLowerCase() as string,
-      type: getTransactionType(transaction.status),
+      transactionStatus: transaction.transactionStatus,
+      type: getTransactionType(transaction),
     }))
     .filter((transaction) => {
       // First filter by transaction type
@@ -106,17 +114,8 @@ export function WalletView() {
       return true;
     });
 
-  const handleAddBank = (data: {
-    accountName: string;
-    accountNumber: string;
-    bankName: string;
-  }) => {
-    console.log("Adding bank account:", data);
-    // Here you would typically call an API to add the bank account
-  };
-
   return (
-    <div className="bg-white p-4 rounded-lg">
+    <div ref={topRef} className="bg-white p-4 rounded-lg">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl md:text-3xl font-bold">Wallet</h2>
         <Button
@@ -176,11 +175,12 @@ export function WalletView() {
           <div className="relative">
             <select
               value={activeTab}
-              onChange={(e) =>
+              onChange={(e) => {
                 setActiveTab(
                   e.target.value as "all" | "rentals" | "transactions",
-                )
-              }
+                );
+                setDisplayPage(1);
+              }}
               className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm"
             >
               <option value="all">All</option>
@@ -204,7 +204,10 @@ export function WalletView() {
           <div className="relative">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                setDisplayPage(1);
+              }}
               className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm"
             >
               <option>All</option>
@@ -235,78 +238,83 @@ export function WalletView() {
             Loading transactions...
           </div>
         ) : filteredTransactions.length > 0 ? (
-          filteredTransactions.map((transaction) => (
-            <div
-              key={transaction.id}
-              className="border border-gray-100 rounded-lg p-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
-                      transaction.isCredit ? "bg-green-50" : "bg-red-50"
-                    }`}
-                  >
-                    <svg
-                      width="27"
-                      height="28"
-                      viewBox="0 0 27 28"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={transaction.isCredit ? "" : "rotate-180"}
+          filteredTransactions
+            .slice(
+              (displayPage - 1) * ITEMS_PER_PAGE,
+              displayPage * ITEMS_PER_PAGE,
+            )
+            .map((transaction) => (
+              <div
+                key={transaction.id}
+                className="border border-gray-100 rounded-lg p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                        transaction.isCredit ? "bg-green-50" : "bg-red-50"
+                      }`}
                     >
-                      <path
-                        d="M7.32824 21.3942C5.44391 20.8174 4.06005 19.8092 3.17665 18.3694C2.29326 16.9297 1.85156 15.4878 1.85156 14.0437C1.85156 12.5996 2.29326 11.1577 3.17665 9.71803C4.06005 8.27832 5.44354 7.27045 7.32714 6.69442V7.85634C6.03198 8.29438 4.97812 9.07922 4.16554 10.2108C3.35297 11.3425 2.94704 12.6201 2.94777 14.0437C2.9485 15.4674 3.35443 16.745 4.16554 17.8766C4.97666 19.0083 6.03089 19.7931 7.32824 20.2311V21.3942ZM16.0892 21.7095C13.9559 21.7095 12.1449 20.9649 10.6563 19.4755C9.16767 17.9862 8.42299 16.1756 8.42226 14.0437C8.42153 11.9119 9.1662 10.1013 10.6563 8.61197C12.1464 7.12261 13.957 6.37793 16.0881 6.37793C17.0824 6.37793 18.0279 6.5568 18.9244 6.91454C19.8224 7.27227 20.6237 7.77603 21.3282 8.4258L20.5539 9.20004C19.9655 8.65395 19.2953 8.22977 18.5433 7.92752C17.7913 7.62454 16.9729 7.47305 16.0881 7.47305C14.2629 7.47305 12.7115 8.11186 11.4338 9.3895C10.1562 10.6671 9.51737 12.2185 9.51737 14.0437C9.51737 15.8689 10.1562 17.4203 11.4338 18.698C12.7115 19.9756 14.2629 20.6144 16.0881 20.6144C16.9729 20.6144 17.7913 20.4633 18.5433 20.1611C19.2953 19.8581 19.9651 19.4335 20.5529 18.8874L21.3282 19.6628C20.6237 20.3111 19.8228 20.8141 18.9255 21.1718C18.0282 21.5303 17.0828 21.7095 16.0892 21.7095ZM22.2382 17.6664L21.4629 16.891L23.7626 14.5913H15.12V13.4962H23.7626L21.4629 11.1964L22.2382 10.4211L25.8609 14.0437L22.2382 17.6664Z"
-                        fill={transaction.isCredit ? "#85CB33" : "#EF4444"}
-                      />
-                    </svg>
+                      <svg
+                        width="27"
+                        height="28"
+                        viewBox="0 0 27 28"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={transaction.isCredit ? "" : "rotate-180"}
+                      >
+                        <path
+                          d="M7.32824 21.3942C5.44391 20.8174 4.06005 19.8092 3.17665 18.3694C2.29326 16.9297 1.85156 15.4878 1.85156 14.0437C1.85156 12.5996 2.29326 11.1577 3.17665 9.71803C4.06005 8.27832 5.44354 7.27045 7.32714 6.69442V7.85634C6.03198 8.29438 4.97812 9.07922 4.16554 10.2108C3.35297 11.3425 2.94704 12.6201 2.94777 14.0437C2.9485 15.4674 3.35443 16.745 4.16554 17.8766C4.97666 19.0083 6.03089 19.7931 7.32824 20.2311V21.3942ZM16.0892 21.7095C13.9559 21.7095 12.1449 20.9649 10.6563 19.4755C9.16767 17.9862 8.42299 16.1756 8.42226 14.0437C8.42153 11.9119 9.1662 10.1013 10.6563 8.61197C12.1464 7.12261 13.957 6.37793 16.0881 6.37793C17.0824 6.37793 18.0279 6.5568 18.9244 6.91454C19.8224 7.27227 20.6237 7.77603 21.3282 8.4258L20.5539 9.20004C19.9655 8.65395 19.2953 8.22977 18.5433 7.92752C17.7913 7.62454 16.9729 7.47305 16.0881 7.47305C14.2629 7.47305 12.7115 8.11186 11.4338 9.3895C10.1562 10.6671 9.51737 12.2185 9.51737 14.0437C9.51737 15.8689 10.1562 17.4203 11.4338 18.698C12.7115 19.9756 14.2629 20.6144 16.0881 20.6144C16.9729 20.6144 17.7913 20.4633 18.5433 20.1611C19.2953 19.8581 19.9651 19.4335 20.5529 18.8874L21.3282 19.6628C20.6237 20.3111 19.8228 20.8141 18.9255 21.1718C18.0282 21.5303 17.0828 21.7095 16.0892 21.7095ZM22.2382 17.6664L21.4629 16.891L23.7626 14.5913H15.12V13.4962H23.7626L21.4629 11.1964L22.2382 10.4211L25.8609 14.0437L22.2382 17.6664Z"
+                          fill={transaction.isCredit ? "#85CB33" : "#EF4444"}
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-sm md:text-base font-medium">
+                        {transaction.title || (transaction.status === "withdrawn" ? "Withdrawal" : transaction.status)}
+                      </h4>
+                      <p className="text-xs md:text-sm text-gray-500">
+                        {transaction.date}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm md:text-base font-medium">
-                      {transaction.title || transaction.text}
-                    </h4>
-                    <p className="text-xs md:text-sm text-gray-500">
-                      {transaction.date}
+                  <div className="text-right">
+                    <p
+                      className={` text-sm md:text-base ${
+                        transaction.status === "debit" ||
+                        transaction.status === "withdrawal" ||
+                        transaction.status === "withdrawn"
+                          ? "text-[#F04438]"
+                          : transaction.status === "successful" ||
+                              transaction.status === "deposit" ||
+                              transaction.status === "deposited"
+                            ? "text-primary"
+                            : "text-[#FA812F]"
+                      }`}
+                    >
+                      <span className="capitalize">
+                        {transaction.transactionStatus === "pending"
+                          ? "Pending"
+                          : transaction.transactionStatus === "completed"
+                            ? "Completed"
+                            : transaction.status === "pending"
+                              ? "Pending"
+                              : transaction.status === "withdrawal" ||
+                                  transaction.status === "withdrawn"
+                                ? "Withdrawal"
+                                : transaction.status === "deposit" ||
+                                    transaction.status === "deposited"
+                                  ? "Deposit"
+                                  : transaction.status}
+                      </span>
+                    </p>
+                    <p className="text-sm md:text-base font-regular">
+                      ₦{transaction?.amount?.toLocaleString()}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p
-                    className={` text-sm md:text-base ${
-                      transaction.status === "debit" ||
-                      transaction.status === "withdrawal" ||
-                      transaction.status === "withdrawn"
-                        ? "text-[#F04438]"
-                        : transaction.status === "successful" ||
-                            transaction.status === "deposit" ||
-                            transaction.status === "deposited"
-                          ? "text-primary"
-                          : "text-[#FA812F]"
-                    }`}
-                  >
-                    <span className="capitalize">
-                      {transaction.status === "debit"
-                        ? "Debit"
-                        : transaction.status === "successful"
-                          ? "Successful"
-                          : transaction.status === "pending"
-                            ? "Pending"
-                            : transaction.status === "withdrawal" ||
-                                transaction.status === "withdrawn"
-                              ? "Withdrawal"
-                              : transaction.status === "deposit" ||
-                                  transaction.status === "deposited"
-                                ? "Deposit"
-                                : transaction.status}
-                    </span>
-                  </p>
-                  <p className="text-sm md:text-base font-regular">
-                    ₦{transaction?.amount?.toLocaleString()}
-                  </p>
-                </div>
               </div>
-            </div>
-          ))
+            ))
         ) : (
           <div className="text-center py-8 text-gray-500">
             No {activeTab} found matching the selected filter.
@@ -314,10 +322,36 @@ export function WalletView() {
         )}
       </div>
 
+      {filteredTransactions.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setDisplayPage((p) => p - 1)}
+            disabled={displayPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-gray-500">
+            Page {displayPage} of{" "}
+            {Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE)}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setDisplayPage((p) => p + 1)}
+            disabled={
+              displayPage ===
+              Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE)
+            }
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
       <AddBankModal
         isOpen={showAddBankModal}
         onClose={() => setShowAddBankModal(false)}
-        onAddBank={handleAddBank}
+        onAddBank={() => {}}
       />
     </div>
   );
