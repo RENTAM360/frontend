@@ -500,9 +500,8 @@ function WalletContent({ userId }: UserProfileClientProps) {
   const [filter, setFilter] = useState("All");
   const { data } = useGetUserWalletQuery(userId);
 
-  const transactions = data?.data || [];
-
-  const totalBalance = transactions.reduce((sum, t) => sum + (t.totalPaid || 0), 0);
+  const wallet = data?.data?.wallet;
+  const transactions = data?.data?.history || [];
 
   const filtered = transactions
     .filter((t) => {
@@ -528,8 +527,13 @@ function WalletContent({ userId }: UserProfileClientProps) {
       <div className="bg-black text-white rounded-lg p-6 mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-white/80 text-sm mb-2">Total transactions</p>
-            <h2 className="text-2xl font-bold mb-2">₦{totalBalance.toLocaleString()}</h2>
+            <p className="text-sm md:text-lg mb-2">Available balance</p>
+            <h3 className="text-2xl md:text-4xl font-bold mb-2">
+              ₦{(wallet?.available || 0).toLocaleString()}
+            </h3>
+            <p className="text-xs md:text-sm opacity-80">
+              ₦{(wallet?.total || 0).toLocaleString()} (Total balance)
+            </p>
           </div>
         </div>
       </div>

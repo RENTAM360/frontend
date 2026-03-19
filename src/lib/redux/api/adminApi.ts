@@ -363,7 +363,7 @@ export const adminApi = baseApi.injectEndpoints({
     getRentedEquipment: builder.query<GetRentedEquipmentResponse, string>({
       query: (userId) => `/admin/user/rented-equipment/${userId}`,
     }),
-    getUserWallet: builder.query<{ message: string; data: UserTransaction[] }, string>({
+    getUserWallet: builder.query<{ message: string; data: { wallet: { total: number; available: number }; history: UserTransaction[] } }, string>({
       query: (userId) => `/admin/user/wallet/${userId}`,
     }),
 
