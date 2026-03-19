@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/context/page-header-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -496,8 +496,16 @@ function ItemsContent({ userId }: UserProfileClientProps) {
 
 // Wallet Content Component
 function WalletContent({ userId }: UserProfileClientProps) {
+  const topRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"all" | "rentals" | "transactions">("all");
   const [filter, setFilter] = useState("All");
+  const [displayPage, setDisplayPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [displayPage]);
+
   const { data } = useGetUserWalletQuery(userId);
 
   const wallet = data?.data?.wallet;
@@ -564,9 +572,11 @@ function WalletContent({ userId }: UserProfileClientProps) {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div ref={topRef} className="space-y-4">
         {filtered.length > 0 ? (
-          filtered.map((t) => {
+          filtered
+            .slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE)
+            .map((t) => {
             const isCredit = t.isCredit ?? false;
             const title = t.booking?.equipment?.name || t.text || t.status;
             const date = new Date(t.time || t.createdAt).toLocaleDateString("en-US", {
@@ -616,6 +626,28 @@ function WalletContent({ userId }: UserProfileClientProps) {
           <div className="text-center py-8 text-gray-500">No transactions found.</div>
         )}
       </div>
+
+      {filtered.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setDisplayPage((p) => p - 1)}
+            disabled={displayPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-gray-500">
+            Page {displayPage} of {Math.ceil(filtered.length / ITEMS_PER_PAGE)}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setDisplayPage((p) => p + 1)}
+            disabled={displayPage === Math.ceil(filtered.length / ITEMS_PER_PAGE)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
