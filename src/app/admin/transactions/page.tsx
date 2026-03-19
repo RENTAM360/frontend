@@ -47,7 +47,7 @@ export default function TransactionsPage() {
   // Convert date strings to ISO date-time format
   const formatDateToISO = (
     dateString?: string,
-    isEndDate: boolean = false
+    isEndDate: boolean = false,
   ): string | undefined => {
     if (!dateString) return undefined;
     // If already in ISO format, return as is
@@ -62,7 +62,7 @@ export default function TransactionsPage() {
   // Format amount filter as API expects: "totalPaid>=min,totalPaid<=max"
   const formatAmountFilter = (
     min?: number,
-    max?: number
+    max?: number,
   ): string | undefined => {
     const parts: string[] = [];
     if (min !== undefined && min !== null && !isNaN(min)) {
@@ -156,18 +156,15 @@ export default function TransactionsPage() {
       id: selectedTransaction._id,
       fullName: getString(
         apiData.userName,
-        selectedTransaction.userName ?? "ThankGod Ogbonna"
+        selectedTransaction.userName ?? "ThankGod Ogbonna",
       ),
       verified: getBoolean(apiData.verified, true),
       coverImage: getString(apiData.coverImage, "/cover1.jpg"),
       avatar: getString(
         apiData.avatar,
-        selectedTransaction.userAvatar ?? "/user.svg"
+        selectedTransaction.userAvatar ?? "/user.svg",
       ),
-      accountName: getString(
-        apiData.accountName,
-        selectedTransaction.userName ?? ""
-      ),
+      accountName: getString(account?.accountName, ""),
       bankName: getString(account?.bankName, ""),
       bankShortName: getString(apiData.bankShortName, ""),
       accountNumber: getString(account?.accountNumber, ""),
@@ -407,7 +404,7 @@ export default function TransactionsPage() {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
-                              }
+                              },
                             )}
                           </td>
                           <td className="p-4">
@@ -525,8 +522,8 @@ export default function TransactionsPage() {
           resultModal?.type === "completed"
             ? "Completed"
             : resultModal?.type === "declined"
-            ? "Declined"
-            : ""
+              ? "Declined"
+              : ""
         }
         description={
           resultModal
@@ -606,7 +603,7 @@ function ProcessWithdrawalModal({
             </button>
           </div>
 
-          {/* Cover image with margin on all sides and rounded bottom corners */}
+          {/* Cover image */}
           <div
             className="relative h-42 mx-4 my-4 rounded-b-[32px] bg-gray-200 md:h-42"
             style={{
@@ -617,7 +614,7 @@ function ProcessWithdrawalModal({
             }}
           ></div>
 
-          {/* Avatar overlapping with cover image */}
+          {/* Avatar  */}
           <div className="relative -mt-18 z-10 flex justify-center">
             <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-white bg-white shadow-md">
               {detail?.avatar ? (

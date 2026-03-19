@@ -104,8 +104,10 @@ export interface Report {
   reason: string
   equipment: {
     _id: string
-    title?: string
+    name?: string
     description?: string
+    pricePerDay?: number
+    media?: string[]
   }
   status?: "pending" | "resolved"
   createdAt: string
@@ -124,11 +126,20 @@ export interface GetReportsResponse {
   }
 }
 
+export interface ReportBankAccount {
+  _id: string
+  bankName: string
+  accountNumber: string
+  accountName?: string
+  bank: string
+  default: boolean
+}
+
 export interface GetReportByIdResponse {
   message: string
   data: {
     report: Report
-    bank: []
+    bank: ReportBankAccount[]
   }
 }
 
@@ -172,16 +183,24 @@ export interface UpdateGeneralSettingsResponse {
 
 export interface UserTransaction {
   _id: string;
-  type: "PAYMENT_INITIALIZATION" | "ESCROW_DEBIT" | string; 
+  type?: string;
   totalPaid: number;
-  paidCustomer?: number;   
+  paidCustomer?: number;
   ref: string;
   status: string;
-  source?: string;        
-  booking?: string;       
-  equipment?: string;     
+  text?: string;
+  isCredit?: boolean;
+  transactionStatus?: string;
   isCompleted: boolean;
-  createdAt: string;       
+  time?: string;
+  createdAt: string;
+  booking?: {
+    _id: string;
+    equipment?: {
+      _id: string;
+      name: string;
+    };
+  };
 }
 
 export interface UserBank {
@@ -189,6 +208,23 @@ export interface UserBank {
   accountName?: string; 
   bank: string;
   bankName: string
+}
+
+export interface RentedEquipmentItem {
+  _id: string;
+  isCompleted: boolean;
+  equipment: {
+    _id?: string;
+    name?: string;
+    media?: { url: string }[];
+    pricePerDay?: number;
+    category?: string;
+  };
+}
+
+export interface GetRentedEquipmentResponse {
+  message: string;
+  data: RentedEquipmentItem[];
 }
 
 export interface AdminUser {
@@ -324,6 +360,12 @@ export const adminApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+    getRentedEquipment: builder.query<GetRentedEquipmentResponse, string>({
+      query: (userId) => `/admin/user/rented-equipment/${userId}`,
+    }),
+    getUserWallet: builder.query<{ message: string; data: UserTransaction[] }, string>({
+      query: (userId) => `/admin/user/wallet/${userId}`,
+    }),
 
   }),
 })
@@ -347,6 +389,8 @@ export const {
     useUnsuspendUserMutation, 
     useGetUserBanksQuery, 
     useGetUserTransactionsQuery,
-    useGetAdminsQuery, 
-    useCreateAdminMutation
+    useGetAdminsQuery,
+    useCreateAdminMutation,
+    useGetRentedEquipmentQuery,
+    useGetUserWalletQuery,
 } = adminApi

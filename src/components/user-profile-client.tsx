@@ -10,7 +10,6 @@ import {
   CreditCard,
   Trash2,
   ChevronRight,
-  ChevronDown,
   Paperclip,
   Send,
 } from "lucide-react";
@@ -19,8 +18,8 @@ import { useGetOtherUserProfileQuery } from "@/lib/redux/api/authApi";
 import { useGetEquipmentsQuery } from "@/lib/redux/api/equipmentApi";
 import {
   useDeleteUserMutation,
-  useGetUserBanksQuery,
-  useGetUserTransactionsQuery,
+  useGetUserWalletQuery,
+  useGetRentedEquipmentQuery,
   useSuspendUserMutation,
   useUnsuspendUserMutation,
 } from "@/lib/redux/api/adminApi";
@@ -57,8 +56,8 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
         return <WalletContent userId={userId} />;
       case "Items":
         return <ItemsContent userId={userId} />;
-      case "Bank":
-        return <BankContent userId={userId} />;
+      case "Rentals":
+        return <RentalsContent userId={userId} />;
       case "Reviews":
         return <ReviewsContent />;
       default:
@@ -90,7 +89,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
     if (!user?._id) return;
 
     const confirmDelete = confirm(
-      "Are you sure you want to permanently delete this user?"
+      "Are you sure you want to permanently delete this user?",
     );
     if (!confirmDelete) return;
 
@@ -114,7 +113,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
 
     // Optional: store user data locally (similar to user-side)
     const existing = JSON.parse(
-      localStorage.getItem("conversationUsers") || "{}"
+      localStorage.getItem("conversationUsers") || "{}",
     );
     existing[receiverId] = user;
     localStorage.setItem("conversationUsers", JSON.stringify(existing));
@@ -297,7 +296,7 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
 
         {/* Tabs */}
         <div className="mt-8 bg-white flex-2 rounded-[20px] border">
-          <div className="flex bg-[#F6F6F6] m-2 p-1 rounded-lg text-xs w-[280px]">
+          <div className="flex bg-[#F6F6F6] m-2 p-1 rounded-lg text-xs w-[300px]">
             <TabButton
               active={activeTab === "Items"}
               onClick={() => setActiveTab("Items")}
@@ -311,10 +310,10 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
               Wallet
             </TabButton>
             <TabButton
-              active={activeTab === "Bank"}
-              onClick={() => setActiveTab("Bank")}
+              active={activeTab === "Rentals"}
+              onClick={() => setActiveTab("Rentals")}
             >
-              Bank
+              Rentals
             </TabButton>
             <TabButton
               active={activeTab === "Reviews"}
@@ -332,16 +331,25 @@ export default function UserProfileClient({ userId }: UserProfileClientProps) {
   );
 }
 
-// Bank Content Component
-function BankContent({ userId }: UserProfileClientProps) {
-  const { data } = useGetUserBanksQuery(userId);
+// Rentals Content Component
+function RentalsContent({ userId }: UserProfileClientProps) {
+  const { data } = useGetRentedEquipmentQuery(userId);
   return (
     <div className="p-6">
-      <h3 className="text-2xl font-bold mb-6">Bank account</h3>
-
-      <div className="space-y-4">
-        {data?.data?.map((account) => (
-          <BankAccountItem key={account.accountNumber} account={account} />
+      <h3 className="text-xl font-bold mb-6">Rentals</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mx-auto max-w-[1600px] justify-center 2xl:grid-cols-5 place-items-stretch scroll-smooth gap-2">
+        {data?.data?.map((item) => (
+          <ItemsCard
+            key={item._id}
+            item={{
+              id: item._id,
+              title: item.equipment?.name || "Unknown",
+              category: item.equipment?.category || "",
+              pricePerDay: item.equipment?.pricePerDay || 0,
+              rating: 0,
+              imageUrl: item.equipment?.media?.[0]?.url || "",
+            }}
+          />
         ))}
       </div>
     </div>
@@ -488,7 +496,30 @@ function ItemsContent({ userId }: UserProfileClientProps) {
 
 // Wallet Content Component
 function WalletContent({ userId }: UserProfileClientProps) {
-  const { data } = useGetUserTransactionsQuery({ userId, page: 1, limit: 10 });
+  const [activeTab, setActiveTab] = useState<"all" | "rentals" | "transactions">("all");
+  const [filter, setFilter] = useState("All");
+  const { data } = useGetUserWalletQuery(userId);
+
+  const transactions = data?.data || [];
+
+  const totalBalance = transactions.reduce((sum, t) => sum + (t.totalPaid || 0), 0);
+
+  const filtered = transactions
+    .filter((t) => {
+      const isRental = !!t.booking;
+      if (activeTab === "rentals" && !isRental) return false;
+      if (activeTab === "transactions" && isRental) return false;
+      if (filter !== "All") {
+        const f = filter.toLowerCase();
+        const s = t.status.toLowerCase();
+        if (f === "successful" && s !== "successful") return false;
+        if (f === "pending" && s !== "pending") return false;
+        if (f === "withdrawal" && s !== "withdrawal" && s !== "withdrawn") return false;
+        if (f === "deposit" && s !== "deposit" && s !== "deposited") return false;
+      }
+      return true;
+    });
+
   return (
     <div className="p-6">
       <h3 className="text-lg font-bold mb-6">Wallet</h3>
@@ -497,67 +528,89 @@ function WalletContent({ userId }: UserProfileClientProps) {
       <div className="bg-black text-white rounded-lg p-6 mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-white/80 text-sm mb-2">Available balance</p>
-            <h2 className="text-2xl font-bold mb-2">₦100,000</h2>
-            <p className="text-white/60 text-xs">₦100,000 (Total balance)</p>
+            <p className="text-white/80 text-sm mb-2">Total transactions</p>
+            <h2 className="text-2xl font-bold mb-2">₦{totalBalance.toLocaleString()}</h2>
           </div>
-          {/* <Button className="bg-white text-black hover:bg-gray-100 px-6">
-            Withdraw
-          </Button> */}
         </div>
       </div>
 
-      {/* Transaction History */}
-      <div className="flex justify-between items-center mb-6">
-        <h4 className="text-lg font-medium">History</h4>
-        <div className="flex items-center gap-2 border rounded-lg px-3 py-2 cursor-pointer">
-          <span className="text-sm">All</span>
-          <ChevronDown className="w-4 h-4" />
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold">History</h3>
+        <div className="flex gap-2">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as "all" | "rentals" | "transactions")}
+            className="appearance-none bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="all">All</option>
+            <option value="rentals">Rentals</option>
+            <option value="transactions">Transactions</option>
+          </select>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="appearance-none bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
+          >
+            <option>All</option>
+            <option>Successful</option>
+            <option>Pending</option>
+            <option>Withdrawal</option>
+            <option>Deposit</option>
+          </select>
         </div>
       </div>
 
-      {/* Transaction List */}
       <div className="space-y-4">
-        {data?.data?.history.map((transaction) => (
-          <TransactionItem
-            key={transaction._id}
-            transaction={{
-              type: transaction.type,
-              date: new Date(transaction.createdAt).toLocaleDateString(),
-              amount: transaction.totalPaid,
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+        {filtered.length > 0 ? (
+          filtered.map((t) => {
+            const isCredit = t.isCredit ?? false;
+            const title = t.booking?.equipment?.name || t.text || t.status;
+            const date = new Date(t.time || t.createdAt).toLocaleDateString("en-US", {
+              year: "numeric", month: "short", day: "numeric",
+            });
+            const status = t.status.toLowerCase();
+            const statusLabel =
+              t.transactionStatus === "pending" ? "Pending"
+              : t.transactionStatus === "completed" ? "Completed"
+              : status === "pending" ? "Pending"
+              : status === "withdrawal" || status === "withdrawn" ? "Withdrawal"
+              : status === "deposit" || status === "deposited" ? "Deposit"
+              : status === "successful" ? "Successful"
+              : t.status;
+            const statusColor =
+              status === "withdrawal" || status === "withdrawn"
+                ? "text-[#F04438]"
+                : status === "successful" || status === "deposit" || status === "deposited"
+                ? "text-primary"
+                : "text-[#FA812F]";
 
-interface BankAccount {
-  bankName: string;
-  accountNumber: string;
-}
-
-// Component for bank account items
-function BankAccountItem({ account }: { account: BankAccount }) {
-  return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-      <div className="flex items-center gap-3">
-        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white overflow-hidden">
-          <Image
-            src={"/placeholder.svg"}
-            alt={account.bankName}
-            className="w-full h-full object-cover"
-            width={100}
-            height={100}
-          />
-        </div>
-        <div>
-          <p className="font-bold text-sm">{account.bankName}</p>
-        </div>
-      </div>
-      <div className="text-gray-600 text-xs">
-        {account.accountNumber}, {account.accountNumber}
+            return (
+              <div key={t._id} className="border border-gray-100 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${isCredit ? "bg-green-50" : "bg-red-50"}`}>
+                      <svg width="27" height="28" viewBox="0 0 27 28" fill="none" xmlns="http://www.w3.org/2000/svg" className={isCredit ? "" : "rotate-180"}>
+                        <path d="M7.32824 21.3942C5.44391 20.8174 4.06005 19.8092 3.17665 18.3694C2.29326 16.9297 1.85156 15.4878 1.85156 14.0437C1.85156 12.5996 2.29326 11.1577 3.17665 9.71803C4.06005 8.27832 5.44354 7.27045 7.32714 6.69442V7.85634C6.03198 8.29438 4.97812 9.07922 4.16554 10.2108C3.35297 11.3425 2.94704 12.6201 2.94777 14.0437C2.9485 15.4674 3.35443 16.745 4.16554 17.8766C4.97666 19.0083 6.03089 19.7931 7.32824 20.2311V21.3942ZM16.0892 21.7095C13.9559 21.7095 12.1449 20.9649 10.6563 19.4755C9.16767 17.9862 8.42299 16.1756 8.42226 14.0437C8.42153 11.9119 9.1662 10.1013 10.6563 8.61197C12.1464 7.12261 13.957 6.37793 16.0881 6.37793C17.0824 6.37793 18.0279 6.5568 18.9244 6.91454C19.8224 7.27227 20.6237 7.77603 21.3282 8.4258L20.5539 9.20004C19.9655 8.65395 19.2953 8.22977 18.5433 7.92752C17.7913 7.62454 16.9729 7.47305 16.0881 7.47305C14.2629 7.47305 12.7115 8.11186 11.4338 9.3895C10.1562 10.6671 9.51737 12.2185 9.51737 14.0437C9.51737 15.8689 10.1562 17.4203 11.4338 18.698C12.7115 19.9756 14.2629 20.6144 16.0881 20.6144C16.9729 20.6144 17.7913 20.4633 18.5433 20.1611C19.2953 19.8581 19.9651 19.4335 20.5529 18.8874L21.3282 19.6628C20.6237 20.3111 19.8228 20.8141 18.9255 21.1718C18.0282 21.5303 17.0828 21.7095 16.0892 21.7095ZM22.2382 17.6664L21.4629 16.891L23.7626 14.5913H15.12V13.4962H23.7626L21.4629 11.1964L22.2382 10.4211L25.8609 14.0437L22.2382 17.6664Z" fill={isCredit ? "#85CB33" : "#EF4444"} />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium capitalize">
+                        {status === "withdrawn" ? "Withdrawal" : title}
+                      </h4>
+                      <p className="text-xs text-gray-500">{date}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm capitalize ${statusColor}`}>{statusLabel}</p>
+                    <p className="text-sm font-medium">₦{t.totalPaid?.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-8 text-gray-500">No transactions found.</div>
+        )}
       </div>
     </div>
   );
@@ -582,42 +635,6 @@ function TabButton({ children, active, onClick }: TabButtonProps) {
   );
 }
 
-// Component for transaction items
-function TransactionItem({
-  transaction,
-}: {
-  transaction: { type: string; date: string; amount: number };
-}) {
-  return (
-    <div className="flex items-center  border border-[#EEEEEE] rounded-lg justify-between p-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-[#F5FBEACC] rounded-full flex items-center justify-center">
-          <svg
-            width="27"
-            height="28"
-            viewBox="0 0 27 28"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M7.32824 21.3932C5.44391 20.8164 4.06005 19.8082 3.17665 18.3685C2.29326 16.9288 1.85156 15.4869 1.85156 14.0428C1.85156 12.5987 2.29326 11.1568 3.17665 9.71706C4.06005 8.27734 5.44354 7.26947 7.32714 6.69344V7.85536C6.03198 8.29341 4.97812 9.07824 4.16554 10.2099C3.35297 11.3415 2.94704 12.6191 2.94777 14.0428C2.9485 15.4664 3.35443 16.744 4.16554 17.8757C4.97666 19.0073 6.03089 19.7921 7.32824 20.2302V21.3932ZM16.0892 21.7086C13.9559 21.7086 12.1449 20.9639 10.6563 19.4745C9.16767 17.9852 8.42299 16.1746 8.42226 14.0428C8.42153 11.9109 9.1662 10.1003 10.6563 8.61099C12.1464 7.12163 13.957 6.37695 16.0881 6.37695C17.0824 6.37695 18.0279 6.55582 18.9244 6.91356C19.8224 7.2713 20.6237 7.77505 21.3282 8.42482L20.5539 9.19907C19.9655 8.65297 19.2953 8.22879 18.5433 7.92654C17.7913 7.62356 16.9729 7.47207 16.0881 7.47207C14.2629 7.47207 12.7115 8.11089 11.4338 9.38852C10.1562 10.6662 9.51737 12.2176 9.51737 14.0428C9.51737 15.868 10.1562 17.4194 11.4338 18.697C12.7115 19.9746 14.2629 20.6135 16.0881 20.6135C16.9729 20.6135 17.7913 20.4623 18.5433 20.1601C19.2953 19.8571 19.9651 19.4326 20.5529 18.8865L21.3282 19.6618C20.6237 20.3101 19.8228 20.8131 18.9255 21.1709C18.0282 21.5293 17.0828 21.7086 16.0892 21.7086ZM22.2382 17.6654L21.4629 16.8901L23.7626 14.5903H15.12V13.4952H23.7626L21.4629 11.1955L22.2382 10.4201L25.8609 14.0428L22.2382 17.6654Z"
-              fill="#85CB33"
-            />
-          </svg>
-        </div>
-        <div>
-          <p className="font-medium capitalize">{transaction.type}</p>
-          <p className="text-sm text-gray-500">{transaction.date}</p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="font-bold text-red-500">
-          ₦{transaction.amount.toLocaleString()}
-        </p>
-      </div>
-    </div>
-  );
-}
 interface EquipmentCardProps {
   item: {
     id: string;
@@ -635,7 +652,12 @@ function ItemsCard({ item }: EquipmentCardProps) {
     <div className="rounded-lg h-full overflow-hidden">
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <Image
-          src={item.imageUrl || "/placeholder.svg"}
+          src={
+            item.imageUrl?.startsWith("https://") ||
+            item.imageUrl?.startsWith("http://")
+              ? item.imageUrl
+              : "/placeholder.svg"
+          }
           priority
           fill
           alt={item.title}

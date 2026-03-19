@@ -413,6 +413,31 @@ export default function ReportsPage() {
                   </div>
                 </div>
 
+                {/* Disputed Equipment */}
+                {reportDetails?.data?.report?.equipment && (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h4 className="text-sm font-medium text-gray-500 mb-3">Disputed item</h4>
+                    <div className="flex items-center gap-3">
+                      {reportDetails.data.report.equipment.media?.[0] && (
+                        <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+                          <Image
+                            src={reportDetails.data.report.equipment.media[0]}
+                            alt={reportDetails.data.report.equipment.name || "Equipment"}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">{reportDetails.data.report.equipment.name}</p>
+                        {reportDetails.data.report.equipment.pricePerDay && (
+                          <p className="text-xs text-gray-500">₦{reportDetails.data.report.equipment.pricePerDay.toLocaleString()} / day</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Report Message - Only show if not resolved */}
                 {reportDetails?.data?.report?.status !== "resolved" && (
                   <div className="bg-[#FFF7F6] border border-[#FFB1AB] rounded-lg p-4 mb-6">
@@ -452,21 +477,16 @@ export default function ReportsPage() {
                       </span>
                     )}
                   </div>
-                  {reportDetails?.data?.bank &&
-                    reportDetails.data.bank.length > 0 && (
-                      <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                        <CreditCard className="w-5 h-5 text-[#17b266]" />
-                        <div>
-                          <span className="text-[#000000]">
-                            {reportDetails?.data?.bank}
-                          </span>
-                          <br />
-                          <span className="text-gray-500 text-sm">
-                            {reportDetails?.data?.bank}
-                          </span>
-                        </div>
+                  {reportDetails?.data?.bank?.map((account) => (
+                    <div key={account._id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                      <CreditCard className="w-5 h-5 text-[#17b266]" />
+                      <div>
+                        <span className="text-[#000000]">{account.bankName}</span>
+                        <br />
+                        <span className="text-gray-500 text-sm">{account.accountNumber} — {account.accountName}</span>
                       </div>
-                    )}
+                    </div>
+                  ))}
                   <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
                     <Mail className="w-5 h-5 text-[#17b266]" />
                     <span className="text-[#000000]">
