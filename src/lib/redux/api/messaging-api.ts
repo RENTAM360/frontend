@@ -19,7 +19,8 @@ function isMessageWithEquipment(msg: Message): msg is MessageWithEquipment {
 }
 
 export const makeConvKey = (receiverId?: string, equipmentId?: string) => {
-  if (!receiverId || !equipmentId) return undefined;
+  if (!receiverId) return undefined;
+  if (!equipmentId) return `direct::${receiverId}`;
   return `${receiverId}::${equipmentId}`;
 };
 
@@ -284,7 +285,7 @@ export const messagingApi = baseApi.injectEndpoints({
       Message,
       {
         receiverId: string;
-        equipmentId: string;
+        equipmentId: string | undefined;
         message: Message;
         currentUserId: string;
       }
@@ -329,7 +330,7 @@ export const messagingApi = baseApi.injectEndpoints({
               const conv = draft.find(
                 (c) =>
                   c.participant.userId === receiverId &&
-                  c.equipmentId === equipmentId
+                  (equipmentId ? c.equipmentId === equipmentId : !c.equipmentId)
               );
               if (conv) {
                 conv.lastMessage = message.content;

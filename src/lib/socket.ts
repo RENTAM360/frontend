@@ -148,10 +148,12 @@ class SocketService {
       return
     }
 
-    const payload = {
+    const payload: Record<string, string> = {
       receiver,
       content,
-      equipment: equipment ?? undefined,
+    }
+    if (equipment) {
+      payload.equipment = equipment
     }
 
     this.socket.emit(

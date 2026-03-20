@@ -14,11 +14,13 @@ interface MessageViewProps {
   conversation: Conversation;
   showProductCard: boolean;
   onSendMessage?: (message: string) => Promise<void>;
+  isAdmin?: boolean;
 }
 
 export function MessageView({
   conversation,
   showProductCard,
+  isAdmin = false,
 }: MessageViewProps) {
   const { currentUserId, messages: contextMessages } = useMessagingContext();
   const [message, setMessage] = useState("");
@@ -74,7 +76,7 @@ export function MessageView({
       conversation.receiverId || conversation.participant?.userId;
     const equipmentId = conversation.equipmentId;
 
-    if (!message.trim() || isSending || !receiverId || !equipmentId) {
+    if (!message.trim() || isSending || !receiverId || (!isAdmin && !equipmentId)) {
       console.warn("[MessageView] Cannot send message - missing data:", {
         receiverId,
         equipmentId,
@@ -260,7 +262,7 @@ export function MessageView({
                 const receiverId =
                   conversation.receiverId || conversation.participant?.userId;
                 const equipmentId = conversation.equipmentId;
-                if (!receiverId || !equipmentId) {
+                if (!receiverId || (!isAdmin && !equipmentId)) {
                   console.warn(
                     "[MessageView] Cannot send media - missing data:",
                     { receiverId, equipmentId }

@@ -101,7 +101,7 @@ export default function MessagesPage() {
 
     const receiverId =
       activeConversation.participant?.userId || activeConversation.receiverId;
-    const equipmentId = activeConversation.equipmentId || "";
+    const equipmentId = activeConversation.equipmentId || undefined;
     await sendMessage(receiverId, equipmentId, message);
   };
 
@@ -294,8 +294,9 @@ export default function MessagesPage() {
               <div className="flex-1 overflow-hidden">
                 <MessageView
                   conversation={activeConversation}
-                  showProductCard={true}
+                  showProductCard={false}
                   onSendMessage={handleSendMessage}
+                  isAdmin={true}
                 />
               </div>
             )}

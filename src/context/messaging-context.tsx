@@ -34,7 +34,7 @@ interface MessagingContextType extends MessagingState {
   ) => void;
   sendMessage: (
     receiverId: string,
-    equipmentId: string,
+    equipmentId: string | undefined,
     content: string
   ) => Promise<void>;
   markAsRead: (
@@ -71,6 +71,7 @@ export function MessagingProvider({
   );
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [messagesVersion, setMessagesVersion] = useState(0);
   const dispatch = useAppDispatch();
 
   // RTK Query hooks
@@ -150,6 +151,7 @@ export function MessagingProvider({
     );
     if (!convKey) return [];
 
+    void messagesVersion; // trigger re-evaluation when socket messages are stored in ref
     const queryMessages = messagesData?.messages ?? [];
     const socketMessages = incomingMessagesRef.current.get(convKey) ?? [];
 
@@ -163,7 +165,7 @@ export function MessagingProvider({
     );
 
     return uniqueMessages;
-  }, [messagesData?.messages, activeConversationId]);
+  }, [messagesData?.messages, activeConversationId, messagesVersion]);
 
   // Socket event handling
   useEffect(() => {
@@ -201,8 +203,6 @@ export function MessagingProvider({
           ? socketMessage.equipment
           : socketMessage.equipment?._id || "";
 
-      if (!equipmentId) return;
-
       const receiverId =
         socketMessage.sender === currentUserId
           ? socketMessage.receiver
@@ -216,10 +216,10 @@ export function MessagingProvider({
         createdAt: socketMessage.createdAt,
         updatedAt: socketMessage.updatedAt,
         read: socketMessage.read,
-        equipment: equipmentId,
+        equipment: equipmentId || undefined,
       };
 
-      const convKey = makeConvKey(receiverId, equipmentId);
+      const convKey = makeConvKey(receiverId, equipmentId || undefined);
       if (!convKey) return;
 
       const existingMessages = incomingMessagesRef.current.get(convKey) ?? [];
@@ -228,6 +228,7 @@ export function MessagingProvider({
           ...existingMessages,
           message,
         ]);
+        setMessagesVersion((v) => v + 1);
       }
     };
 
@@ -303,7 +304,7 @@ export function MessagingProvider({
   );
 
   const sendMessage = useCallback(
-    async (receiverId: string, equipmentId: string, content: string) => {
+    async (receiverId: string, equipmentId: string | undefined, content: string) => {
       if (!currentUserId) {
         throw new Error("Not connected");
       }
@@ -325,12 +326,23 @@ export function MessagingProvider({
           equipmentId,
           (response) => {
             if (response.ok) {
-              addMessageOptimistic({
-                receiverId,
-                equipmentId,
-                message: response.data as Message,
-                currentUserId,
-              });
+              const sentMessage = response.data as Message;
+              if (!equipmentId) {
+                // Admin direct message — no RTK cache entry exists, store in ref directly
+                const convKey = `direct::${receiverId}`;
+                const existing = incomingMessagesRef.current.get(convKey) ?? [];
+                if (!existing.some((m) => m._id === sentMessage._id)) {
+                  incomingMessagesRef.current.set(convKey, [...existing, sentMessage]);
+                  setMessagesVersion((v) => v + 1);
+                }
+              } else {
+                addMessageOptimistic({
+                  receiverId,
+                  equipmentId,
+                  message: sentMessage,
+                  currentUserId,
+                });
+              }
               resolve();
             } else {
               reject(new Error(response.error ?? "Failed to send message"));
@@ -339,7 +351,7 @@ export function MessagingProvider({
         );
       });
     },
-    [currentUserId, addMessageOptimistic, authToken]
+    [currentUserId, addMessageOptimistic, authToken, setMessagesVersion]
   );
 
   const connect = useCallback(async (authToken: string) => {
