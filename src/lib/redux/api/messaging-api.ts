@@ -40,7 +40,27 @@ export const messagingApi = baseApi.injectEndpoints({
           );
           return [];
         }
-        return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return response.data.flatMap((c: any) => {
+          const uid = c.userId || c.receiverId || c.participant?.userId || c._id || "";
+          if (!uid) return []; // skip entries with no usable ID
+          return [{
+            receiverId: uid,
+            equipmentId: "",
+            equipment: { name: "", media: [] },
+            participant: {
+              userId: uid,
+              // null/empty name means admin account — show "Rentam360"
+              name: c.name || c.participant?.name || "Rentam360",
+              avatar: c.avatar || c.participant?.avatar || "",
+            },
+            lastMessage: c.lastMessage || "",
+            lastMessageTime: c.lastMessageTime || "",
+            lastMessageRead: (c.unreadCount ?? 0) === 0,
+            unreadCount: c.unreadCount ?? 0,
+            conversationId: c._id || c.conversationId || "",
+          }];
+        });
       },
       providesTags: ["Conversation"],
     }),
@@ -178,25 +198,37 @@ export const messagingApi = baseApi.injectEndpoints({
     >({
       query: ({ receiverId }) => `/messages/${receiverId}`,
 
-      transformResponse: (
-        response: MessagesWithEquipmentResponse
-      ): MessagesPayload => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      transformResponse: (response: any): MessagesPayload => {
         console.log("[v0] Messages API response:", response);
 
-        const payload = response.data;
-        const messages = payload.messages ?? [];
+        if (!response) return { messages: [] };
 
-        if (!Array.isArray(messages)) {
-          console.error("[v0] Invalid messages response format:", response);
-          return { messages: [] };
+        // Handle raw array response
+        if (Array.isArray(response)) {
+          return { messages: response };
         }
 
-        const equipment = payload?.equipment ?? undefined;
+        const payload = response.data;
 
-        return {
-          messages,
-          equipment,
-        };
+        if (!payload) return { messages: [] };
+
+        // Handle { data: [...] } — direct array in data
+        if (Array.isArray(payload)) {
+          return { messages: payload };
+        }
+
+        // Handle double-nested: { data: { messages: { messages: [...] } } }
+        // or single-nested:     { data: { messages: [...] } }
+        const messagesRaw = payload.messages;
+        const messages = Array.isArray(messagesRaw)
+          ? messagesRaw
+          : Array.isArray(messagesRaw?.messages)
+          ? messagesRaw.messages
+          : [];
+        const equipment = payload.equipment ?? undefined;
+
+        return { messages, equipment };
       },
       providesTags: (result, error, { receiverId }) => [
         { type: "Message", id: receiverId },

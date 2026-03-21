@@ -5,40 +5,62 @@ import { MessageList } from "@/components/message-list";
 import { MessageView } from "@/components/message-view";
 import {
   ArrowLeft,
-  Flag,
   MessageCircle,
-  MoreVertical,
   Search,
   User,
 } from "lucide-react";
 import { useMessagingContext } from "@/context/messaging-context";
+import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ReportModal } from "@/components/report-modal";
 import { timeAgo } from "@/app/utils/timeAgo";
 
 export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [adminActiveConversation, setAdminActiveConversation] = useState<import("@/types/messaging").Conversation | null>(null);
 
   const {
-    conversations,
-    activeConversation,
     activeConversationId,
     joinConversation,
     sendMessage,
-    isLoadingConversations,
     isLoadingMessages,
     isConnected,
     connectionError,
     setActiveConversationId,
   } = useMessagingContext();
+
+  // Use unfiltered conversations so admin direct messages (no equipment) are included
+  const { data: allConversations = [], isLoading: isLoadingConversations } =
+    useGetConversationsQuery(undefined, { refetchOnFocus: true, refetchOnMountOrArgChange: true });
+
+  // Supplement "Unknown" participant names from localStorage (stored when admin clicks Message)
+  const conversations = useMemo(() => {
+    const stored = JSON.parse(
+      typeof window !== "undefined"
+        ? localStorage.getItem("conversationUsers") || "{}"
+        : "{}"
+    );
+    return allConversations.map((c) => {
+      if (!c.equipmentId && c.participant?.name === "Unknown") {
+        const uid = c.participant?.userId || c.receiverId;
+        const userData = stored[uid];
+        if (userData) {
+          return {
+            ...c,
+            participant: {
+              ...c.participant,
+              name: `${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim() || "Unknown",
+              avatar: userData.avatar || c.participant?.avatar || "",
+            },
+          };
+        }
+      }
+      return c;
+    });
+  }, [allConversations]);
+
+  // Admin manages its own active conversation from the unfiltered list
+  const activeConversation = adminActiveConversation;
 
   // console.log(isConnected, activeConversation, conversations)
 
@@ -74,20 +96,37 @@ export default function MessagesPage() {
 
   // Handle URL conversation parameter
   useEffect(() => {
-    if (!convId) return;
+    if (!convId || isLoadingConversations) return;
 
     const existing = conversations.find(
       (c) => c.participant?.userId === convId || c.receiverId === convId
     );
 
-    if (existing) {
-      const receiverId = existing.participant?.userId || existing.receiverId;
-      const equipmentId = existing.equipmentId || "";
-      joinConversation(receiverId, equipmentId, existing);
-    } else if (!isLoadingConversations) {
-      console.warn("[Messaging] Conversation not found:", convId);
-    }
-  }, [convId, joinConversation, conversations, isLoadingConversations]);
+    const conv = existing ?? (() => {
+      // New direct message — try to restore user data from localStorage
+      const stored = JSON.parse(localStorage.getItem("conversationUsers") || "{}");
+      const userData = stored[convId];
+      return {
+        receiverId: convId,
+        equipmentId: "",
+        equipment: { name: "", media: [] as string[] },
+        participant: {
+          userId: convId,
+          name: userData ? `${userData.firstName} ${userData.lastName}` : "User",
+          avatar: userData?.avatar || "",
+        },
+        lastMessage: "",
+        conversationId: "",
+        lastMessageRead: false,
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0,
+        messages: [],
+      } as import("@/types/messaging").Conversation;
+    })();
+
+    setAdminActiveConversation(conv);
+    joinConversation(conv.receiverId, conv.equipmentId || undefined, conv);
+  }, [convId, isLoadingConversations, conversations, joinConversation]);
 
   // Conversations are already `Conversation[]` shaped; use them directly
   const formattedConversations = useMemo(() => {
@@ -105,13 +144,6 @@ export default function MessagesPage() {
     await sendMessage(receiverId, equipmentId, message);
   };
 
-  // const handleOpenReportModal = () => {
-  //   setIsReportModalOpen(true)
-  // }
-
-  const handleCloseReportModal = () => {
-    setIsReportModalOpen(false);
-  };
 
   const filteredConversations = useMemo(() => {
     if (!searchQuery) return formattedConversations;
@@ -182,18 +214,49 @@ export default function MessagesPage() {
               conversations={filteredConversations}
               activeId={
                 activeConversationId
-                  ? `${activeConversationId.receiverId}::${activeConversationId.equipmentId}`
+                  ? activeConversationId.equipmentId
+                    ? `${activeConversationId.receiverId}::${activeConversationId.equipmentId}`
+                    : `direct::${activeConversationId.receiverId}`
                   : ""
               }
               onSelect={(key: string) => {
-                const [receiverId, equipmentId] = key.split("::");
-                if (!receiverId) return;
-                const conv = conversations.find(
-                  (c) =>
-                    (c.participant?.userId || c.receiverId) === receiverId &&
-                    c.equipmentId === equipmentId
-                );
-                joinConversation(receiverId, equipmentId || "", conv);
+                const makeMinimalConv = (receiverId: string, equipmentId: string): import("@/types/messaging").Conversation => ({
+                  receiverId,
+                  equipmentId,
+                  equipment: { name: "", media: [] },
+                  participant: { userId: receiverId, name: "User", avatar: "" },
+                  lastMessage: "",
+                  lastMessageRead: true,
+                  conversationId: "",
+                  lastMessageTime: "",
+                  unreadCount: 0,
+                });
+
+                if (key.startsWith("direct::")) {
+                  const receiverId = key.slice("direct::".length);
+                  if (!receiverId) return;
+                  const conv =
+                    conversations.find(
+                      (c) =>
+                        (c.participant?.userId || c.receiverId) === receiverId &&
+                        !c.equipmentId
+                    ) ?? makeMinimalConv(receiverId, "");
+                  setAdminActiveConversation(conv);
+                  joinConversation(receiverId, undefined, conv);
+                } else {
+                  const separatorIdx = key.indexOf("::");
+                  const receiverId = key.slice(0, separatorIdx);
+                  const equipmentId = key.slice(separatorIdx + 2);
+                  if (!receiverId) return;
+                  const conv =
+                    conversations.find(
+                      (c) =>
+                        (c.participant?.userId || c.receiverId) === receiverId &&
+                        c.equipmentId === equipmentId
+                    ) ?? makeMinimalConv(receiverId, equipmentId);
+                  setAdminActiveConversation(conv);
+                  joinConversation(receiverId, equipmentId || "", conv);
+                }
               }}
             />
           )}
@@ -220,7 +283,7 @@ export default function MessagesPage() {
               <div className="flex items-center space-x-3">
                 {/* Back button (mobile only) */}
                 <button
-                  onClick={() => setActiveConversationId(null)}
+                  onClick={() => { setActiveConversationId(null); setAdminActiveConversation(null); }}
                   className="md:hidden mr-2 p-2 rounded-full hover:bg-gray-100"
                 >
                   <ArrowLeft className="h-5 w-5 text-gray-600" />
@@ -260,29 +323,7 @@ export default function MessagesPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
-                  <Flag className="h-5 w-5" fill="#12B76A" />
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="rounded-full p-2 text-[#12B76A] hover:bg-gray-100 transition-colors">
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setIsReportModalOpen(true);
-                      }}
-                    >
-                      <Flag className="h-4 w-4 mr-2" />
-                      Report User
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <div className="flex items-center space-x-2" />
             </div>
 
             {/* Message View */}
@@ -331,18 +372,6 @@ export default function MessagesPage() {
           </div>
         </div> */}
 
-      {activeConversation && activeConversation.equipment && (
-        <ReportModal
-          isOpen={isReportModalOpen}
-          onClose={handleCloseReportModal}
-          reportedUserId={
-            activeConversation.participant?.userId ||
-            activeConversation.receiverId
-          }
-          reportedUserName={activeConversation.participant?.name}
-          equipmentId={activeConversation.equipmentId || ""}
-        />
-      )}
     </div>
   );
 }

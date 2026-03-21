@@ -12,7 +12,9 @@ import {
 } from "react";
 import {
   useGetConversationsByEquipmentQuery,
+  useGetConversationsQuery,
   useGetMessagesByEquipmentQuery,
+  useGetMessagesQuery,
   useAddMessageOptimisticMutation,
   messagingApi,
   makeConvKey,
@@ -29,7 +31,7 @@ import { useAppDispatch } from "@/lib/redux/hooks";
 interface MessagingContextType extends MessagingState {
   joinConversation: (
     receiverId: string,
-    equipmentId: string,
+    equipmentId: string | undefined,
     conv?: Conversation
   ) => void;
   sendMessage: (
@@ -65,6 +67,9 @@ export function MessagingProvider({
 }) {
   const [activeConversationId, setActiveConversationId] =
     useState<ConversationId | null>(null);
+  const activeConversationIdRef = useRef<ConversationId | null>(null);
+  // Keep ref in sync so socket handlers can read latest value without stale closure
+  activeConversationIdRef.current = activeConversationId;
   const incomingMessagesRef = useRef<Map<string, Message[]>>(new Map());
   const [tempConversation, setTempConversation] = useState<Conversation | null>(
     null
@@ -77,8 +82,9 @@ export function MessagingProvider({
   // RTK Query hooks
   const { data: conversations = [], isLoading: isLoadingConversations } =
     useGetConversationsByEquipmentQuery();
+  const { data: directConversations = [] } = useGetConversationsQuery();
 
-  const { data: messagesData, isLoading: isLoadingMessages } =
+  const { data: messagesData, isLoading: isLoadingMessagesByEquipment } =
     useGetMessagesByEquipmentQuery(
       {
         receiverId: activeConversationId?.receiverId ?? "",
@@ -94,6 +100,25 @@ export function MessagingProvider({
       }
     );
 
+  // Used for admin direct messages (no equipment)
+  const { data: directMessagesData, isLoading: isLoadingDirectMessages } =
+    useGetMessagesQuery(
+      {
+        receiverId: activeConversationId?.receiverId ?? "",
+        currentUserId: currentUserId ?? "",
+      },
+      {
+        skip:
+          !activeConversationId ||
+          !currentUserId ||
+          !activeConversationId.receiverId ||
+          !!activeConversationId.equipmentId, // only when NO equipmentId
+        refetchOnMountOrArgChange: true,
+      }
+    );
+
+  const isLoadingMessages = isLoadingMessagesByEquipment || isLoadingDirectMessages;
+
   const [addMessageOptimistic] = useAddMessageOptimisticMutation();
 
   const markAsRead = useCallback(
@@ -107,38 +132,62 @@ export function MessagingProvider({
             (c.participant?.userId === receiverId ||
               c.receiverId === receiverId) &&
             c.equipmentId === equipmentId
+        )?.conversationId ||
+        directConversations.find(
+          (c) =>
+            (c.participant?.userId === receiverId ||
+              c.receiverId === receiverId) &&
+            !c.equipmentId
         )?.conversationId;
 
-      if (!finalConvId) {
+      // Always clear unread count in caches regardless of whether we have a conversationId
+      if (!equipmentId) {
+        dispatch(
+          messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+            // Use forEach to clear ALL matching entries (handles stale duplicates)
+            draft.forEach((conv) => {
+              if (
+                (conv.receiverId === receiverId || conv.participant?.userId === receiverId) &&
+                !conv.equipmentId
+              ) {
+                conv.unreadCount = 0;
+              }
+            });
+          })
+        );
+      } else {
+        dispatch(
+          messagingApi.util.updateQueryData(
+            "getConversationsByEquipment",
+            undefined,
+            (draft) => {
+              const conv = draft.find((c) => c.conversationId === finalConvId);
+              if (conv) conv.unreadCount = 0;
+            }
+          )
+        );
+      }
+
+      // For direct conversations, the API may not return a conversationId —
+      // fall back to the receiverId so the socket event is still emitted
+      const idToEmit = finalConvId || (!equipmentId ? receiverId : null);
+
+      if (!idToEmit) {
         console.warn("[Messaging] No conversationId found to mark as read");
         return;
       }
 
-      console.log(`Emitting mark_messages for: ${finalConvId}`);
-
       socketService.rawSocket?.emit(
         "read_message",
-        finalConvId,
+        idToEmit,
         (response: { ok: boolean; error?: string }) => {
           if (response.ok) {
-            console.log(`Conv ${finalConvId} marked as read`);
+            console.log(`Marked as read: ${idToEmit}`);
           }
         }
       );
-
-      // Update cache optimistically
-      dispatch(
-        messagingApi.util.updateQueryData(
-          "getConversationsByEquipment",
-          undefined,
-          (draft) => {
-            const conv = draft.find((c) => c.conversationId === finalConvId);
-            if (conv) conv.unreadCount = 0;
-          }
-        )
-      );
     },
-    [currentUserId, isConnected, conversations, dispatch]
+    [currentUserId, isConnected, conversations, directConversations, dispatch]
   );
 
   // Merge messages from query and socket
@@ -152,7 +201,9 @@ export function MessagingProvider({
     if (!convKey) return [];
 
     void messagesVersion; // trigger re-evaluation when socket messages are stored in ref
-    const queryMessages = messagesData?.messages ?? [];
+    const queryMessages = activeConversationId.equipmentId
+      ? (messagesData?.messages ?? [])
+      : (directMessagesData?.messages ?? []);
     const socketMessages = incomingMessagesRef.current.get(convKey) ?? [];
 
     const allMessages = [...queryMessages, ...socketMessages];
@@ -165,7 +216,7 @@ export function MessagingProvider({
     );
 
     return uniqueMessages;
-  }, [messagesData?.messages, activeConversationId, messagesVersion]);
+  }, [messagesData?.messages, directMessagesData?.messages, activeConversationId, messagesVersion]);
 
   // Socket event handling
   useEffect(() => {
@@ -230,6 +281,50 @@ export function MessagingProvider({
         ]);
         setMessagesVersion((v) => v + 1);
       }
+
+      // For direct messages, patch caches instantly (no network request needed)
+      if (!equipmentId) {
+        // Patch conversation list — update existing entry or refetch if not found yet
+        let convFound = false;
+        dispatch(
+          messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+            const existing = draft.find(
+              (c) => (c.receiverId === receiverId || c.participant?.userId === receiverId) && !c.equipmentId
+            );
+            if (existing) {
+              convFound = true;
+              existing.lastMessage = message.content;
+              existing.lastMessageTime = message.createdAt;
+              // Only increment unread if message is from someone else AND this conv isn't currently open
+              const activeConvId = activeConversationIdRef.current;
+              const isActiveConv = activeConvId?.receiverId === receiverId && !activeConvId?.equipmentId;
+              if (message.sender !== currentUserId && !isActiveConv) {
+                existing.unreadCount = (existing.unreadCount ?? 0) + 1;
+              } else if (isActiveConv) {
+                existing.unreadCount = 0;
+              }
+            }
+          })
+        );
+        // If no existing conversation entry, refetch to get proper names from the API
+        if (!convFound) {
+          dispatch(messagingApi.util.invalidateTags(["Conversation"]));
+        }
+
+        // Patch message history cache so the message view shows it immediately
+        dispatch(
+          messagingApi.util.updateQueryData(
+            "getMessages",
+            { receiverId, currentUserId },
+            (draft) => {
+              if (!Array.isArray(draft.messages)) draft.messages = [];
+              if (!draft.messages.some((m) => m._id === message._id)) {
+                draft.messages.push(message);
+              }
+            }
+          )
+        );
+      }
     };
 
     socket.on("connect", handleConnect);
@@ -247,7 +342,7 @@ export function MessagingProvider({
       socket.off("connect_error", handleError);
       socket.off("chat", handleMessage);
     };
-  }, [currentUserId, authToken]);
+  }, [currentUserId, authToken, dispatch]);
 
   // Auto-trigger mark as read when conversation becomes active
   useEffect(() => {
@@ -267,8 +362,8 @@ export function MessagingProvider({
   }, [activeConversationId, isConnected, isLoadingMessages, markAsRead]);
 
   const joinConversation = useCallback(
-    (receiverId: string, equipmentId: string, conv?: Conversation) => {
-      setActiveConversationId({ receiverId, equipmentId });
+    (receiverId: string, equipmentId: string | undefined, conv?: Conversation) => {
+      setActiveConversationId({ receiverId, equipmentId: equipmentId ?? "" });
 
       if (conv) {
         setTempConversation(conv);
@@ -278,27 +373,29 @@ export function MessagingProvider({
         socketService.joinChat(receiverId);
       }
 
-      // Update cache
-      dispatch(
-        messagingApi.util.updateQueryData(
-          "getConversationsByEquipment",
-          undefined,
-          (draft) => {
-            const c = draft.find(
-              (c) =>
-                (c.participant?.userId === receiverId ||
-                  c.receiverId === receiverId) &&
-                c.equipmentId === equipmentId
-            );
-            if (c) {
-              c.unreadCount = 0;
-              if (conv?.equipment) {
-                c.equipment = conv.equipment;
+      // Only update equipment-based cache when equipmentId is present
+      if (equipmentId) {
+        dispatch(
+          messagingApi.util.updateQueryData(
+            "getConversationsByEquipment",
+            undefined,
+            (draft) => {
+              const c = draft.find(
+                (c) =>
+                  (c.participant?.userId === receiverId ||
+                    c.receiverId === receiverId) &&
+                  c.equipmentId === equipmentId
+              );
+              if (c) {
+                c.unreadCount = 0;
+                if (conv?.equipment) {
+                  c.equipment = conv.equipment;
+                }
               }
             }
-          }
-        )
-      );
+          )
+        );
+      }
     },
     [isConnected, dispatch]
   );
@@ -328,13 +425,43 @@ export function MessagingProvider({
             if (response.ok) {
               const sentMessage = response.data as Message;
               if (!equipmentId) {
-                // Admin direct message — no RTK cache entry exists, store in ref directly
+                // Direct message — store in ref for instant display
                 const convKey = `direct::${receiverId}`;
                 const existing = incomingMessagesRef.current.get(convKey) ?? [];
                 if (!existing.some((m) => m._id === sentMessage._id)) {
                   incomingMessagesRef.current.set(convKey, [...existing, sentMessage]);
                   setMessagesVersion((v) => v + 1);
                 }
+                // Patch the conversation list cache instantly
+                let sentConvFound = false;
+                dispatch(
+                  messagingApi.util.updateQueryData("getConversations", undefined, (draft) => {
+                    const conv = draft.find(
+                      (c) => (c.receiverId === receiverId || c.participant?.userId === receiverId) && !c.equipmentId
+                    );
+                    if (conv) {
+                      sentConvFound = true;
+                      conv.lastMessage = sentMessage.content;
+                      conv.lastMessageTime = sentMessage.createdAt;
+                    }
+                  })
+                );
+                if (!sentConvFound) {
+                  dispatch(messagingApi.util.invalidateTags(["Conversation"]));
+                }
+                // Patch the message history cache so sent message shows immediately
+                dispatch(
+                  messagingApi.util.updateQueryData(
+                    "getMessages",
+                    { receiverId, currentUserId },
+                    (draft) => {
+                      if (!Array.isArray(draft.messages)) draft.messages = [];
+                      if (!draft.messages.some((m) => m._id === sentMessage._id)) {
+                        draft.messages.push(sentMessage);
+                      }
+                    }
+                  )
+                );
               } else {
                 addMessageOptimistic({
                   receiverId,
@@ -351,7 +478,7 @@ export function MessagingProvider({
         );
       });
     },
-    [currentUserId, addMessageOptimistic, authToken, setMessagesVersion]
+    [currentUserId, addMessageOptimistic, authToken, setMessagesVersion, dispatch]
   );
 
   const connect = useCallback(async (authToken: string) => {

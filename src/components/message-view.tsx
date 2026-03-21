@@ -76,7 +76,7 @@ export function MessageView({
       conversation.receiverId || conversation.participant?.userId;
     const equipmentId = conversation.equipmentId;
 
-    if (!message.trim() || isSending || !receiverId || (!isAdmin && !equipmentId)) {
+    if (!message.trim() || isSending || !receiverId) {
       console.warn("[MessageView] Cannot send message - missing data:", {
         receiverId,
         equipmentId,
@@ -262,7 +262,7 @@ export function MessageView({
                 const receiverId =
                   conversation.receiverId || conversation.participant?.userId;
                 const equipmentId = conversation.equipmentId;
-                if (!receiverId || (!isAdmin && !equipmentId)) {
+                if (!receiverId) {
                   console.warn(
                     "[MessageView] Cannot send media - missing data:",
                     { receiverId, equipmentId }

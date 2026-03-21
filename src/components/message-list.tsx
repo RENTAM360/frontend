@@ -50,8 +50,13 @@ export function MessageList({
   return (
     <div className="divide-y bg-white overflow-y-auto">
       {conversations.map((conversation) => {
-        // Create a unique key for this conversation (receiverId::equipmentId)
-        const conversationKey = `${conversation.participant.userId}::${conversation.equipmentId}`;
+        const participantId = conversation.participant?.userId || conversation.receiverId || "";
+        const conversationKey = conversation.equipmentId
+          ? `${participantId}::${conversation.equipmentId}`
+          : `direct::${participantId}`;
+        const participantName = conversation.participant?.name || "Unknown";
+        const participantAvatar = conversation.participant?.avatar;
+
         return (
           <button
             key={conversationKey}
@@ -83,11 +88,11 @@ export function MessageList({
               </div>
 
               {/* Profile image overlay in bottom right corner (allowed to overflow) */}
-              {conversation.participant.avatar ? (
+              {participantAvatar ? (
                 <div className="absolute bottom-0 -right-2 w-6 h-6 rounded-full border-2 z-20 border-white overflow-hidden bg-white">
                   <Image
-                    src={conversation.participant.avatar}
-                    alt={conversation.participant.name}
+                    src={participantAvatar}
+                    alt={participantName}
                     fill
                     className="object-cover"
                     onError={(e) => {
@@ -105,7 +110,7 @@ export function MessageList({
             <div className="flex-1 overflow-hidden">
               <div className="flex justify-between">
                 <h3 className="font-sm font-medium text-[#5A5555]">
-                  {conversation.participant.name}
+                  {participantName}
                 </h3>
                 <div className="flex flex-col">
                   <span className="text-xs text-[#5A5555]">
@@ -119,7 +124,7 @@ export function MessageList({
                 </div>
               </div>
               <p className="truncate text-xs text-gray-500 mb-1">
-                {conversation.equipment.name}
+                {conversation.equipment?.name ?? "Direct message"}
               </p>
               <p className="truncate text-xs text-[#5A5555]">
                 {(() => {

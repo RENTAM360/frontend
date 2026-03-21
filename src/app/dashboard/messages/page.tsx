@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import { useMessagingContext } from "@/context/messaging-context";
+import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import {
@@ -30,11 +31,13 @@ export default function MessagesPage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedConversationId, setSelectedConversationId] =
     useState<ConversationId | null>(null);
+  const [directActiveConversation, setDirectActiveConversation] =
+    useState<import("@/types/messaging").Conversation | null>(null);
   const isNavigatingBackRef = useRef(false);
 
   const {
     conversations,
-    activeConversation,
+    activeConversation: equipmentActiveConversation,
     activeConversationId,
     joinConversation,
     sendMessage,
@@ -45,6 +48,16 @@ export default function MessagesPage() {
     markAsRead,
     setActiveConversationId,
   } = useMessagingContext();
+
+  // For direct (admin) messages, use local state; for equipment ones use context
+  const activeConversation = directActiveConversation ?? equipmentActiveConversation;
+
+  // Fetch direct (admin) messages — only no-equipment conversations
+  const { data: allConversations = [] } = useGetConversationsQuery();
+  const directConversations = useMemo(
+    () => allConversations.filter((c) => !c.equipmentId),
+    [allConversations]
+  );
 
   const router = useRouter();
   const pathname = usePathname();
@@ -152,83 +165,84 @@ export default function MessagesPage() {
   const isConversationPending = !!desiredConversationId && !conversationForView;
 
   const sortedConversations = useMemo(() => {
-    // Log conversations to debug
-    // console.log("[MessagesPage] Conversations received:", {
-    //   total: conversations.length,
-    //   conversations: conversations.map((c) => ({
-    //     receiverId: c.receiverId || c.participant?.userId,
-    //     equipmentId: c.equipmentId,
-    //     equipmentName: c.equipment?.name,
-    //     key: `${c.receiverId || c.participant?.userId}::${c.equipmentId}`,
-    //   })),
-    // });
+    const merged = [...conversations, ...directConversations];
 
-    // Ensure uniqueness by receiverId + equipmentId (in case backend returns duplicates)
+    // Ensure uniqueness by key
     const uniqueConversations = Array.from(
       new Map(
-        conversations.map((c) => {
-          const key = `${c.receiverId || c.participant?.userId}::${
-            c.equipmentId
-          }`;
+        merged.map((c) => {
+          const pid = c.receiverId || c.participant?.userId || "";
+          const key = c.equipmentId ? `${pid}::${c.equipmentId}` : `direct::${pid}`;
           return [key, c];
         })
       ).values()
     );
-
-    if (uniqueConversations.length !== conversations.length) {
-      console.warn(
-        "[MessagesPage] Removed duplicate conversations:",
-        conversations.length - uniqueConversations.length
-      );
-    }
 
     return uniqueConversations.sort(
       (a, b) =>
         new Date(b.lastMessageTime ?? 0).getTime() -
         new Date(a.lastMessageTime ?? 0).getTime()
     );
-  }, [conversations]);
+  }, [conversations, directConversations]);
 
   const handleSelectConversation = useCallback(
     (conversationKey: string) => {
-      // 1. Parse the conversation key (receiverId::equipmentId)
-      const [receiverId, equipmentId] = conversationKey.split("::");
-      if (!receiverId || !equipmentId) return;
+      const isDirect = conversationKey.startsWith("direct::");
+      const receiverId = isDirect
+        ? conversationKey.slice("direct::".length)
+        : conversationKey.split("::")[0];
+      const equipmentId = isDirect ? "" : conversationKey.split("::")[1] ?? "";
+
+      if (!receiverId) return;
 
       const convId: ConversationId = { receiverId, equipmentId };
 
-      // 2. Find the specific conversation object to extract the conversationId
-      const targetConversation = conversations.find(
-        (c) =>
-          (c.participant?.userId === receiverId ||
-            c.receiverId === receiverId) &&
-          c.equipmentId === equipmentId
-      );
+      const allConvs = [...conversations, ...directConversations];
+      const targetConversation =
+        allConvs.find(
+          (c) =>
+            (c.participant?.userId === receiverId || c.receiverId === receiverId) &&
+            (isDirect ? !c.equipmentId : c.equipmentId === equipmentId)
+        ) ??
+        (isDirect
+          ? {
+              receiverId,
+              equipmentId: "",
+              equipment: { name: "", media: [] },
+              participant: { userId: receiverId, name: "Unknown", avatar: "" },
+              lastMessage: "",
+              lastMessageRead: true,
+              lastMessageTime: new Date().toISOString(),
+              conversationId: "",
+              unreadCount: 0,
+            }
+          : undefined);
 
-      // 3. Update local state immediately for instant UI response
       setSelectedConversationId(convId);
 
-      // 4. Join the socket room and update context state
-      joinConversation(receiverId, equipmentId, targetConversation);
+      if (isDirect) {
+        setDirectActiveConversation(targetConversation ?? null);
+      } else {
+        setDirectActiveConversation(null);
+      }
 
-      // 5. Trigger markAsRead using the explicit conversationId from the API
-      if (targetConversation?.conversationId) {
+      joinConversation(receiverId, equipmentId || undefined, targetConversation);
+
+      if (targetConversation?.conversationId && !isDirect) {
         markAsRead(receiverId, equipmentId, targetConversation.conversationId);
       }
 
-      // 6. Update URL asynchronously for bookmarking/navigation
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("receiver", receiverId);
-      params.set("equipment", equipmentId);
-
-      const nextPath = params.toString()
-        ? `${pathname}?${params.toString()}`
-        : pathname;
-
-      router.replace(nextPath, { scroll: false });
+      // Only update URL for equipment-based conversations
+      if (!isDirect) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("receiver", receiverId);
+        params.set("equipment", equipmentId);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      }
     },
     [
       conversations,
+      directConversations,
       joinConversation,
       pathname,
       router,
@@ -262,10 +276,10 @@ export default function MessagesPage() {
     if (!searchQuery) return sortedConversations;
     return sortedConversations.filter(
       (conv) =>
-        (conv.participant.name ?? "")
+        (conv.participant?.name ?? "")
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
-        (conv.equipment.name ?? "")
+        (conv.equipment?.name ?? "")
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
     );
@@ -327,7 +341,9 @@ export default function MessagesPage() {
               conversations={filteredConversations}
               activeId={
                 desiredConversationId
-                  ? `${desiredConversationId.receiverId}::${desiredConversationId.equipmentId}`
+                  ? desiredConversationId.equipmentId
+                    ? `${desiredConversationId.receiverId}::${desiredConversationId.equipmentId}`
+                    : `direct::${desiredConversationId.receiverId}`
                   : ""
               }
               onSelect={handleSelectConversation}
@@ -362,6 +378,7 @@ export default function MessagesPage() {
 
                     // Clear local state immediately - this takes precedence over URL params
                     setSelectedConversationId(null);
+                    setDirectActiveConversation(null);
                     setActiveConversationId(null);
 
                     // Clear URL params (this happens asynchronously, but state change is immediate)
@@ -445,7 +462,7 @@ export default function MessagesPage() {
               <div className="flex-1 overflow-hidden">
                 <MessageView
                   conversation={conversationForView}
-                  showProductCard={true}
+                  showProductCard={!!conversationForView.equipmentId}
                   onSendMessage={handleSendMessage}
                 />
               </div>
