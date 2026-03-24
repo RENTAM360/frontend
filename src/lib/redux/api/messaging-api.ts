@@ -345,7 +345,7 @@ export const messagingApi = baseApi.injectEndpoints({
         dispatch(
           messagingApi.util.updateQueryData(
             "getRecentMessagesByEquipment",
-            { receiverId, equipmentId, currentUserId },
+            { receiverId, equipmentId: equipmentId ?? "", currentUserId },
             (draft) => {
               draft.push(message);
               if (draft.length > 20) draft.splice(0, draft.length - 20);
