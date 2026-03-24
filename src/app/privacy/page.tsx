@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <p className="text-[#797B89] text-sm md:text-base mb-8">
           Welcome to <strong className="text-black">RENTAM360</strong>. Your privacy matters to us, and this Privacy
           Policy explains how we collect, use, disclose, and protect your information when you use our mobile
-          application, website, and related services (collectively, the "Service"). By using RENTAM360, you agree to
+          application, website, and related services (collectively, the &quot;Service&quot;). By using RENTAM360, you agree to
           the practices described in this Privacy Policy.
         </p>
 
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
           <Section title="10. Changes to This Privacy Policy">
             <p className="text-[#797B89] text-sm md:text-base">
               We may update this Privacy Policy from time to time. Changes will be posted within the app or on our
-              website, and the "Last Updated" date will be revised accordingly.
+              website, and the &quot;Last Updated&quot; date will be revised accordingly.
             </p>
           </Section>
 

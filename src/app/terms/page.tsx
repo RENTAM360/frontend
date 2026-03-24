@@ -24,11 +24,11 @@ export default function TermsPage() {
 
           <Section title="1. Definitions">
             <Items items={[
-              <><strong className="text-black">"RENTAM360," "we," "our," or "us"</strong> refers to the RENTAM360 platform and its operators.</>,
-              <><strong className="text-black">"User"</strong> refers to any individual or entity that accesses or uses the Service.</>,
-              <><strong className="text-black">"Lessor"</strong> refers to a user who lists equipment for lease.</>,
-              <><strong className="text-black">"Lessee"</strong> refers to a user who leases equipment through the platform.</>,
-              <><strong className="text-black">"Equipment"</strong> refers to tools, machinery, vehicles, or assets listed on RENTAM360.</>,
+              <><strong className="text-black">&quot;RENTAM360,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us&quot;</strong> refers to the RENTAM360 platform and its operators.</>,
+              <><strong className="text-black">&quot;User&quot;</strong> refers to any individual or entity that accesses or uses the Service.</>,
+              <><strong className="text-black">&quot;Lessor&quot;</strong> refers to a user who lists equipment for lease.</>,
+              <><strong className="text-black">&quot;Lessee&quot;</strong> refers to a user who leases equipment through the platform.</>,
+              <><strong className="text-black">&quot;Equipment&quot;</strong> refers to tools, machinery, vehicles, or assets listed on RENTAM360.</>,
             ]} />
           </Section>
 

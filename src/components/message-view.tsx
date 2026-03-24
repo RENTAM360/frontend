@@ -20,7 +20,6 @@ interface MessageViewProps {
 export function MessageView({
   conversation,
   showProductCard,
-  isAdmin = false,
 }: MessageViewProps) {
   const { currentUserId, messages: contextMessages } = useMessagingContext();
   const [message, setMessage] = useState("");
