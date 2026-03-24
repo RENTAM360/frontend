@@ -288,7 +288,7 @@ export default function UsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Search by name, email, address"
+              placeholder="Search by name or email address"
               className="w-[300px] pl-9 shadow-none py-4 rounded-lg border-[#EAEAEA]"
               value={searchQuery}
               onChange={(e) => {
@@ -367,7 +367,7 @@ export default function UsersPage() {
                               year: "numeric",
                               month: "short",
                               day: "numeric",
-                            }
+                            },
                           )}
                         </td>
                         <td className="p-4">
@@ -377,10 +377,10 @@ export default function UsersPage() {
                                 user.status === "active"
                                   ? "bg-[#17b266]"
                                   : user.status === "inactive"
-                                  ? "bg-yellow-400"
-                                  : user.status === "suspended"
-                                  ? "bg-red-500"
-                                  : "bg-gray-400"
+                                    ? "bg-yellow-400"
+                                    : user.status === "suspended"
+                                      ? "bg-red-500"
+                                      : "bg-gray-400"
                               }`}
                             ></div>
                             <span>

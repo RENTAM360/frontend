@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 import { ReportModal } from "@/components/report-modal";
+import { socketService } from "@/lib/socket";
 import Link from "next/link";
 import { timeAgo } from "@/app/utils/timeAgo";
 import type { ConversationId } from "@/types/messaging";
@@ -71,23 +72,26 @@ export default function MessagesPage() {
     isOnlinr?: boolean;
   }>({});
 
+  const activeParticipantId = activeConversation?.participant.userId ?? null;
+
   useEffect(() => {
-    const handleStorageUpdate = () => {
-      const users = JSON.parse(localStorage.getItem("activeUsers") || "{}");
-      let status = {};
-      if (activeConversation?.participant.userId) {
-        status = users[activeConversation.participant.userId] || {};
-      }
-      setUserStatus(status);
+    // Read any previously stored status from localStorage
+    const users = JSON.parse(localStorage.getItem("activeUsers") || "{}");
+    setUserStatus(activeParticipantId ? users[activeParticipantId] || {} : {});
+
+    if (!activeParticipantId) return;
+
+    // Subscribe directly to socket events — the server doesn't include userId
+    // in the payload, so we associate the update with the active participant
+    const handleStatus = (data: { isOnlinr?: boolean; lastActive?: number }) => {
+      setUserStatus({ isOnlinr: data.isOnlinr, lastActive: data.lastActive });
     };
 
-    // Load once
-    handleStorageUpdate();
-
-    // Optional: update automatically if socket events update localStorage
-    window.addEventListener("storage", handleStorageUpdate);
-    return () => window.removeEventListener("storage", handleStorageUpdate);
-  }, [activeConversation?.participant.userId]);
+    socketService.onLastActive(handleStatus);
+    // Request current status in case the user was already online before we joined
+    socketService.requestUserStatus(activeParticipantId);
+    return () => socketService.offLastActive(handleStatus);
+  }, [activeParticipantId]);
 
   // Handle URL conversation parameters (receiver + equipment)
   useEffect(() => {

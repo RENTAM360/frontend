@@ -24,7 +24,7 @@ export function AdminManagementSettings({
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedAdmins(checked ? admins.map((admin) => admin.id) : []);
+    setSelectedAdmins(checked ? admins.map((admin) => admin._id) : []);
   };
 
   // const handleAddAdmin = () => {
@@ -77,14 +77,14 @@ export function AdminManagementSettings({
           {/* Table Rows */}
           {admins.map((admin) => (
             <div
-              key={admin.id}
+              key={admin._id}
               className="grid grid-cols-12 gap-12 p-6 border-b border-gray-50 hover:bg-gray-50"
             >
               <div className="col-span-1 flex items-center">
                 <Checkbox
-                  checked={selectedAdmins.includes(admin.id)}
+                  checked={selectedAdmins.includes(admin._id)}
                   onCheckedChange={(checked) =>
-                    handleSelectAdmin(admin.id, checked as boolean)
+                    handleSelectAdmin(admin._id, checked as boolean)
                   }
                   className="border-gray-300"
                 />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useGetAdminEquipmentChartQuery } from "@/lib/redux/api/adminApi";
 import {
   LineChart,
@@ -48,19 +49,85 @@ const CustomizedDot = ({ cx = 0, cy = 0, value }: CustomizedDotProps) => {
   );
 };
 
-export function EquipmentOverviewChart() {
+function getLastNMonthsRange(n: number) {
+  const now = new Date();
+
+  const end = {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+  };
+
+  const startDate = new Date();
+  startDate.setMonth(now.getMonth() - (n - 1));
+
+  const start = {
+    year: startDate.getFullYear(),
+    month: startDate.getMonth() + 1,
+  };
+
+  return { start, end };
+}
+
+function filterByMonthRange(
+  data: { _id: { year: number; month: number }; count: number }[],
+  start: { year: number; month: number },
+  end: { year: number; month: number },
+) {
+  return data.filter((item) => {
+    const { year, month } = item._id;
+
+    const afterStart =
+      year > start.year || (year === start.year && month >= start.month);
+
+    const beforeEnd =
+      year < end.year || (year === end.year && month <= end.month);
+
+    return afterStart && beforeEnd;
+  });
+}
+
+export function EquipmentOverviewChart({ range = 6 }: { range?: number }) {
   const { data, isLoading, isError } = useGetAdminEquipmentChartQuery();
+
+  const chartData = useMemo(() => {
+    if (!data?.data?.raw) return [];
+
+    const { start, end } = getLastNMonthsRange(range);
+
+    const equipment = filterByMonthRange(data.data.raw.equipment, start, end);
+
+    const bookings = filterByMonthRange(data.data.raw.bookings, start, end);
+
+    const map = new Map();
+
+    equipment.forEach((item) => {
+      const key = `${item._id.year}-${item._id.month}`;
+      if (!map.has(key)) map.set(key, { equipment: 0, bookings: 0 });
+
+      map.get(key).equipment = item.count;
+    });
+
+    bookings.forEach((item) => {
+      const key = `${item._id.year}-${item._id.month}`;
+      if (!map.has(key)) map.set(key, { equipment: 0, bookings: 0 });
+
+      map.get(key).bookings = item.count;
+    });
+
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => {
+        const [year, month] = key.split("-");
+        return {
+          name: `${month}/${year}`,
+          equipment: value.equipment,
+          bookings: value.bookings,
+        };
+      });
+  }, [data, range]);
 
   if (isLoading) return <AnimatedLogo />;
   if (isError) return <p className="p-4 text-red-500">Error loading chart</p>;
-
-  // Map API datasets to Recharts format
-  const chartData =
-    data?.data?.labels.map((label: string, i: number) => ({
-      name: label,
-      equipment: data.data.datasets[0].data[i],
-      bookings: data.data.datasets[1].data[i],
-    })) ?? [];
 
   return (
     <ResponsiveContainer width="100%" height="100%">

@@ -7,9 +7,11 @@ import { UserReportPieChart } from "@/components/users-report-chart";
 import { PageHeader } from "@/context/page-header-context";
 import { useGetAdminDashboardQuery } from "@/lib/redux/api/adminApi";
 import { formatCurrency, formatNumber } from "../utils/formatters";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { data, isLoading, isError } = useGetAdminDashboardQuery();
+  const [range, setRange] = useState<number>(6);
 
   if (isLoading) return <AnimatedLogo />;
   if (isError) return <p>Error loading dashboard</p>;
@@ -50,7 +52,7 @@ export default function Dashboard() {
           percentage={`${formatNumber(dashboardData?.totalCompleted.compare)}%`}
           lastMonth="Last Month"
           lastMonthValue={formatCurrency(
-            dashboardData?.totalCompleted.lastMonth
+            dashboardData?.totalCompleted.lastMonth,
           )}
         />
         <StatsCard
@@ -113,16 +115,18 @@ export default function Dashboard() {
                 <div className="w-3 h-3 bg-[#17b266] rounded-sm"></div>
                 <span className="text-[9px]">Old Users</span>
               </div> */}
-              <div className=" text-[9px] border rounded px-2 py-1">
-                Last 6 months
-                {/* <select className="text-[9px] border rounded px-2 py-1">
-                  <option>Last 6 months</option>
-                  <option>Last year</option>
-                </select> */}
-              </div>
+              <select
+                className="text-[9px] border rounded px-2 py-1"
+                value={range}
+                onChange={(e) => setRange(Number(e.target.value))}
+              >
+                <option value={1}>Last Month</option>
+                <option value={3}>Last 3 Months</option>
+                <option value={6}>Last 6 Months</option>
+              </select>
             </div>
             <div className="h-[300px] w-full">
-              <EquipmentOverviewChart />
+              <EquipmentOverviewChart range={range} />
             </div>
           </CardContent>
         </Card>
@@ -172,13 +176,20 @@ function StatsCard({
   lastMonth: string;
   lastMonthValue: string;
 }) {
+  const isNegative = percentage.toString().startsWith("-");
   return (
     <Card className="overflow-hidden border shadow-none border-[#EAEAEA]">
       <CardContent className="p-0">
         <div className="p-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-[12px] text-gray-500">{title}</h3>
-            <span className="text-[10px] text-[#17b266] bg-[#17b266]/10 px-2 py-0.5 rounded">
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded ${
+                isNegative
+                  ? "text-red-600 bg-red-50"
+                  : "text-[#17b266] bg-[#17b266]/10"
+              }`}
+            >
               {percentage}
             </span>
           </div>

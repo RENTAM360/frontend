@@ -130,10 +130,20 @@ class SocketService {
     console.log("[Socket] Joined chat with:", receiverUserId)
   }
 
+  requestUserStatus(userId: string) {
+    if (!this.socket?.connected) return
+    // Ask server for current status — common event name patterns
+    this.socket.emit("get_status", userId)
+    this.socket.emit("user_status", userId)
+  }
+
   updateUserStatus({ userId, lastActive, isOnlinr }: UserStatusData) {
+    if (!userId) return
     const users = JSON.parse(localStorage.getItem("activeUsers") || "{}")
     users[userId] = { lastActive, isOnlinr }
     localStorage.setItem("activeUsers", JSON.stringify(users))
+    // Notify same-tab listeners (storage event only fires in other tabs)
+    window.dispatchEvent(new CustomEvent("userStatusUpdate", { detail: { userId, lastActive, isOnlinr } }))
   }
 
   sendMessage(
@@ -197,6 +207,16 @@ class SocketService {
     if (!this.socket) return
 
     this.socket.on("messages read", callback)
+  }
+
+  onLastActive(callback: (data: Partial<UserStatusData>) => void) {
+    this.socket?.on("lastActive", callback)
+    this.socket?.on("lastActive1", callback)
+  }
+
+  offLastActive(callback: (data: Partial<UserStatusData>) => void) {
+    this.socket?.off("lastActive", callback)
+    this.socket?.off("lastActive1", callback)
   }
 
   offMessage(callback?: (message: SocketMessage) => void) {

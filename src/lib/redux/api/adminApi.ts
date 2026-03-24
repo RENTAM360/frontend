@@ -44,6 +44,10 @@ export interface GetAdminEquipmentChartResponse {
       yAxisLabel: string
       legend: string[]
     }
+    raw: {
+      equipment: { _id: { year: number; month: number }; count: number }[]
+      bookings: { _id: { year: number; month: number }; count: number }[]
+    }
   }
 }
 
@@ -228,7 +232,7 @@ export interface GetRentedEquipmentResponse {
 }
 
 export interface AdminUser {
-  id: string
+  _id: string
   fullName: string
   email: string
   roleName: string

@@ -714,13 +714,20 @@ function StatsCard({
   lastMonth: string;
   lastMonthValue: string;
 }) {
+  const isNegative = percentage.toString().startsWith("-");
   return (
     <Card className="overflow-hidden shadow-none border border-[#EAEAEA]">
       <CardContent className="p-0">
         <div className="p-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm text-gray-500">{title}</h3>
-            <span className="text-xs text-[#17b266] bg-[#17b266]/10 px-2 py-0.5 rounded">
+            <span
+              className={`text-xs px-2 py-0.5 rounded ${
+                isNegative
+                  ? "text-red-600 bg-red-50"
+                  : "text-[#17b266] bg-[#17b266]/10"
+              }`}
+            >
               {percentage}
             </span>
           </div>

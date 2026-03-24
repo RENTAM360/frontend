@@ -10,6 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { useMessagingContext } from "@/context/messaging-context";
+import { socketService } from "@/lib/socket";
 import { useGetConversationsQuery } from "@/lib/redux/api/messaging-api";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -78,20 +79,22 @@ export default function MessagesPage() {
     null;
 
   useEffect(() => {
-    const handleStorageUpdate = () => {
-      const users = JSON.parse(localStorage.getItem("activeUsers") || "{}");
-      const status = activeParticipantId
-        ? users[activeParticipantId] || {}
-        : {};
-      setUserStatus(status);
+    // Read any previously stored status from localStorage
+    const users = JSON.parse(localStorage.getItem("activeUsers") || "{}");
+    setUserStatus(activeParticipantId ? users[activeParticipantId] || {} : {});
+
+    if (!activeParticipantId) return;
+
+    // Subscribe directly to socket events — the server doesn't include userId
+    // in the payload, so we associate the update with the active participant
+    const handleStatus = (data: { isOnlinr?: boolean; lastActive?: number }) => {
+      setUserStatus({ isOnlinr: data.isOnlinr, lastActive: data.lastActive });
     };
 
-    // Load once
-    handleStorageUpdate();
-
-    // Optional: update automatically if socket events update localStorage
-    window.addEventListener("storage", handleStorageUpdate);
-    return () => window.removeEventListener("storage", handleStorageUpdate);
+    socketService.onLastActive(handleStatus);
+    // Request current status in case the user was already online before we joined
+    socketService.requestUserStatus(activeParticipantId);
+    return () => socketService.offLastActive(handleStatus);
   }, [activeParticipantId]);
 
   // Handle URL conversation parameter
