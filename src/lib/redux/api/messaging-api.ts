@@ -331,7 +331,7 @@ export const messagingApi = baseApi.injectEndpoints({
         const patchResult = dispatch(
           messagingApi.util.updateQueryData(
             "getMessagesByEquipment",
-            { receiverId, equipmentId, currentUserId },
+            { receiverId, equipmentId: equipmentId ?? "", currentUserId },
             (draft) => {
               if (!draft.messages) draft.messages = [];
               draft.messages.push(message);
