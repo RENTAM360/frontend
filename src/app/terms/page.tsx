@@ -14,9 +14,9 @@ export default function TermsPage() {
         </h1>
 
         <p className="text-[#797B89] text-sm md:text-base mb-8">
-          Welcome to <strong className="text-black">RENTAM360</strong>. These Terms and Conditions ("Terms") govern
+          Welcome to <strong className="text-black">RENTAM360</strong>. These Terms and Conditions (&quot;Terms&quot;) govern
           your access to and use of the RENTAM360 mobile application, website, and related services (collectively,
-          the "Service"). By accessing or using RENTAM360, you agree to be bound by these Terms. If you do not agree,
+          the &quot;Service&quot;). By accessing or using RENTAM360, you agree to be bound by these Terms. If you do not agree,
           please do not use the Service.
         </p>
 
