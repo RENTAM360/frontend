@@ -245,7 +245,7 @@ export default function EquipmentDetailsClient({
 
     joinConversation(receiverId, equipmentId, conv);
     router.push(
-      `/dashboard/messages?receiver=${receiverId}&equipment=${equipmentId}`
+      `/dashboard/messages?receiver=${receiverId}&equipment=${equipmentId}`,
     );
   };
 
@@ -319,7 +319,7 @@ export default function EquipmentDetailsClient({
           <button
             onClick={() =>
               setSelectedImage((prev) =>
-                prev === 0 ? equipmentData.media.length - 1 : prev - 1
+                prev === 0 ? equipmentData.media.length - 1 : prev - 1,
               )
             }
             className="absolute left-4 text-white text-4xl hover:text-gray-300"
@@ -360,7 +360,7 @@ export default function EquipmentDetailsClient({
           <button
             onClick={() =>
               setSelectedImage((prev) =>
-                prev === equipmentData.media.length - 1 ? 0 : prev + 1
+                prev === equipmentData.media.length - 1 ? 0 : prev + 1,
               )
             }
             className="absolute right-4 text-white text-4xl hover:text-gray-300"
@@ -456,6 +456,11 @@ export default function EquipmentDetailsClient({
               </span>
               <span className="text-xs text-[#979797] ml-2">Per day</span>
             </div>
+            {!equipmentData.availability && (
+              <div className="px-2 py-1 bg-orange-100 text-xs text-[#FF5F00] border border-[#FF5F00] rounded">
+                Currently Unavailable
+              </div>
+            )}
           </div>
           <div className="flex items-start gap-2 text-[#979797] mb-4">
             <svg
@@ -677,7 +682,7 @@ export default function EquipmentDetailsClient({
                     <div className="relative h-8 w-8 overflow-hidden flex justify-center items-center bg-white rounded-full flex-shrink-0">
                       {latestFeedback?.feedbackBy?.avatar ? (
                         isLocalFileUri(
-                          latestFeedback?.feedbackBy?.avatar || ""
+                          latestFeedback?.feedbackBy?.avatar || "",
                         ) ? (
                           <Image
                             src={
@@ -782,7 +787,10 @@ export default function EquipmentDetailsClient({
           <div className="bg-white rounded-lg p-6">
             <h1 className="text-base font-medium">Location</h1>
             <div className="space-y-6">
-              <div onClick={hasValidCoordinates ? handleMapClick : undefined} className="h-[157px]">
+              <div
+                onClick={hasValidCoordinates ? handleMapClick : undefined}
+                className="h-[157px]"
+              >
                 {typeof window !== "undefined" && hasValidCoordinates ? (
                   <Map
                     imageUrl={equipmentData.media[0]}
